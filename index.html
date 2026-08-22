@@ -434,8 +434,8 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
       <h1 id="heroTitle">早上好</h1>
       <p class="sub" id="heroSub">今天也闪闪发光吧。计划完成 <b class="num" id="heroPlanPct">0</b>%，已专注 <b class="num" id="heroFocus">0</b> 分钟。</p>
       <div class="hero-actions">
-        <button class="btn btn-primary" data-open="panel-plan">✏️ 管理今日计划</button>
-        <button class="btn btn-ghost" data-open="panel-growth">📈 成长报告</button>
+        <button class="btn btn-primary" data-open="plan">✏️ 管理今日计划</button>
+        <button class="btn btn-ghost" data-open="growth">📈 成长报告</button>
       </div>
     </div>
     <div class="ring-wrap">
@@ -473,7 +473,7 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
       <div class="card-hd">
         <div class="ic" style="background:rgba(240,178,92,.14)">📝</div>
         <div style="flex:1"><h3>今日计划</h3><p id="planSub">0/0 已完成</p></div>
-        <button class="btn btn-sm btn-ghost" data-open="panel-plan">管理</button>
+        <button class="btn btn-sm btn-ghost" data-open="plan">管理</button>
       </div>
       <div class="card-bd">
         <div class="list" id="planList"></div>
@@ -484,7 +484,7 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
       <div class="card-hd">
         <div class="ic" style="background:rgba(92,200,178,.14)">🗓️</div>
         <div style="flex:1"><h3>打卡日历</h3><p>有记录的日子亮起小点</p></div>
-        <button class="btn btn-sm btn-ghost" data-open="panel-cal">翻月</button>
+        <button class="btn btn-sm btn-ghost" data-open="cal">翻月</button>
       </div>
       <div class="card-bd" id="calMini"></div>
     </div>
@@ -493,7 +493,7 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
       <div class="card-hd">
         <div class="ic" style="background:rgba(123,167,217,.14)">🎓</div>
         <div style="flex:1"><h3>课程进度</h3><p id="courseSub">0 门 · 平均 0%</p></div>
-        <button class="btn btn-sm btn-ghost" data-open="panel-courses">管理</button>
+        <button class="btn btn-sm btn-ghost" data-open="courses">管理</button>
       </div>
       <div class="card-bd">
         <div class="list" id="courseList"></div>
@@ -504,7 +504,7 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
       <div class="card-hd">
         <div class="ic" style="background:rgba(123,167,217,.14)">📖</div>
         <div style="flex:1"><h3>每日阅读</h3><p id="readSub">0 本 · 0 页</p></div>
-        <button class="btn btn-sm btn-ghost" data-open="panel-reading">记录</button>
+        <button class="btn btn-sm btn-ghost" data-open="reading">记录</button>
       </div>
       <div class="card-bd">
         <div class="stat-row">
@@ -519,7 +519,7 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
       <div class="card-hd">
         <div class="ic" style="background:rgba(240,178,92,.14)">🇬🇧</div>
         <div style="flex:1"><h3>英语学习</h3><p id="engSub">0 次 · 0 分钟</p></div>
-        <button class="btn btn-sm btn-ghost" data-open="panel-english">记录</button>
+        <button class="btn btn-sm btn-ghost" data-open="english">记录</button>
       </div>
       <div class="card-bd">
         <div class="stat-row">
@@ -534,7 +534,7 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
       <div class="card-hd">
         <div class="ic" style="background:rgba(92,200,178,.14)">🏃</div>
         <div style="flex:1"><h3>每日运动</h3><p id="sportSub">0 次 · 0 千卡</p></div>
-        <button class="btn btn-sm btn-ghost" data-open="panel-sports">记录</button>
+        <button class="btn btn-sm btn-ghost" data-open="sports">记录</button>
       </div>
       <div class="card-bd">
         <div class="stat-row">
