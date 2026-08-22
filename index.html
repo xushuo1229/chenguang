@@ -181,6 +181,33 @@ input,select,textarea{font-family:inherit;color:var(--text-1)}
 .mini-ic:hover{background:rgba(240,178,92,.12);color:var(--amber)}
 .mini-ic.del:hover{background:rgba(239,122,114,.14);color:var(--err)}
 
+/* 优先级与计划内容 */
+.pri{font-size:10px;padding:2px 7px;border-radius:6px;font-weight:600;flex-shrink:0}
+.pri-h{background:rgba(242,109,133,.16);color:#ff8fa3}
+.pri-m{background:rgba(240,178,92,.16);color:var(--amber)}
+.pri-l{background:rgba(123,167,217,.16);color:#9dc4f0}
+.li-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.li-title{font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.li-desc{font-size:11.5px;color:var(--text-3);line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}
+.li-item.done .li-title{text-decoration:line-through;color:var(--text-3)}
+.li-item.done .li-desc{opacity:.6}
+.li-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* 报告 */
+.report-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:8px}
+@media(max-width:560px){.report-summary{grid-template-columns:repeat(2,1fr)}}
+.report-summary .rs{text-align:center;padding:14px 8px;border-radius:var(--r-md);background:rgba(255,255,255,.03);border:1px solid var(--line)}
+.report-summary .rs b{display:block;font-size:24px;font-family:var(--font-num);color:var(--amber)}
+.report-summary .rs span{font-size:11px;color:var(--text-3)}
+.report-section{margin-top:6px}
+.report-section h4{font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.report-section .rs-list{display:flex;flex-direction:column;gap:6px}
+.report-section .rs-item{padding:10px 12px;border-radius:var(--r-md);background:rgba(255,255,255,.03);border:1px solid var(--line);font-size:12.5px}
+.report-section .rs-item.done{border-left:3px solid var(--ok)}
+.report-section .rs-item.pending{border-left:3px solid var(--amber)}
+.report-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.report-preview{background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:var(--r-md);padding:14px;font-size:12.5px;line-height:1.7;max-height:240px;overflow-y:auto;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+
 /* 进度条 */
 .bar{height:6px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;position:relative}
 .bar i{display:block;height:100%;border-radius:999px;background:var(--grad-amber);width:0;transition:width 1s var(--ease-out-expo)}
@@ -1008,12 +1035,14 @@ function render(){
   $('#pCheckins').textContent = stats.checkins || 0;
 
   // 今日计划卡
+  D.plan.forEach(migratePlan);
   const list = todayPlans.slice(0, 5);
   $('#planSub').textContent = `${done}/${todayPlans.length} 已完成`;
   $('#planList').innerHTML = list.length ? list.map(p => `
     <div class="li-item ${p.done ? 'done' : ''}">
       <button class="check" data-act="toggle-plan" data-id="${p.id}" aria-label="切换完成">✓</button>
-      <span class="li-txt">${esc(p.text)}</span>
+      <div class="li-body"><div class="li-title">${esc(p.title)}</div></div>
+      <span class="pri ${PRIORITIES[p.priority]}">${p.priority}</span>
       <span class="li-tag" data-cat="${esc(p.cat)}" ${catTag(p.cat)}>${esc(p.cat)}</span>
     </div>`).join('') : `<div class="empty"><div class="big">📝</div>今天还没有计划</div>`;
 
@@ -1190,34 +1219,83 @@ const panelAuth = {
 };
 
 /* ---------- 面板：今日计划 ---------- */
+const PRIORITIES = { '高':'pri-h', '中':'pri-m', '低':'pri-l' };
+function migratePlan(p){
+  if(p.text !== undefined && p.title === undefined){ p.title = p.text; delete p.text; }
+  if(!p.title) p.title = '未命名计划';
+  if(!p.content) p.content = '';
+  if(!PRIORITIES[p.priority]) p.priority = '中';
+  return p;
+}
 const panelPlan = {
   title:'今日计划', sub:'记录今天要完成的事，逐项打卡',
   html(){
     const today = todayStr();
     return `<div class="row"><div class="spacer"></div><div class="muted num" id="planStat"></div></div>
       <div class="list" id="planFullList" style="max-height:44vh;overflow-y:auto"></div>
-      <div class="form-grid">
-        <div class="field"><label>计划内容</label><input class="inp" id="pText" placeholder="例如：完成高等数学第3章习题"></div>
-        <div class="field"><label>分类</label><select class="inp" id="pCat">${CATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
-      </div>
-      <div class="form-grid">
-        <div class="field"><label>预计专注（分钟）</label><input class="inp num" id="pMins" type="number" value="30" min="0"></div>
-        <div class="field"><label>日期</label><input class="inp" id="pDate" type="date" value="${today}"></div>
-      </div>
-      <div class="row"><div class="spacer"></div><button class="btn btn-primary" id="pAdd">＋ 添加计划</button></div>`;
+      <div class="auth-tabs" id="planEditorTabs" style="margin-top:6px"><button class="active" data-tab="add">＋ 新增计划</button><button data-tab="edit" id="tabEditBtn" disabled>✏️ 编辑中</button></div>
+      <div id="planAddForm">
+        <div class="form-grid">
+          <div class="field"><label>计划标题 *</label><input class="inp" id="pTitle" placeholder="例如：完成高等数学第3章习题"></div>
+          <div class="field"><label>分类</label><select class="inp" id="pCat">${CATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
+        </div>
+        <div class="field"><label>计划内容 / 备注</label><textarea class="inp" id="pContent" placeholder="补充细节：做哪些题、看哪几页、截止时间等"></textarea></div>
+        <div class="form-grid">
+          <div class="field"><label>优先级</label><select class="inp" id="pPri"><option>高</option><option selected>中</option><option>低</option></select></div>
+          <div class="field"><label>预计专注（分钟）</label><input class="inp num" id="pMins" type="number" value="30" min="0"></div>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>日期</label><input class="inp" id="pDate" type="date" value="${today}"></div>
+          <div class="field" style="display:flex;align-items:flex-end;gap:8px">
+            <button class="btn btn-primary" id="pAdd" style="flex:1">＋ 添加计划</button>
+            <button class="btn btn-ghost" id="pEditSave" style="display:none;flex:1">💾 保存修改</button>
+            <button class="btn btn-ghost" id="pEditCancel" style="display:none">取消</button>
+          </div>
+        </div>
+      </div>`;
   },
   mount(){
+    D.plan.forEach(migratePlan);
     const today = todayStr();
+    let editingId = null;
+    const $title = $('#pTitle'), $content = $('#pContent'), $cat = $('#pCat'), $pri = $('#pPri'), $mins = $('#pMins'), $date = $('#pDate');
+    const $addBtn = $('#pAdd'), $editSave = $('#pEditSave'), $editCancel = $('#pEditCancel');
+    const $tabAdd = $('#planEditorTabs button[data-tab="add"]'), $tabEdit = $('#planEditorTabs button[data-tab="edit"]');
+
+    const setMode = (mode) => {
+      if(mode === 'add'){
+        editingId = null;
+        $title.value = ''; $content.value = ''; $cat.value = '学习'; $pri.value = '中'; $mins.value = 30; $date.value = today;
+        $addBtn.style.display = ''; $editSave.style.display = 'none'; $editCancel.style.display = 'none';
+        $tabAdd.classList.add('active'); $tabEdit.classList.remove('active'); $tabEdit.disabled = true;
+      } else {
+        $addBtn.style.display = 'none'; $editSave.style.display = ''; $editCancel.style.display = '';
+        $tabAdd.classList.remove('active'); $tabEdit.classList.add('active'); $tabEdit.disabled = false;
+      }
+    };
+
     const paint = () => {
-      const list = D.plan.slice().sort((a,b)=>Number(a.done)-Number(b.done));
+      const list = D.plan.slice().sort((a,b)=>{
+        const prioOrder = { '高':0, '中':1, '低':2 };
+        if(a.done !== b.done) return Number(a.done) - Number(b.done);
+        return prioOrder[a.priority] - prioOrder[b.priority];
+      });
       const done = list.filter(p=>p.done).length;
-      $('#planStat').textContent = `${done}/${list.length} 已完成 · 共 ${list.length} 条`;
+      const highPending = list.filter(p=>!p.done && p.priority==='高').length;
+      $('#planStat').textContent = `${done}/${list.length} 已完成 · ${highPending} 个高优先级待办`;
       $('#planFullList').innerHTML = list.length ? list.map(p => `
         <div class="li-item ${p.done?'done':''}">
-          <button class="check" data-id="${p.id}" data-pact="toggle">✓</button>
-          <span class="li-txt">${esc(p.text)}</span>
-          <span class="li-tag" data-cat="${esc(p.cat)}" ${catTag(p.cat)}>${esc(p.cat)}</span>
-          <span class="muted num">${p.date}</span>
+          <button class="check" data-id="${p.id}" data-pact="toggle" aria-label="切换完成状态">✓</button>
+          <div class="li-body">
+            <div class="li-title">${esc(p.title)}</div>
+            ${p.content ? `<div class="li-desc">${esc(p.content)}</div>` : ''}
+            <div class="li-meta">
+              <span class="pri ${PRIORITIES[p.priority]}">${p.priority}</span>
+              <span class="li-tag" data-cat="${esc(p.cat)}" ${catTag(p.cat)}>${esc(p.cat)}</span>
+              <span class="muted num">${p.date}</span>
+              ${p.mins ? `<span class="muted num">⏱ ${p.mins}分钟</span>` : ''}
+            </div>
+          </div>
           <div class="li-ops">
             <button class="mini-ic" data-id="${p.id}" data-pact="edit" title="编辑">✏️</button>
             <button class="mini-ic del" data-id="${p.id}" data-pact="del" title="删除">🗑</button>
@@ -1225,26 +1303,52 @@ const panelPlan = {
         </div>`).join('') : `<div class="empty"><div class="big">📝</div>还没有计划，添加第一个吧</div>`;
       $$('#planFullList [data-pact]').forEach(b => b.addEventListener('click', (e) => {
         const id = b.dataset.id, act = b.dataset.pact;
-        if(act === 'toggle'){ const p = D.plan.find(x=>x.id===id); if(p){ p.done=!p.done; if(p.done) markCalendar(today); save(); } }
-        if(act === 'del'){ if(confirm('确定删除这条计划？')){ D.plan = D.plan.filter(x=>x.id!==id); save(); } }
+        if(act === 'toggle'){
+          const p = D.plan.find(x=>x.id===id); if(p){ p.done=!p.done; if(p.done){ markCalendar(today); } save(); }
+          paint(); render();
+        }
+        if(act === 'del'){ if(confirm('确定删除这条计划？')){ D.plan = D.plan.filter(x=>x.id!==id); save(); paint(); render(); } }
         if(act === 'edit'){
           const p = D.plan.find(x=>x.id===id); if(!p) return;
-          const t = prompt('计划内容：', p.text); if(t === null) return;
-          const cat = prompt('分类（学习/英语/运动/阅读/复盘）：', p.cat) || '学习';
-          p.text = t.trim().slice(0,40); if(CATS.includes(cat)) p.cat = cat; save();
+          editingId = p.id;
+          $title.value = p.title; $content.value = p.content || ''; $cat.value = p.cat || '学习';
+          $pri.value = p.priority || '中'; $mins.value = p.mins || 0; $date.value = p.date || today;
+          setMode('edit');
+          $title.focus();
         }
-        paint(); render();
       }));
     };
-    paint();
-    $('#pAdd').addEventListener('click', () => {
-      const t = $('#pText').value.trim();
-      if(!t){ toast('请输入计划内容','err'); return; }
-      D.plan.push({ id:uid(), text:t.slice(0,40), cat:$('#pCat').value, mins:Number($('#pMins').value)||0, date:$('#pDate').value||today, done:false });
-      $('#pText').value = '';
-      save(); paint(); render();
+
+    const collect = () => ({
+      title: $title.value.trim().slice(0,40),
+      content: $content.value.trim().slice(0,200),
+      cat: $cat.value,
+      priority: $pri.value,
+      mins: Number($mins.value) || 0,
+      date: $date.value || today,
+    });
+
+    const validate = (d) => { if(!d.title){ toast('请输入计划标题','err'); $title.focus(); return false; } return true; };
+
+    $addBtn.addEventListener('click', () => {
+      const d = collect(); if(!validate(d)) return;
+      D.plan.push({ id:uid(), ...d, done:false });
+      setMode('add'); save(); paint(); render();
       toast('已添加计划');
     });
+
+    $editSave.addEventListener('click', () => {
+      if(!editingId) return;
+      const p = D.plan.find(x=>x.id===editingId); if(!p) return;
+      const d = collect(); if(!validate(d)) return;
+      Object.assign(p, d);
+      setMode('add'); save(); paint(); render();
+      toast('计划已更新');
+    });
+
+    $editCancel.addEventListener('click', () => setMode('add'));
+
+    paint();
   },
 };
 
@@ -1534,64 +1638,171 @@ const TimerLib = {
 const panelGrowth = {
   title:'成长报告', sub:'所有数据来自你的真实记录',
   html(){ return `
-    <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;justify-content:center">
-      <div class="ring-wrap" style="width:150px;height:150px">
-        <svg width="150" height="150"><circle class="ring-bg" cx="75" cy="75" r="66" stroke-width="12"/><circle class="ring-fg" id="gRing" cx="75" cy="75" r="66" stroke-width="12" stroke-dasharray="414.69" stroke-dashoffset="414.69"/></svg>
-        <div class="ring-num"><div><b id="gRingNum">0%</b><span>总体完成度</span></div></div>
+    <div class="report-actions">
+      <button class="btn btn-primary" id="gRefresh">🔄 生成/刷新报告</button>
+      <button class="btn btn-soft" id="gCopy">📋 复制报告文本</button>
+      <button class="btn btn-ghost" id="gExport">💾 导出 JSON</button>
+    </div>
+    <div id="gReportArea" style="display:none">
+      <div class="report-summary">
+        <div class="rs"><b id="gPlanDone">0</b><span>计划完成</span></div>
+        <div class="rs"><b id="gPlanRate">0%</b><span>完成率</span></div>
+        <div class="rs"><b id="gStreak">0</b><span>连续打卡</span></div>
+        <div class="rs"><b id="gScore">0</b><span>综合得分</span></div>
       </div>
-      <div class="stat-row" style="flex:1;min-width:220px">
-        <div class="stat"><b class="num" id="g1">0</b><span>计划完成</span></div>
-        <div class="stat"><b class="num" id="g2">0</b><span>连续打卡天</span></div>
-        <div class="stat"><b class="num" id="g3">0</b><span>累计阅读页</span></div>
-        <div class="stat"><b class="num" id="g4">0</b><span>运动千卡</span></div>
+      <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;justify-content:center;margin:10px 0">
+        <div class="ring-wrap" style="width:140px;height:140px">
+          <svg width="140" height="140"><circle class="ring-bg" cx="70" cy="70" r="62" stroke-width="11"/><circle class="ring-fg" id="gRing" cx="70" cy="70" r="62" stroke-width="11" stroke-dasharray="389.56" stroke-dashoffset="389.56"/></svg>
+          <div class="ring-num"><div><b id="gRingNum">0%</b><span>总体完成度</span></div></div>
+        </div>
+        <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:10px">
+          <div><p class="muted" style="margin-bottom:6px">🔥 近 7 天活跃度</p><div class="heat" id="gHeat"></div></div>
+          <div><p class="muted" style="margin-bottom:6px">⏳ 各模块投入时长</p><div class="chart" id="gModule"></div></div>
+        </div>
+      </div>
+      <div class="report-section">
+        <h4>✅ 已完成计划 (${D.plan.filter(p=>p.done).length})</h4>
+        <div class="rs-list" id="gDoneList"></div>
+      </div>
+      <div class="report-section">
+        <h4>📝 待完成计划 (${D.plan.filter(p=>!p.done).length})</h4>
+        <div class="rs-list" id="gPendingList"></div>
+      </div>
+      <div class="report-section">
+        <h4>📊 课程进度分布</h4>
+        <div class="chart" id="gCourse"></div>
+      </div>
+      <div class="report-section">
+        <h4>📄 报告预览（可复制/导出）</h4>
+        <pre class="report-preview" id="gPreview"></pre>
       </div>
     </div>
-    <div><p class="muted" style="margin-bottom:8px">🔥 近 7 天活跃度</p><div class="heat" id="gHeat"></div></div>
-    <div><p class="muted" style="margin-bottom:8px">⏳ 各模块投入时长</p><div class="chart" id="gModule"></div></div>
-    <div><p class="muted" style="margin-bottom:8px">📊 课程进度分布</p><div class="chart" id="gCourse"></div></div>
+    <div class="empty" id="gEmpty"><div class="big">📈</div>点击上方「生成/刷新报告」查看你的成长数据</div>
     <p class="hint" style="text-align:center">💡 完成计划、记录阅读/英语/运动都会自动计入打卡与统计</p>`; },
   mount(){
-    const planDone = D.plan.filter(p=>p.done).length;
-    const planPct = D.plan.length ? Math.round(planDone/D.plan.length*100) : 0;
-    const wp = D.sport.weekPlan || {};
-    const weekItems = Object.values(wp).flat();
-    const weekDone = weekItems.filter(x=>x.done).length;
-    const weekPct = weekItems.length ? Math.round(weekDone/weekItems.length*100) : 0;
-    const overall = Math.round((planPct + weekPct) / 2);
-    setRing($('#gRing'), overall);
-    animateNum($('#gRingNum'), overall, '%');
-    $('#g1').textContent = `${planDone}/${D.plan.length}`;
-    $('#g2').textContent = D.profile.streak || 0;
-    $('#g3').textContent = sum((D.reading.records||[]).map(r=>r.pages));
-    $('#g4').textContent = sum((D.sport.records||[]).map(r=>r.kcal));
-    // 7 天活跃
-    const recorded = new Set(D.calendar.recorded||[]);
-    const now = new Date();
-    let html = '';
-    for(let i=6;i>=0;i--){
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate()-i);
-      const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-      const isToday = i === 0;
-      const hot = recorded.has(ds);
-      html += `<div class="h-col"><div class="h-bar"><div class="h-box ${hot?'hot':''}" style="height:${hot?'100%':'8%'}"></div></div><small>${['日','一','二','三','四','五','六'][d.getDay()]}</small></div>`;
-    }
-    $('#gHeat').innerHTML = html;
-    // 模块时长
-    const readM = sum((D.reading.records||[]).map(r=>r.mins)), engM = sum((D.english.records||[]).map(r=>r.mins)), sportM = sum((D.sport.records||[]).map(r=>r.mins));
-    const maxM = Math.max(1, readM, engM, sportM);
-    $('#gModule').innerHTML = mbar('📖 阅读', readM, maxM) + mbar('🇬🇧 英语', engM, maxM) + mbar('💪 运动', sportM, maxM);
-    setTimeout(()=>{ $$('#gModule [data-cw]').forEach(el=>setBars(el, Number(el.dataset.cw))); }, 60);
-    // 课程分布
-    const cs = D.courses;
-    $('#gCourse').innerHTML = cs.length ? cs.map(c => `
-      <div class="chart-row"><span class="c-name" style="display:flex;align-items:center;gap:6px"><i style="width:8px;height:8px;border-radius:2px;background:${c.color};display:inline-block"></i>${esc(c.name)}</span>
-      <div class="c-bar"><i data-cw style="width:0" data-w="${c.pct}"></i></div><span class="c-val">${c.pct}%</span></div>`).join('') : `<div class="empty">还没有课程数据</div>`;
-    setTimeout(()=>{ $$('#gCourse [data-cw]').forEach(el=>setBars(el, Number(el.dataset.w))); }, 60);
+    D.plan.forEach(migratePlan);
+    const build = () => {
+      $('#gEmpty').style.display = 'none';
+      $('#gReportArea').style.display = '';
+      const planDone = D.plan.filter(p=>p.done).length;
+      const planTotal = D.plan.length;
+      const planPct = planTotal ? Math.round(planDone/planTotal*100) : 0;
+      const wp = D.sport.weekPlan || {};
+      const weekItems = Object.values(wp).flat();
+      const weekDone = weekItems.filter(x=>x.done).length;
+      const weekPct = weekItems.length ? Math.round(weekDone/weekItems.length*100) : 0;
+      const overall = Math.round((planPct + weekPct) / 2);
+      const streak = D.profile.streak || 0;
+      const score = Math.round(overall * .5 + Math.min(streak,30) * .5 + Math.min(planDone,20));
+
+      setRing($('#gRing'), overall);
+      animateNum($('#gRingNum'), overall, '%');
+      $('#gPlanDone').textContent = `${planDone}/${planTotal}`;
+      $('#gPlanRate').textContent = `${planPct}%`;
+      $('#gStreak').textContent = streak;
+      $('#gScore').textContent = score;
+
+      // 7 天活跃
+      const recorded = new Set(D.calendar.recorded||[]);
+      const now = new Date();
+      let heatHtml = '';
+      for(let i=6;i>=0;i--){
+        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate()-i);
+        const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        const hot = recorded.has(ds);
+        heatHtml += `<div class="h-col"><div class="h-bar"><div class="h-box ${hot?'hot':''}" style="height:${hot?'100%':'8%'}"></div></div><small>${['日','一','二','三','四','五','六'][d.getDay()]}</small></div>`;
+      }
+      $('#gHeat').innerHTML = heatHtml;
+
+      // 模块时长
+      const readM = sum((D.reading.records||[]).map(r=>r.mins)), engM = sum((D.english.records||[]).map(r=>r.mins)), sportM = sum((D.sport.records||[]).map(r=>r.mins));
+      const maxM = Math.max(1, readM, engM, sportM);
+      $('#gModule').innerHTML = mbar('📖 阅读', readM, maxM) + mbar('🇬🇧 英语', engM, maxM) + mbar('💪 运动', sportM, maxM);
+      setTimeout(()=>{ $$('#gModule [data-cw]').forEach(el=>setBars(el, Number(el.dataset.cw))); }, 60);
+
+      // 已完成/待完成列表
+      const doneList = D.plan.filter(p=>p.done).sort((a,b)=> (b.mins||0) - (a.mins||0));
+      const pendingList = D.plan.filter(p=>!p.done).sort((a,b)=>{ const o={高:0,中:1,低:2}; return o[a.priority]-o[b.priority]; });
+      $('#gDoneList').innerHTML = doneList.length ? doneList.map(p => `
+        <div class="rs-item done">
+          <div style="display:flex;justify-content:space-between;gap:10px"><b>${esc(p.title)}</b><span class="muted num">${p.date}</span></div>
+          ${p.content ? `<div style="color:var(--text-3);margin-top:3px">${esc(p.content)}</div>` : ''}
+          <div class="li-meta" style="margin-top:5px"><span class="li-tag" ${catTag(p.cat)}>${esc(p.cat)}</span>${p.mins?`<span class="muted num">⏱ ${p.mins}分钟</span>`:''}</div>
+        </div>`).join('') : `<div class="empty">暂无已完成计划</div>`;
+      $('#gPendingList').innerHTML = pendingList.length ? pendingList.map(p => `
+        <div class="rs-item pending">
+          <div style="display:flex;justify-content:space-between;gap:10px"><b>${esc(p.title)}</b><span class="muted num">${p.date}</span></div>
+          ${p.content ? `<div style="color:var(--text-3);margin-top:3px">${esc(p.content)}</div>` : ''}
+          <div class="li-meta" style="margin-top:5px"><span class="pri ${PRIORITIES[p.priority]}">${p.priority}</span><span class="li-tag" ${catTag(p.cat)}>${esc(p.cat)}</span>${p.mins?`<span class="muted num">⏱ ${p.mins}分钟</span>`:''}</div>
+        </div>`).join('') : `<div class="empty">暂无待办计划</div>`;
+
+      // 课程分布
+      const cs = D.courses;
+      $('#gCourse').innerHTML = cs.length ? cs.map(c => `
+        <div class="chart-row"><span class="c-name" style="display:flex;align-items:center;gap:6px"><i style="width:8px;height:8px;border-radius:2px;background:${c.color};display:inline-block"></i>${esc(c.name)}</span>
+        <div class="c-bar"><i data-cw style="width:0" data-w="${c.pct}"></i></div><span class="c-val">${c.pct}%</span></div>`).join('') : `<div class="empty">还没有课程数据</div>`;
+      setTimeout(()=>{ $$('#gCourse [data-cw]').forEach(el=>setBars(el, Number(el.dataset.w))); }, 60);
+
+      // 文本报告
+      const reportText = generateReportText({ planDone, planTotal, planPct, weekDone, weekTotal: weekItems.length, weekPct, overall, streak, score, readM, engM, sportM });
+      $('#gPreview').textContent = reportText;
+    };
+
+    $('#gRefresh').addEventListener('click', () => { build(); toast('成长报告已生成'); });
+    $('#gCopy').addEventListener('click', async () => {
+      const text = $('#gPreview').textContent;
+      if(!text || $('#gReportArea').style.display === 'none'){ toast('请先生成报告','err'); return; }
+      try{ await navigator.clipboard.writeText(text); toast('报告已复制到剪贴板'); }
+      catch(e){ toast('复制失败，请手动选择复制','err'); }
+    });
+    $('#gExport').addEventListener('click', () => {
+      const payload = { __app:'cgl', exportedAt:new Date().toISOString(), profile:D.profile, data:D, settings:settings };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `晨光自律台-成长报告-${todayStr()}.json`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      toast('报告 JSON 已导出');
+    });
+    // 默认自动生成一次
+    setTimeout(build, 80);
   },
 };
 function mbar(name, val, max){
   const p = Math.round(val/max*100);
   return `<div class="chart-row"><span class="c-name">${name}</span><div class="c-bar"><i data-cw style="width:0" data-w="${p}"></i></div><span class="c-val">${val} 分钟</span></div>`;
+}
+function generateReportText({ planDone, planTotal, planPct, weekDone, weekTotal, weekPct, overall, streak, score, readM, engM, sportM }){
+  const today = todayStr();
+  const pending = D.plan.filter(p=>!p.done).map(p=>`[${p.priority}] ${p.title}${p.mins?'('+p.mins+'min)':''}`);
+  const done = D.plan.filter(p=>p.done).map(p=>`[完成] ${p.title}${p.mins?'('+p.mins+'min)':''}`);
+  return `== 晨光自律台 · 成长报告 ==
+生成日期：${today}
+
+【核心数据】
+· 今日/全部计划完成：${planDone}/${planTotal}（${planPct}%）
+· 周运动计划完成：${weekDone}/${weekTotal}（${weekPct}%）
+· 总体完成度：${overall}%
+· 连续打卡：${streak} 天
+· 综合成长得分：${score}
+
+【投入时长】
+· 阅读：${readM} 分钟
+· 英语：${engM} 分钟
+· 运动：${sportM} 分钟
+
+【已完成计划】
+${done.length ? done.join('\n') : '暂无'}
+
+【待完成计划】
+${pending.length ? pending.join('\n') : '暂无'}
+
+【课程进度】
+${D.courses.length ? D.courses.map(c=>`· ${c.name}: ${c.pct}%`).join('\n') : '暂无课程数据'}
+
+Keep going! 每天进步一点点，自律让我自由。
+`;
 }
 
 /* ---------- 面板：设置 ---------- */
