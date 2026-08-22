@@ -120,14 +120,56 @@ input,select,textarea{font-family:inherit;color:var(--text-1)}
 /* ============================================================
    4. 布局
    ============================================================ */
+.app{display:flex;min-height:100vh}
 .wrap{max-width:1180px;margin:0 auto;padding:0 clamp(16px,4vw,40px) 56px}
-.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:var(--s4);padding:14px clamp(16px,4vw,40px);border-bottom:1px solid var(--line)}
+.sidebar{width:220px;flex-shrink:0;position:fixed;inset:0 auto 0 0;z-index:25;display:flex;flex-direction:column;gap:var(--s5);padding:22px 16px;border-right:1px solid var(--line);background:rgba(13,16,22,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.main-area{flex:1;margin-left:220px;min-width:0;min-height:100vh;display:flex;flex-direction:column}
+.main-area .wrap{flex:1}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:var(--s4);padding:14px clamp(16px,4vw,40px);border-bottom:1px solid var(--line);background:rgba(13,16,22,.75);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+
+/* 侧边栏 */
+.sb-brand{display:flex;align-items:center;gap:12px;padding:0 6px}
+.sb-brand .brand-mark{width:40px;height:40px;border-radius:12px}
+.sb-brand .brand-mark svg{width:22px;height:22px}
+.sb-title{font-size:15px;font-weight:700;letter-spacing:.5px}
+.sb-title small{display:block;font-size:9.5px;color:var(--text-3);font-weight:500;letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
+.nav-menu{display:flex;flex-direction:column;gap:4px;flex:1}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;color:var(--text-2);font-size:13px;font-weight:500;cursor:pointer;transition:background var(--t-fast),color var(--t-fast);border-left:3px solid transparent}
+.nav-item:hover{background:rgba(240,178,92,.08);color:var(--text-1)}
+.nav-item.active{background:rgba(240,178,92,.13);color:var(--amber);border-left-color:var(--amber)}
+.nav-item .ni-ic{width:22px;height:22px;display:grid;place-items:center;font-size:16px}
+.sb-card{margin-top:auto;background:rgba(240,178,92,.08);border:1px solid rgba(240,178,92,.18);border-radius:var(--r-lg);padding:14px}
+.sb-card h4{font-size:12px;font-weight:600;color:var(--amber);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.sb-card p{font-size:11px;color:var(--text-2);line-height:1.55}
+
+/* 顶部统计条 */
+.statbar{display:flex;gap:12px;flex-wrap:wrap;padding:18px clamp(16px,4vw,40px) 0}
+.stat-pill{display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:var(--r-full);background:rgba(23,28,38,.65);border:1px solid var(--line);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.stat-pill .spi{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-size:14px;background:rgba(240,178,92,.12)}
+.stat-pill .spi.c2{background:rgba(92,200,178,.12)}
+.stat-pill .spi.c3{background:rgba(123,167,217,.12)}
+.stat-pill .spi.c4{background:rgba(242,109,133,.12)}
+.stat-pill b{font-size:16px;font-weight:700}
+.stat-pill span{font-size:11px;color:var(--text-3)}
+
+/* 模块视图 */
+.view{display:none;animation:fadeIn .35s var(--ease-out-quart)}
+.view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.view-head{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.view-head h2{font-size:clamp(20px,3vw,28px);font-weight:700}
+.view-head p{color:var(--text-3);font-size:12.5px}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:clamp(40px,10vh,100px) 20px;text-align:center}
+.empty-state .big{font-size:56px;opacity:.75}
+.empty-state h3{font-size:16px;font-weight:600}
+.empty-state p{font-size:12px;color:var(--text-3);max-width:320px;line-height:1.6}
 .brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--text-1);font-weight:700;font-size:16px;letter-spacing:.4px}
 .brand-mark{width:38px;height:38px;border-radius:12px;background:var(--grad-amber);display:grid;place-items:center;position:relative;overflow:hidden;box-shadow:0 6px 18px -4px rgba(240,151,90,.45)}
 .brand-mark svg{width:21px;height:21px;stroke:#2a1c08;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .brand-mark::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.5) 50%,transparent 70%);transform:translateX(-100%);animation:sheen 5.5s ease-in-out infinite}
 @keyframes sheen{0%,55%{transform:translateX(-100%)}85%,100%{transform:translateX(100%)}}
 .topbar .spacer{flex:1}
+.mobile-only{display:none}
 .chip{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:var(--r-full);font-size:12.5px;color:var(--text-2)}
 .avatar-btn{display:inline-flex;align-items:center;gap:8px;padding:5px 12px 5px 5px;border-radius:var(--r-full);transition:border-color var(--t-fast),background var(--t-fast)}
 .avatar-btn:hover{background:rgba(255,255,255,.05)}
@@ -368,6 +410,21 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
   .tech-bg .corner,.tech-bg .radar,.tech-bg .bars,.tech-data.tl{display:none}
   .li-ops{opacity:1}
   .hero{grid-template-columns:1fr}
+  .sidebar{transform:translateX(-100%);width:220px;padding:22px 16px;align-items:stretch;transition:transform .3s var(--ease-out-quart)}
+  .sidebar.open{transform:translateX(0)}
+  .sb-title,.sb-card,.nav-item span{display:block}
+  .nav-item{justify-content:flex-start;padding:11px 14px}
+  .main-area{margin-left:0}
+  .topbar .brand{display:none}
+  .mobile-only{display:inline-grid}
+}
+@media(max-width:1024px){
+  .sidebar{width:72px;padding:18px 10px;align-items:center}
+  .sb-brand{flex-direction:column;gap:6px}
+  .sb-title,.sb-card{display:none}
+  .nav-item{justify-content:center;padding:12px;border-left:none}
+  .nav-item span{display:none}
+  .main-area{margin-left:72px}
 }
 </style>
 </head>
@@ -406,6 +463,7 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
 
 <!-- ===== 顶栏 ===== -->
 <header class="topbar glass" role="banner">
+  <button class="icon-btn mobile-only" id="menuBtn" aria-label="打开菜单">☰</button>
   <a class="brand" href="#top" aria-label="晨光自律台首页">
     <span class="brand-mark"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 6.2L21 9.3l-4.8 4.5 1.2 6.7L12 17l-5.4 3.5 1.2-6.7L3 9.3l6.6-1.1z"/></svg></span>
     <span>晨光<span style="background:var(--grad-amber);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">自律台</span></span>
@@ -420,7 +478,43 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
   <button class="icon-btn" id="logoutBtn" aria-label="退出登录" title="退出登录" style="display:none">⏻</button>
 </header>
 
+<!-- ===== 侧边栏 ===== -->
+<aside class="sidebar glass" role="navigation" aria-label="主导航">
+  <div class="sb-brand">
+    <span class="brand-mark"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 6.2L21 9.3l-4.8 4.5 1.2 6.7L12 17l-5.4 3.5 1.2-6.7L3 9.3l6.6-1.1z"/></svg></span>
+    <div class="sb-title">自律工作台<small>Self-Discipline</small></div>
+  </div>
+  <nav class="nav-menu">
+    <div class="nav-item active" data-view="home"><span class="ni-ic">🪟</span><span>首页</span></div>
+    <div class="nav-item" data-view="plan"><span class="ni-ic">☰</span><span>今日计划</span></div>
+    <div class="nav-item" data-view="courses"><span class="ni-ic">🎓</span><span>课程学习</span></div>
+    <div class="nav-item" data-view="reading"><span class="ni-ic">📖</span><span>每日阅读</span></div>
+    <div class="nav-item" data-view="english"><span class="ni-ic">🇬🇧</span><span>英语学习</span></div>
+    <div class="nav-item" data-view="sports"><span class="ni-ic">🏃</span><span>每日运动</span></div>
+    <div class="nav-item" data-view="growth"><span class="ni-ic">📊</span><span>成长数据</span></div>
+    <div class="nav-item" data-view="settings"><span class="ni-ic">⚙️</span><span>设置</span></div>
+  </nav>
+  <div class="sb-card">
+    <h4>✨ 每日小目标</h4>
+    <p>打开工作台，先完成一件最重要的事，今天就赢了一半。</p>
+  </div>
+</aside>
+
+<!-- ===== 主内容区 ===== -->
+<div class="app">
+<div class="main-area">
+
 <main class="wrap" id="top">
+  <div class="statbar" id="statBar">
+    <div class="stat-pill"><span class="spi">☰</span><div><b class="num" id="sbTotal">0</b><span>计划总数</span></div></div>
+    <div class="stat-pill"><span class="spi c2">✓</span><div><b class="num" id="sbDone">0</b><span>已完成</span></div></div>
+    <div class="stat-pill"><span class="spi c3">🎯</span><div><b class="num" id="sbPct">0%</b><span>完成度</span></div></div>
+    <div class="stat-pill"><span class="spi c4">⏱</span><div><b class="num" id="sbFocus">0</b><span>预计专注</span></div></div>
+    <div class="spacer"></div>
+    <button class="btn btn-primary" data-open="plan">＋ 新增计划</button>
+  </div>
+
+  <div class="view active" id="viewHome">
   <svg width="0" height="0" style="position:absolute"><defs>
     <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#f5c06a"/><stop offset="55%" stop-color="#f0975a"/><stop offset="100%" stop-color="#f07a5a"/>
@@ -565,7 +659,20 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
   <p style="text-align:center;margin-top:34px;font-size:11px;color:var(--text-3)" class="reveal">
     晨光自律台 · 每天进步一点点，自律让我自由
   </p>
+  </div><!-- /viewHome -->
+
+  <!-- 模块独立视图 -->
+  <div class="view" id="viewPlan"><div class="view-head"><h2>☰ 今日计划</h2><p>把今天要做的事逐项完成</p></div><div id="planViewBody"></div></div>
+  <div class="view" id="viewCourses"><div class="view-head"><h2>🎓 课程学习</h2><p>管理课程进度与笔记</p></div><div id="coursesViewBody"></div></div>
+  <div class="view" id="viewReading"><div class="view-head"><h2>📖 每日阅读</h2><p>记录读书收获</p></div><div id="readingViewBody"></div></div>
+  <div class="view" id="viewEnglish"><div class="view-head"><h2>🇬🇧 英语学习</h2><p>背单词、练听力、做阅读</p></div><div id="englishViewBody"></div></div>
+  <div class="view" id="viewSports"><div class="view-head"><h2>🏃 每日运动</h2><p>记录运动，保持状态</p></div><div id="sportsViewBody"></div></div>
+  <div class="view" id="viewGrowth"><div class="view-head"><h2>📊 成长数据</h2><p>汇总你的自律成果</p></div><div id="growthViewBody"></div></div>
+  <div class="view" id="viewSettings"><div class="view-head"><h2>⚙️ 设置</h2><p>个性化你的工作台</p></div><div id="settingsViewBody"></div></div>
 </main>
+
+</div><!-- /main-area -->
+</div><!-- /app -->
 
 <!-- ===== 面板容器 ===== -->
 <div id="panelRoot"></div>
@@ -1085,6 +1192,12 @@ function render(){
 
   // 今日计划卡
   D.plan.forEach(migratePlan);
+  // 顶部统计条（计划视图）
+  const sbTotal = $('#sbTotal'), sbDone = $('#sbDone'), sbPct = $('#sbPct'), sbFocus = $('#sbFocus');
+  if(sbTotal) sbTotal.textContent = todayPlans.length;
+  if(sbDone) sbDone.textContent = done;
+  if(sbPct) sbPct.textContent = pct + '%';
+  if(sbFocus) sbFocus.textContent = focusToday;
   const list = todayPlans.slice(0, 5);
   $('#planSub').textContent = `${done}/${todayPlans.length} 已完成`;
   $('#planList').innerHTML = list.length ? list.map(p => `
@@ -2074,14 +2187,52 @@ function markCalendar(dateStr){
 }
 
 /* ---------- 全局事件 ---------- */
+/* ---------- 侧边栏 / 视图路由 ---------- */
+let currentView = 'home';
+const VIEW_NAMES = ['home','plan','courses','reading','english','sports','growth','settings'];
+function navTo(name){
+  if(!VIEW_NAMES.includes(name)) return;
+  if(name === 'settings' && !Store.me){ toast('请先登录','err'); openPanel('auth'); return; }
+  currentView = name;
+  // 高亮侧边栏
+  $$('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.view === name));
+  // 切换视图
+  $$('.view').forEach(el => el.classList.toggle('active', el.id === 'view' + name.charAt(0).toUpperCase() + name.slice(1)));
+  // 顶部统计条仅在计划视图显示
+  const statBar = $('#statBar');
+  if(statBar) statBar.style.display = name === 'plan' ? 'flex' : 'none';
+  // 渲染对应模块视图
+  if(name !== 'home') renderModuleView(name);
+  // 滚动到顶部
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+function renderModuleView(name){
+  const bodyId = name + 'ViewBody';
+  const body = $('#' + bodyId);
+  if(!body) return;
+  // 若已渲染过且不是需要实时刷新的，可跳过；这里简单每次都渲染确保最新
+  const builders = { plan: panelPlan, courses: panelCourses, reading: panelReading, english: panelEnglish, sports: panelSports, growth: panelGrowth, settings: panelSettings };
+  const b = builders[name]; if(!b) return;
+  body.innerHTML = b.html();
+  b.mount && b.mount();
+  $$('.reveal-p', body).forEach((el, i) => { el.style.animation = `popup .5s ${.05 + i*.07}s var(--ease-out-quart) both`; });
+}
+
 function bindGlobal(){
-  $$('[data-open]').forEach(b => b.addEventListener('click', () => openPanel(b.dataset.open)));
+  $$('[data-view]').forEach(b => b.addEventListener('click', () => { navTo(b.dataset.view); $('.sidebar').classList.remove('open'); }));
+  $$('[data-open]').forEach(b => {
+    const name = b.dataset.open;
+    if(VIEW_NAMES.includes(name)) b.addEventListener('click', () => { navTo(name); $('.sidebar').classList.remove('open'); });
+    else b.addEventListener('click', () => openPanel(name));
+  });
+  const menuBtn = $('#menuBtn');
+  if(menuBtn) menuBtn.addEventListener('click', () => $('.sidebar').classList.toggle('open'));
   $('#userBtn').addEventListener('click', () => {
     if(Store.me) openPanel('profile'); else openPanel('auth');
   });
   $('#setBtn').addEventListener('click', () => {
     if(!Store.me){ toast('请先登录','err'); openPanel('auth'); return; }
-    openPanel('settings');
+    navTo('settings');
   });
   $('#logoutBtn').addEventListener('click', () => { if(confirm('确定退出登录？')) logout(); });
   document.addEventListener('keydown', (e) => { if(e.key === 'Escape') openPanel(null); });
@@ -2118,6 +2269,7 @@ function init(){
   refreshTechData();
   bindGlobal();
   render();
+  navTo('home');
   observeReveal();
   bindParallax();
   setLoad(45, '应用个性化设置…');
