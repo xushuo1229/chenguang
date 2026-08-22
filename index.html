@@ -87,15 +87,27 @@ input,select,textarea{font-family:inherit;color:var(--text-1)}
 .tech-data .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ok);margin-right:6px;animation:blink 2.2s ease-in-out infinite}
 @keyframes blink{0%,100%{opacity:1;box-shadow:0 0 6px var(--ok)}50%{opacity:.35;box-shadow:none}}
 
-.grain{position:fixed;inset:0;z-index:40;pointer-events:none;opacity:.05;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")}
+.grain{position:fixed;inset:0;z-index:40;pointer-events:none;opacity:.035;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")}
 
-#fxCanvas{position:fixed;inset:0;z-index:-1;pointer-events:none;display:block}
+#fxCanvas{position:fixed;inset:0;z-index:-1;pointer-events:none;display:none}
+#fxCanvas.on{display:block}
+
+/* 加载遮罩 */
+.app-loader{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg-0);transition:opacity .4s ease,visibility .4s ease}
+.app-loader.done{opacity:0;visibility:hidden;pointer-events:none}
+.app-loader .spinner{width:40px;height:40px;border-radius:50%;border:3px solid rgba(240,178,92,.15);border-top-color:var(--amber);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.app-loader p{margin-top:16px;font-size:13px;color:var(--text-2);letter-spacing:1px}
+.app-loader .progress{width:160px;height:3px;background:rgba(255,255,255,.06);border-radius:999px;margin-top:12px;overflow:hidden}
+.app-loader .progress i{display:block;height:100%;width:0;background:var(--grad-amber);transition:width .3s ease}
 
 /* ============================================================
    3. 玻璃拟态工具
    ============================================================ */
-.glass{background:rgba(23,28,38,var(--glass-alpha));backdrop-filter:blur(var(--glass-blur));-webkit-backdrop-filter:blur(var(--glass-blur));border:1px solid var(--line)}
-.card{position:relative;border-radius:var(--r-lg);box-shadow:var(--shadow-card);overflow:hidden;transition:transform var(--t-med) var(--ease-out-quart),box-shadow var(--t-med) var(--ease-out-quart)}
+.glass{background:rgba(23,28,38,var(--glass-alpha));border:1px solid var(--line)}
+.topbar.glass,.panel.glass{backdrop-filter:blur(var(--glass-blur));-webkit-backdrop-filter:blur(var(--glass-blur))}
+@supports not (backdrop-filter:blur(1px)){.topbar.glass,.panel.glass{background:rgba(23,28,38,.95)}}
+.card{position:relative;border-radius:var(--r-lg);box-shadow:var(--shadow-card);overflow:hidden;transition:transform var(--t-med) var(--ease-out-quart),box-shadow var(--t-med) var(--ease-out-quart);contain:layout style paint}
 .card::before{content:"";position:absolute;inset:0;background:radial-gradient(600px 180px at var(--mx,50%) var(--my,0%),rgba(240,178,92,.08),transparent 60%);opacity:0;transition:opacity var(--t-med);pointer-events:none}
 .card:hover{transform:translateY(-3px);box-shadow:var(--shadow-float)}
 .card:hover::before{opacity:1}
@@ -344,6 +356,10 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
 .heat .h-box.none{background:rgba(255,255,255,.06)}
 .heat small{font-size:9.5px;color:var(--text-3)}
 
+/* 低性能模式：减少背景动画与模糊 */
+.perf-lite .aurora i,.perf-lite .scanline,.perf-lite .radar,.perf-lite .bars,.perf-lite .grain{animation:none!important;opacity:.02!important}
+.perf-lite .tech-bg .corner::after{opacity:.25}
+
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001s!important;animation-iteration-count:1!important;transition-duration:.001s!important;scroll-behavior:auto!important}
   .reveal{opacity:1;transform:none}
@@ -356,6 +372,13 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
 </style>
 </head>
 <body>
+<!-- 加载遮罩 -->
+<div class="app-loader" id="appLoader" aria-live="polite">
+  <div class="spinner"></div>
+  <div class="progress"><i id="loadBar"></i></div>
+  <p id="loadText">正在初始化工作台…</p>
+</div>
+
 <!-- ===== HUD 背景层 ===== -->
 <div class="aurora" aria-hidden="true"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div>
 <div class="tech-bg" aria-hidden="true">
@@ -661,7 +684,7 @@ function seedData(username){
 }
 
 /* 默认设置 */
-const DEFAULT_SETTINGS = { bg:0, customBg:'', glass:1, classColors:Object.assign({}, DEF_CLASS_COLORS) };
+const DEFAULT_SETTINGS = { bg:0, customBg:'', glass:1, particles:false, classColors:Object.assign({}, DEF_CLASS_COLORS) };
 let settings = Object.assign({}, DEFAULT_SETTINGS);
 
 /* 当前活动数据 */
@@ -677,6 +700,15 @@ function applySettings(){
     const c = settings.classColors[el.dataset.cat];
     if(c){ el.style.color = c; el.style.background = hexToRgba(c,.13); }
   });
+  // 粒子开关
+  const canvas = $('#fxCanvas');
+  if(canvas){ canvas.classList.toggle('on', !!settings.particles); }
+  // 低性能模式：如果粒子关闭且是移动端，进一步减少背景动画
+  if(!settings.particles && window.matchMedia('(pointer:coarse)').matches){
+    body.classList.add('perf-lite');
+  } else {
+    body.classList.remove('perf-lite');
+  }
 }
 
 /* 云同步（800ms 防抖） */
@@ -790,6 +822,11 @@ const Fx = {
     document.addEventListener('visibilitychange', () => { Fx.hidden = document.hidden; });
     Fx.running = true;
     Fx.loop();
+  },
+  stop(){
+    Fx.running = false;
+    if(Fx.raf){ cancelAnimationFrame(Fx.raf); Fx.raf = null; }
+    const c = $('#fxCanvas'); if(c){ c.classList.remove('on'); const ctx = c.getContext('2d'); if(ctx) ctx.clearRect(0,0,c.width,c.height); }
   },
   resize(){
     Fx.dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -1823,6 +1860,7 @@ const panelSettings = {
     <label class="upload-zone" for="bgFile">📷 上传自定义背景图（自动压缩至 1440px）<input type="file" id="bgFile" accept="image/*" style="display:none"></label>
     <div class="row"><button class="btn btn-sm btn-ghost" id="bgReset">恢复默认背景</button><button class="btn btn-sm btn-ghost" id="bgClear" style="display:none">移除自定义</button></div>
     <div class="field"><label>卡片毛玻璃效果</label><div class="auth-tabs" id="glassSeg"><button data-g="0">轻柔</button><button data-g="1">正常</button><button data-g="2">强烈</button></div></div>
+    <div class="field"><label>粒子动效（默认关闭以提升性能）</label><div class="auth-tabs" id="particleSeg"><button data-p="0">关闭</button><button data-p="1">开启</button></div><p class="hint">开启后背景会出现青色神经网络粒子，低性能设备可能卡顿。</p></div>
     <div class="field"><label>🎨 计划分类颜色（点击取色）</label><div id="classColorList"></div></div>
     <div style="border-top:1px solid var(--line);padding-top:14px">
       <div class="row"><div class="spacer"></div><button class="btn btn-sm btn-soft" id="expBtn">💾 导出数据</button><button class="btn btn-sm btn-ghost" id="impBtn">📥 导入数据</button></div>
@@ -1876,6 +1914,14 @@ const panelSettings = {
     $$('#glassSeg button').forEach(b => b.addEventListener('click', () => { settings.glass = Number(b.dataset.g); saveSet(); }));
     const syncGlass = () => { $$('#glassSeg button').forEach(b => b.classList.toggle('active', Number(b.dataset.g) === settings.glass)); };
     syncGlass();
+    $$('#particleSeg button').forEach(b => b.addEventListener('click', () => {
+      settings.particles = Number(b.dataset.p) === 1;
+      saveSet();
+      if(settings.particles && !Fx.running && !window.matchMedia('(prefers-reduced-motion: reduce)').matches){ Fx.init(); }
+      if(!settings.particles && Fx.running){ Fx.stop(); }
+    }));
+    const syncParticles = () => { $$('#particleSeg button').forEach(b => b.classList.toggle('active', (Number(b.dataset.p) === 1) === !!settings.particles)); };
+    syncParticles();
     // 分类颜色
     const paintColors = () => {
       $('#classColorList').innerHTML = CATS.map(c => {
@@ -2036,26 +2082,84 @@ function refreshPanels(){
   if(activePanel && PANEL_ICONS[activePanel]) openPanel(activePanel);
 }
 
+/* ---------- 加载进度 ---------- */
+function setLoad(pct, text){
+  const bar = $('#loadBar'), txt = $('#loadText');
+  if(bar) bar.style.width = pct + '%';
+  if(txt && text) txt.textContent = text;
+}
+function hideLoader(){
+  const loader = $('#appLoader');
+  if(loader){ loader.classList.add('done'); setTimeout(() => loader.remove(), 500); }
+}
+
 /* ---------- 初始化 ---------- */
 function init(){
+  setLoad(15, '加载界面资源…');
+  // 关键路径：先渲染出静态 UI，让用户能立即看到内容
   buildEqBars();
   refreshTechData();
-  observeReveal();
-  bindParallax();
   bindGlobal();
   render();
-  const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-  Fx.reduced = mq.matches;
-  if(!mq.matches) Fx.init();
-  else { $$('.reveal').forEach(el => el.classList.add('in')); }
-  // 会话恢复后渲染
-  restoreSession().then(() => {
-    if(!Store.me) openPanel('auth');
+  observeReveal();
+  bindParallax();
+  setLoad(45, '应用个性化设置…');
+
+  // 非关键路径延迟执行，避免阻塞首次绘制
+  const afterPaint = () => {
+    // 尽早读取设置以决定粒子开关
+    const cur = Store.current();
+    if(cur){ const s = Store.getSettings(cur.u); if(s) settings = Object.assign({}, DEFAULT_SETTINGS, s); }
     applySettings();
-    refreshTechData();
-  });
+    setLoad(70, '初始化动效…');
+
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    Fx.reduced = mq.matches;
+    // 粒子默认关闭，仅在用户开启且非减少动画模式下启用
+    if(settings.particles && !mq.matches){
+      requestAnimationFrame(() => Fx.init());
+    } else {
+      $$('.reveal').forEach(el => el.classList.add('in'));
+    }
+
+    setLoad(90, '恢复会话…');
+    // 异步恢复会话，不阻塞 UI
+    restoreSession().then(() => {
+      if(!Store.me) openPanel('auth');
+      applySettings();
+      refreshTechData();
+      setLoad(100, '准备就绪');
+      setTimeout(hideLoader, 120);
+    }).catch(() => {
+      if(!Store.me) openPanel('auth');
+      setLoad(100, '准备就绪');
+      setTimeout(hideLoader, 120);
+    });
+  };
+
+  if('requestIdleCallback' in window){
+    requestIdleCallback(afterPaint, { timeout: 300 });
+  } else {
+    setTimeout(afterPaint, 30);
+  }
 }
-init();
+
+// 全局错误兜底：隐藏加载动画并提示用户
+window.addEventListener('error', (e) => {
+  const txt = $('#loadText');
+  if(txt){ txt.textContent = '加载出错，请刷新重试：' + (e.message || '未知错误'); txt.style.color = 'var(--err)'; }
+  setTimeout(hideLoader, 1500);
+});
+window.addEventListener('unhandledrejection', (e) => {
+  const txt = $('#loadText');
+  if(txt){ txt.textContent = '加载出错，请刷新重试：' + (e.reason && e.reason.message ? e.reason.message : '未知错误'); txt.style.color = 'var(--err)'; }
+  setTimeout(hideLoader, 1500);
+});
+
+try { init(); } catch(e) {
+  const txt = $('#loadText');
+  if(txt){ txt.textContent = '初始化失败：' + e.message; txt.style.color = 'var(--err)'; }
+}
 
 })();
 </script>
