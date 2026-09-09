@@ -1,0 +1,110 @@
+# 晨光自律台 · 大学生 AI 自律工作台
+
+> 每天进步一点点，自律让我自由。
+
+一个面向大学生的全栈自律工作台：每日打卡、课程进度、每日阅读、英语学习、运动记录、待办计划、专注统计，数据全平台打通，支持多设备云端同步。
+
+## 当前技术架构（2026-08 最新）
+
+```
+前端多页 (静态文件)               数据与同步层 (js/)              后端 (backend/)
+┌─────────────┐              ┌──────────────────┐          ┌─────────────────────┐
+│ index.html  │              │ store.js · CGStore│          │ Express + JWT API    │
+│ dashboard   │◄────────────►│ 统一数据层         │◄────────►│ 端口 3000             │
+│ workbench   │              │ 单一 key 全页共享  │  同步层   │ /api/data 整份快照    │
+│ ...         │              │ sync.js · CGSync  │          │ SQLite 按用户隔离      │
+└─────────────┘              │ 登录拉取/防抖回写  │          └─────────────────────┘
+                             └──────────────────┘
+```
+
+| 层级 | 技术 | 说明 |
+|------|------|------|
+| 前端 | 原生 HTML/CSS/JS（多页静态） | index（落地/注册登录）、dashboard（课程/书架/运动/英语）、workbench（工作台总览） |
+| 数据层 | `js/store.js`（CGStore） | 所有页面共享**单一 key** `chenguangData`，八类数据：user/checkins/sports/readings/courses/english/todos/focus；写入即派发 `chenguang:update` 事件跨页实时刷新 |
+| 同步层 | `js/sync.js`（CGSync） | 登录后「先推后拉」同步云端；本地变更防抖 400ms 回写；离线/无 token 静默走本地 |
+| 后端 | Node.js + Express + SQLite（better-sqlite3）+ JWT | `backend/` 目录，注册/登录/鉴权，按用户隔离，多设备数据一致 |
+
+## 快速开始
+
+### 1. 启动后端（端口 3000）
+```bash
+cd backend
+npm install        # 首次
+npm start
+```
+> 首次启动自动执行 `schema.sql` 建表并生成 `chenguang.db`。
+> 详细文档见 `backend/README.md`（API 一览 / 数据结构 / 离线行为 / 部署）。
+
+### 2. 启动前端（端口 8080）
+```bash
+# 项目根目录
+python -m http.server 8080
+```
+浏览器打开 http://localhost:8080/index.html
+
+### 3. 验证多设备同步
+- 注册账号 → 在 dashboard「课程进度」添加一门课
+- 换一个浏览器（或清空本地存储）用**同一账号**登录 → 课程依然存在，完全一致
+
+## 功能特性
+
+### 核心功能
+- **用户系统**：注册 / 登录（bcrypt 密码加密 + JWT 鉴权）
+- **每日打卡**：一键打卡、连续天数统计
+- **课程进度**：添加课程、编辑总章节/已学章节、进度条实时刷新
+- **每日阅读**：书架管理（书名/总页数/已读页数）、累计阅读统计
+- **英语学习**：背单词打卡、专注分钟
+- **每日运动**：记录项目/千卡/时长
+- **待办计划**：今日任务、完成率
+- **专注统计**：累计专注分钟
+- **成长数据**：累计阅读/页数、计划完成率、专注、学习次数、连续天数
+
+### 数据层设计亮点
+- **单一真源**：所有页面读写同一份 `chenguangData`，杜绝「多页面数据不通」
+- **跨页实时**：`chenguang:update` 自定义事件 + 原生 `storage` 事件，多标签页即时刷新
+- **兼容迁移**：首次运行自动把旧 `cg_*` 键合并进统一数据层
+- **云端同步**：后端为真源，本地为缓存+离线兜底；登录「先推后拉」避免本地新数据被云端旧数据覆盖
+
+## 项目结构
+
+```
+chenguang-platform/
+├── index.html                # 落地页（注册/登录入口）
+├── dashboard.html            # 仪表盘：课程/书架/运动/英语/统计（功能最全）
+├── workbench.html            # 工作台：今日计划/四卡总览/成长数据
+├── login.html / register.html # 认证页
+├── stats.html                # 数据统计
+├── js/
+│   ├── store.js              # 【核心】统一数据层 CGStore（单 key 真源）
+│   ├── sync.js               # 【核心】云端同步层 CGSync（先推后拉）
+│   └── apiClient.js          # API 客户端（基址 localhost:3000/api）
+├── backend/                  # 【当前后端】Node + Express + SQLite + JWT
+│   ├── src/server.js         # 路由 + 静态托管
+│   ├── src/db.js             # SQLite 初始化/读写
+│   ├── src/auth.js           # JWT + bcrypt
+│   └── schema.sql            # 建表 SQL
+├── service-worker.js         # 静态资源缓存（版本化清理）
+├── css/ styles.css           # 样式
+└── server/                   # 【已废弃】早期 MySQL/Supabase 版后端，仅保留参考
+```
+
+## 离线 / 后端未启动行为
+
+- 无令牌（未登录）：纯本地存储，行为与纯前端版一致。
+- 已登录但后端临时不可用：pull/push 静默失败并 `console.warn`，页面继续用本地缓存，恢复后自动重试回写。
+- 注册/登录连不上后端：回退「演示登录」，不影响使用。
+
+## 数据导出 / 导入
+
+- dashboard 个人中心提供「导出数据」（下载 JSON 备份）与「导入数据」（从备份恢复）。
+- 建议定期导出，防止误操作或本地存储丢失。
+
+## 生产部署提示
+
+- 后端：设置强随机 `JWT_SECRET` 环境变量；SQLite 适合个人/小团队，高并发可换 PostgreSQL（表结构一致）。
+- 前端：可部署到任意静态托管（GitHub Pages / CloudStudio / Nginx）。
+- `chenguang.db` 是用户数据，请在 `.gitignore` 排除并定期备份。
+
+## License
+
+MIT

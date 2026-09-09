@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>工作台 · 晨光自律台</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <!-- 资源预加载 -->
+  <link rel="preload" href="css/variables.css" as="style">
+  <link rel="preload" href="css/shared.css" as="style">
+
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+  <!-- Font Awesome 6 (免费) -->
+  <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/shared.css">
+  <style>
+    body { display: flex; min-height: 100vh; }
+
+    .main {
+      flex: 1;
+      padding: 24px 28px 40px;
+      max-width: 900px;
+      overflow-y: auto;
+    }
+
+    .topbar .greeting h2 {
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+
+    .topbar .greeting h2 span {
+      color: var(--neon-blue);
+    }
+
+    .topbar .greeting .date {
+      font-size: 0.85rem;
+      color: #8888aa;
+    }
+
+    .topbar .actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .topbar .actions a {
+      background: rgba(15,15,40,0.95);
+      padding: 8px 18px;
+      border-radius: 40px;
+      text-decoration: none;
+      color: #e0e0ff;
+      font-size: 0.85rem;
+      font-weight: 500;
+      border: 1px solid rgba(0,212,255,0.15);
+      transition: 0.2s;
+    }
+
+    .topbar .actions a:hover {
+      border-color: var(--neon-blue);
+      background: rgba(0,212,255,0.08);
+    }
+
+    .topbar .actions a i {
+      margin-right: 4px;
+    }
+
+    /* ===== 功能卡片网格 ===== */
+    .func-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .func-card {
+      background: rgba(15,15,40,0.95);
+      border-radius: 18px;
+      padding: 18px 20px 16px;
+      border: 1px solid rgba(0,212,255,0.15);
+      transition: 0.2s;
+      position: relative;
+      isolation: isolate;
+    }
+
+    .func-card:hover {
+      border-color: var(--neon-purple);
+      box-shadow: 0 4px 16px rgba(0,212,255,0.04);
+    }
+
+    /* 卡片交错入场动画 */
+    @keyframes cardReveal {
+      from { opacity: 0; transform: translateY(30px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .func-card { animation: cardReveal 0.5s ease backwards; }
+    .func-card:nth-child(1) { animation-delay: 0.05s; }
+    .func-card:nth-child(2) { animation-delay: 0.1s; }
+    .func-card:nth-child(3) { animation-delay: 0.15s; }
+    .func-card:nth-child(4) { animation-delay: 0.2s; }
+    .func-card:nth-child(5) { animation-delay: 0.25s; }
+
+    /* 渐变色卡片顶部装饰条 */
+    .func-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 1;
+    }
+    .func-card:hover::before { opacity: 1; }
+
+    /* 主卡（今日计划）：视觉权重更高 */
+    .func-card.hero-card {
+      background: linear-gradient(135deg, #fffdf7, #fdf6e7);
+      border: 1.5px solid var(--neon-purple);
+      box-shadow: 0 6px 20px rgba(0,212,255,0.12);
+    }
+    .func-card.hero-card .hero-num {
+      font-size: 2rem;
+    }
+    .func-card.hero-card .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .func-card.hero-card .btn-primary {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 8px 20px;
+      border-radius: 40px;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(0,212,255,0.35);
+      transition: 0.2s;
+    }
+    .func-card.hero-card .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0,212,255,0.45);
+    }
+
+    /* Hero card animated gradient border */
+    .hero-card {
+      position: relative;
+      background: linear-gradient(135deg, #fffdf7 0%, #fdf6e7 100%);
+    }
+    .hero-card::after {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(0,212,255,0.3), rgba(147,51,234,0.1));
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .hero-card:hover::after { opacity: 1; }
+
+    /* 卡片图标统一圆底 */
+    .func-card .card-header .label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .func-card .card-header .label .card-ico {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: rgba(0,212,255,0.1);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+    }
+    .func-card.full.hero-card .card-header .label .card-ico {
+      width: 32px;
+      height: 32px;
+      background: rgba(0,212,255,0.1);
+      font-size: 1rem;
+    }
+
+    .func-card .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .func-card .card-header .label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #a0a0c0;
+      letter-spacing: 0.3px;
+    }
+
+    .func-card .card-header .status {
+      font-size: 0.7rem;
+      color: #8888aa;
+      background: rgba(0,212,255,0.08);
+      padding: 2px 12px;
+      border-radius: 40px;
+    }
+
+    .func-card .card-body {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin: 4px 0 8px;
+    }
+
+    .func-card .card-body .num {
+      font-size: 1.6rem;
+      font-weight: 700;
+    }
+
+    .func-card .card-body .unit {
+      font-size: 0.8rem;
+      color: #8888aa;
+    }
+
+    .func-card .card-body .empty-hint {
+      font-size: 0.85rem;
+      color: #8888aa;
+    }
+
+    .func-card .card-action {
+      font-size: 0.8rem;
+      color: var(--neon-blue);
+      text-decoration: none;
+      font-weight: 500;
+      border-bottom: 1.5px dashed var(--neon-purple);
+      padding-bottom: 1px;
+    }
+
+    .func-card .card-action:hover {
+      color: var(--neon-blue);
+    }
+
+    .func-card .sub-actions {
+      display: flex;
+      gap: 14px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+
+    .func-card .sub-actions a {
+      font-size: 0.75rem;
+      color: #8888aa;
+      text-decoration: none;
+    }
+
+    .func-card .sub-actions a:hover {
+      color: #e0e0ff;
+    }
+
+    /* 课程和阅读合并为一列 */
+    .func-card.full {
+      grid-column: 1 / -1;
+    }
+
+    /* ===== 成长数据区 ===== */
+    .data-section {
+      background: rgba(15,15,40,0.95);
+      border-radius: 18px;
+      padding: 20px 22px 22px;
+      border: 1px solid rgba(0,212,255,0.15);
+    }
+
+    .data-section .data-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .data-section .data-header h3 {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .data-section .data-header a {
+      font-size: 0.8rem;
+      color: #8888aa;
+      text-decoration: none;
+    }
+
+    .data-section .data-header a:hover {
+      color: #e0e0ff;
+    }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px 20px;
+    }
+
+    .data-item {
+      text-align: center;
+      padding: 8px 4px;
+      background: rgba(10,10,30,0.5);
+      border-radius: 14px;
+    }
+
+    .data-item .d-num {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .data-item .d-label {
+      font-size: 0.7rem;
+      color: #8888aa;
+      display: block;
+      margin-top: 2px;
+    }
+
+    .data-item .d-bar {
+      width: 100%;
+      height: 10px;
+      background: rgba(0,212,255,0.04);
+      border-radius: 5px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+
+    .data-item .d-bar .d-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+      border-radius: 5px;
+      width: 0%;
+      transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .data-bar { height: 10px; background: rgba(0,212,255,0.04); border-radius: 5px; overflow: hidden; }
+    .data-bar-fill { height: 100%; border-radius: 5px; transition: width 1s cubic-bezier(0.22, 1, 0.36, 1); }
+
+    /* ===== 空状态优化 ===== */
+    .empty-gold {
+      color: var(--neon-blue);
+      font-weight: 500;
+    }
+
+    /* ===== 侧边栏活跃项发光 ===== */
+    .sidebar .nav-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 4px;
+      background: var(--primary);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--primary);
+    }
+
+    /* ===== 按钮点击涟漪 ===== */
+    .btn { position: relative; overflow: hidden; }
+
+    /* ===== 数字跳动 ===== */
+    @keyframes numberPop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    .num-pop { animation: numberPop 0.3s ease; }
+
+    /* ===== 响应式 ===== */
+    @media (max-width: 640px) {
+      .main { padding: 16px; max-width: 100%; }
+      body { flex-direction: column; }
+      .func-grid { grid-template-columns: 1fr; }
+      .func-card.full { grid-column: 1; }
+      .data-grid { grid-template-columns: 1fr 1fr; }
+      .topbar .greeting h2 { font-size: 1.1rem; }
+      .p-stats { grid-template-columns: repeat(2, 1fr); }
+      .topbar .actions a.nav-link { display: none; }
+    }
+
+    @media (max-width: 400px) {
+      .data-grid { grid-template-columns: 1fr; }
+      .topbar .actions a { padding: 6px 12px; font-size: 0.75rem; }
+    }
+
+    /* ===== 模态框系统 ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(30,30,42,.45);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: rgba(15,15,40,0.95);
+      border-radius: 18px;
+      width: 100%;
+      max-width: 420px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,.2);
+      animation: modalIn .25s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(.95) translateY(8px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 20px 12px;
+      border-bottom: 1px solid rgba(0,212,255,0.1);
+    }
+    .modal-head h3 { font-size: 1.05rem; font-weight: 600; }
+    .modal-close {
+      width: 30px; height: 30px;
+      border: none; background: rgba(0,212,255,0.08);
+      border-radius: 50%; cursor: pointer;
+      font-size: 1rem; color: #8888aa;
+      display: flex; align-items: center; justify-content: center;
+      transition: .2s;
+    }
+    .modal-close:hover { background: rgba(0,212,255,0.15); color: #e0e0ff; }
+    .modal-body { padding: 16px 20px 20px; }
+    .modal-body .form-row { margin-bottom: 14px; }
+    .modal-body .form-row label {
+      display: block; font-size: .8rem; font-weight: 600;
+      color: #a0a0c0; margin-bottom: 5px;
+    }
+    .modal-body .form-row input,
+    .modal-body .form-row select {
+      width: 100%; padding: 10px 14px;
+      border: 1.5px solid rgba(0,212,255,0.15); border-radius: 10px;
+      font-size: .9rem; color: #e0e0ff;
+      transition: .2s; background: rgba(15,15,40,0.95);
+    }
+    .modal-body .form-row input:focus,
+    .modal-body .form-row select:focus {
+      outline: none; border-color: var(--neon-blue);
+      box-shadow: 0 0 0 3px rgba(0,212,255,.12);
+    }
+    .modal-body .form-row-inline {
+      display: flex; gap: 12px;
+    }
+    .modal-body .form-row-inline > div { flex: 1; }
+    .modal-foot {
+      display: flex; gap: 10px; justify-content: flex-end;
+      padding: 14px 20px 18px; border-top: 1px solid rgba(0,212,255,0.1);
+    }
+    .modal-foot button {
+      padding: 9px 22px; border-radius: 40px;
+      font-size: .85rem; font-weight: 600; cursor: pointer;
+      border: none; transition: .2s;
+    }
+    .modal-foot .btn-cancel {
+      background: rgba(0,212,255,0.08); color: #a0a0c0;
+    }
+    .modal-foot .btn-cancel:hover { background: rgba(0,212,255,0.15); }
+    .modal-foot .btn-confirm {
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0,212,255,.35);
+    }
+    .modal-foot .btn-confirm:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0,212,255,.45);
+    }
+
+    /* ===== 专注计时器 ===== */
+    .focus-presets { display: flex; gap: 8px; }
+    .focus-preset {
+      flex: 1; padding: 9px 0; border-radius: 10px;
+      border: 1.5px solid rgba(0,212,255,0.15); background: rgba(15,15,40,0.95);
+      font-size: .85rem; font-weight: 600; color: #a0a0c0;
+      cursor: pointer; transition: .2s;
+    }
+    .focus-preset:hover { border-color: var(--neon-purple); }
+    .focus-preset.active {
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+      border-color: transparent; color: #fff;
+      box-shadow: 0 4px 12px rgba(0,212,255,.3);
+    }
+    .focus-preset:disabled { opacity: .55; cursor: not-allowed; }
+    .focus-clock-wrap { text-align: center; padding: 6px 0 2px; }
+    .focus-clock {
+      font-size: 3rem; font-weight: 700; letter-spacing: 2px;
+      color: #e0e0ff; font-variant-numeric: tabular-nums;
+    }
+    .focus-clock.running { color: var(--neon-blue); }
+    .focus-prog {
+      height: 8px; border-radius: 999px; background: rgba(0,212,255,0.08);
+      overflow: hidden; margin: 12px auto 4px; max-width: 260px;
+    }
+    .focus-prog-fill {
+      height: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, var(--neon-blue), var(--neon-cyan));
+      transition: width .5s ease;
+    }
+
+    /* ===== 列表项（课程/书籍/运动） ===== */
+    .item-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+    .item-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; border-radius: 12px;
+      background: rgba(10,10,30,0.5); border: 1px solid rgba(0,212,255,0.15);
+      transition: .2s;
+    }
+    .item-row:hover { border-color: var(--neon-purple); }
+    .item-row .item-main { flex: 1; min-width: 0; }
+    .item-row .item-title {
+      font-size: .85rem; font-weight: 600; color: #e0e0ff;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .item-row .item-sub {
+      font-size: .72rem; color: #8888aa; margin-top: 2px;
+    }
+    .item-row .item-pct {
+      font-size: .9rem; font-weight: 700;
+      min-width: 38px; text-align: right;
+    }
+    .item-row .item-bar {
+      width: 50px; height: 5px; border-radius: 4px;
+      background: rgba(0,212,255,0.15); overflow: hidden; flex-shrink: 0;
+    }
+    .item-row .item-bar .item-bar-fill {
+      height: 100%; border-radius: 4px;
+      background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+      transition: width .3s;
+    }
+    .item-row .item-btn {
+      border: none; background: none; cursor: pointer;
+      font-size: .75rem; padding: 4px 8px; border-radius: 6px;
+      transition: .2s;
+    }
+    .item-row .item-btn.edit { color: var(--neon-blue); }
+    .item-row .item-btn.edit:hover { background: rgba(0,212,255,0.1); }
+    .item-row .item-btn.del { color: #c0c0c0; }
+    .item-row .item-btn.del:hover { background: rgba(255,77,106,0.1); color: var(--danger); }
+    .item-empty {
+      padding: 20px; text-align: center;
+      color: #8888aa; font-size: .85rem;
+    }
+
+    /* ===== 展开面板（卡片点击展开列表） ===== */
+    .expand-panel {
+      display: none;
+      margin-top: 10px; padding-top: 10px;
+      border-top: 1px dashed rgba(0,212,255,0.15);
+    }
+    .expand-panel.show { display: block; }
+    .expand-toggle {
+      font-size: .75rem; color: #8888aa; cursor: pointer;
+      margin-top: 6px; display: inline-flex; align-items: center; gap: 4px;
+      transition: .2s;
+    }
+    .expand-toggle:hover { color: var(--neon-blue); }
+    .expand-toggle .chevron { transition: transform .2s; }
+    .expand-toggle.open .chevron { transform: rotate(180deg); }
+
+    /* ===== 确认对话框 ===== */
+    .confirm-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(30,30,42,.5); backdrop-filter: blur(4px);
+      z-index: 1100; align-items: center; justify-content: center; padding: 20px;
+    }
+    .confirm-overlay.show { display: flex; }
+    .confirm-box {
+      background: rgba(15,15,40,0.95); border-radius: 16px;
+      max-width: 340px; width: 100%; padding: 24px;
+      text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.2);
+      animation: modalIn .2s ease;
+    }
+    .confirm-box h3 { font-size: 1rem; margin-bottom: 8px; }
+    .confirm-box p { font-size: .85rem; color: #8888aa; margin-bottom: 18px; }
+    .confirm-box .confirm-actions {
+      display: flex; gap: 10px; justify-content: center;
+    }
+    .confirm-box .confirm-actions button {
+      padding: 8px 24px; border-radius: 40px; border: none;
+      font-size: .85rem; font-weight: 600; cursor: pointer; transition: .2s;
+    }
+    .confirm-box .btn-cancel { background: rgba(0,212,255,0.08); color: #a0a0c0; }
+    .confirm-box .btn-cancel:hover { background: rgba(0,212,255,0.15); }
+    .confirm-box .btn-delete {
+      background: var(--danger); color: #fff;
+      box-shadow: 0 4px 12px rgba(255,77,106,.3);
+    }
+    .confirm-box .btn-delete:hover { transform: translateY(-1px); }
+
+    /* ===== 同步状态指示 ===== */
+    .sync-status {
+      font-size: .72rem; font-weight: 600; padding: 5px 12px;
+      border-radius: 999px; white-space: nowrap;
+      transition: .3s;
+    }
+    .sync-status[data-sync-state="syncing"] { background: rgba(0,212,255,0.1); color: var(--neon-blue); }
+    .sync-status[data-sync-state="ok"]      { background: rgba(6,255,199,0.1); color: var(--neon-cyan); }
+    .sync-status[data-sync-state="offline"] { background: rgba(255,77,106,0.15); color: var(--danger); }
+
+    /* ===== 计时器运行脉冲 ===== */
+    .focus-clock.running { animation: focusPulse 2s ease-in-out infinite; }
+    @keyframes focusPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .55; }
+    }
+
+    /* ===== 打卡完成态 ===== */
+    .btn-primary.checked {
+      background: rgba(6,255,199,0.1); color: var(--neon-cyan);
+      box-shadow: none; pointer-events: auto;
+    }
+
+    /* ===== 内嵌视图（课程 / 管理 / 我的） ===== */
+    body[data-wb-theme="teal"] {
+      background: rgba(10,10,30,0.5) 0%, rgba(15,15,40,0.5) 50%, rgba(20,20,50,0.5) 100%);
+    }
+    body[data-wb-theme="rose"] {
+      background: rgba(15,10,30,0.5) 0%, rgba(20,10,40,0.5) 50%, rgba(25,15,50,0.5) 100%);
+    }
+    .wb-view { animation: viewIn .25s ease; }
+    @keyframes viewIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .view-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .view-head h2 { font-size: 1.25rem; color: #e0e0ff; display: flex; align-items: center; gap: 8px; }
+    .view-head .view-sub { font-size: .8rem; color: #8888aa; margin-top: 4px; font-weight: 400; }
+    .view-card {
+      background: rgba(15,15,40,0.95); border: 1px solid rgba(0,212,255,0.15); border-radius: 18px;
+      padding: 18px 20px; margin-bottom: 16px;
+    }
+    .view-card h3 { font-size: .95rem; color: #e0e0ff; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+    .view-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 4px; border-bottom: 1px solid rgba(0,212,255,0.1); font-size: .88rem;
+    }
+    .view-row:last-child { border-bottom: none; }
+    .view-row .vr-label { color: #a0a0c0; }
+    .view-row .vr-value { color: #e0e0ff; font-weight: 600; }
+    .btn-wb {
+      padding: 9px 20px; border-radius: 40px; border: none;
+      font-size: .85rem; font-weight: 600; cursor: pointer; transition: .2s;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple)); color: #fff;
+      box-shadow: 0 4px 12px rgba(0,212,255,.3);
+    }
+    .btn-wb:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,212,255,.45); }
+    .btn-wb.ghost {
+      background: rgba(0,212,255,0.08); color: #a0a0c0; box-shadow: none;
+    }
+    .btn-wb.ghost:hover { background: rgba(0,212,255,0.15); transform: none; }
+    .btn-wb.danger { background: rgba(255,77,106,0.15); color: var(--danger); box-shadow: none; }
+    .btn-wb.danger:hover { background: rgba(255,77,106,0.1); transform: none; }
+    .wb-select {
+      padding: 8px 14px; border-radius: 10px; border: 1.5px solid rgba(0,212,255,0.15);
+      font-size: .85rem; color: #e0e0ff; background: rgba(15,15,40,0.95); cursor: pointer;
+    }
+    /* 课程视图 */
+    .cv-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px; border-radius: 14px; margin-bottom: 10px;
+      background: rgba(10,10,30,0.5); border: 1px solid rgba(0,212,255,0.15);
+    }
+    .cv-item .cv-main { flex: 1; min-width: 0; }
+    .cv-item .cv-name { font-weight: 600; color: #e0e0ff; font-size: .92rem; }
+    .cv-item .cv-sub { font-size: .75rem; color: #8888aa; margin-top: 3px; }
+    .cv-item .cv-bar { margin-top: 8px; height: 6px; background: rgba(0,212,255,.15); border-radius: 999px; overflow: hidden; }
+    .cv-item .cv-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--neon-blue), var(--neon-cyan)); transition: width .4s; }
+    .cv-item .cv-pct { font-size: 1.05rem; font-weight: 700; color: var(--neon-cyan); min-width: 52px; text-align: center; }
+    .cv-item .cv-pct.done { color: var(--neon-cyan); }
+    .cv-actions { display: flex; gap: 6px; margin-top: 6px; justify-content: flex-end; }
+    .cv-actions button {
+      font-size: .72rem; padding: 4px 10px; border-radius: 8px; border: none; cursor: pointer;
+      background: rgba(15,15,40,0.95); color: #a0a0c0; border: 1px solid rgba(0,212,255,0.15); transition: .2s;
+    }
+    .cv-actions button:hover { border-color: var(--neon-purple); color: var(--neon-blue); }
+    /* 我的视图 */
+    .profile-hero {
+      display: flex; align-items: center; gap: 16px;
+      background: linear-gradient(135deg, #fffdf7, #fdf6e7);
+      border: 1.5px solid var(--neon-purple); border-radius: 18px; padding: 20px; margin-bottom: 16px;
+    }
+    .profile-avatar {
+      width: 58px; height: 58px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-cyan));
+      color: #fff; font-size: 1.4rem; font-weight: 700;
+      display: grid; place-items: center; flex-shrink: 0;
+    }
+    .profile-meta .p-name { font-size: 1.1rem; font-weight: 700; color: #e0e0ff; }
+    .profile-meta .p-sub { font-size: .78rem; color: #8888aa; margin-top: 3px; }
+    .p-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .p-stat {
+      background: rgba(10,10,30,0.5); border-radius: 14px; padding: 14px 10px; text-align: center;
+      border: 1px solid rgba(0,212,255,0.15);
+    }
+    .p-stat .ps-num { font-size: 1.3rem; font-weight: 700; color: var(--neon-cyan); }
+    .p-stat .ps-label { font-size: .7rem; color: #8888aa; margin-top: 4px; }
+    @media (max-width: 640px) { .p-stats { grid-template-columns: repeat(2, 1fr); } }
+
+    /* ===== 任务清单（工作台首页） ===== */
+    .task-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 6px; border-bottom: 1px solid rgba(0,212,255,0.1);
+    }
+    .task-row:last-child { border-bottom: none; }
+    .task-row .t-check {
+      width: 22px; height: 22px; border-radius: 7px; flex-shrink: 0;
+      border: 1.5px solid #d8d4cc; cursor: pointer;
+      display: grid; place-items: center;
+      font-size: .75rem; color: #fff; transition: .2s;
+    }
+    .task-row .t-check:hover { border-color: var(--neon-blue); }
+    .task-row .t-check.checked { background: var(--neon-blue); border-color: var(--neon-blue); }
+    .task-row .t-text { flex: 1; font-size: .88rem; color: #e0e0ff; word-break: break-all; }
+    .task-row.done .t-text { text-decoration: line-through; color: #8888aa; }
+
+    /* ===== 顶栏专注计时 chip ===== */
+    .actions #focusChip {
+      display: none; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: 40px;
+      background: rgba(0,212,255,0.1); color: var(--neon-blue);
+      font-size: .8rem; font-weight: 700; text-decoration: none;
+      font-variant-numeric: tabular-nums;
+      animation: focusPulse 2s ease-in-out infinite;
+    }
+    .actions #focusChip:hover { background: rgba(0,212,255,0.15); }
+
+    /* ===== 7 天打卡可视化 ===== */
+    .mini-week { display: flex; gap: 8px; justify-content: space-between; }
+    .mw-day { flex: 1; text-align: center; }
+    .mw-dot {
+      width: 34px; height: 34px; margin: 0 auto; border-radius: 50%;
+      background: rgba(0,212,255,0.08); color: #fff; font-size: .8rem;
+      display: grid; place-items: center; transition: .2s;
+    }
+    .mw-day.hit .mw-dot { background: var(--neon-cyan); }
+    .mw-day.today .mw-dot { box-shadow: 0 0 0 2.5px var(--neon-purple); }
+    .mw-label { font-size: .66rem; color: #8888aa; margin-top: 5px; }
+  </style>
+</head>
+<body>
+
+<!-- ===== 左侧导航 ===== -->
+<aside class="sidebar">
+  <a href="#" class="logo">☀</a>
+  <a href="#" class="nav-item active" data-nav="home"><i class="fas fa-home"></i>首页</a>
+  <a href="stats.html" class="nav-item" data-nav="stats"><i class="fas fa-chart-line"></i>数据</a>
+  <a href="ai.html" class="nav-item" data-nav="ai"><i class="fas fa-robot"></i>AI</a>
+  <a href="#" class="nav-item" data-nav="course"><i class="fas fa-book"></i>课程</a>
+  <div class="nav-bottom">
+    <a href="#" class="nav-item" data-nav="manage"><i class="fas fa-cog"></i>管理</a>
+    <a href="#" class="nav-item" data-nav="profile"><i class="fas fa-user"></i>我的</a>
+  </div>
+</aside>
+
+<!-- ===== 主内容 ===== -->
+<main class="main">
+
+  <!-- 顶部（全局：所有视图共享） -->
+  <div class="topbar">
+    <div class="greeting">
+      <h2>👋 欢迎回来<span id="welcomeName">同学</span> · 第<span id="welcomeDay">1</span> 天打卡</h2>
+      <div class="date" id="welcomeDate">2026年9月8日 · 星期一</div>
+    </div>
+    <div class="actions">
+      <a href="#" id="focusChip" style="display:none;" title="专注进行中，点击查看"><i class="fas fa-hourglass-half"></i> <span id="focusChipTime">00:00</span></a>
+      <span class="sync-status" data-sync-status style="display:none;"></span>
+      <a href="stats.html" class="nav-link" data-nav="history"><i class="fas fa-clock-rotate-left"></i> 历史数据</a>
+      <a href="#" id="bellBtn"><i class="fas fa-bell"></i> <span id="bellCount">0</span></a>
+      <a href="#" id="newBtn"><i class="fas fa-plus"></i> 新建任务</a>
+    </div>
+  </div>
+
+  <!-- ===== 视图：首页 ===== -->
+  <div id="wb-view-home">
+
+  <!-- ===== 功能网格 ===== -->
+  <div class="func-grid">
+
+    <!-- 今日计划（主卡，全宽） -->
+    <div class="func-card full hero-card" style="animation: cardReveal 0.5s ease backwards; animation-delay: 0.05s;">
+      <div class="card-header">
+        <span class="label"><span class="card-ico">📋</span> 今日计划</span>
+        <span class="status" id="planStatus">今日 0 / 0</span>
+      </div>
+      <div class="card-body">
+        <span class="num hero-num" id="planDone">0</span><span class="unit">项完成</span>
+        <span style="margin:0 4px;color:#ddd;">·</span>
+        <span class="num hero-num" id="planTotal">0</span><span class="unit">项待办</span>
+        <span id="planEmpty" style="margin-left:8px;" class="empty-hint">还没有任务</span>
+      </div>
+      <div class="hero-actions">
+        <a href="#" class="btn-primary" data-act="checkin">✅ 今日打卡</a>
+        <a href="#" class="card-action" data-act="add">+ 添加任务</a>
+      </div>
+      <span class="expand-toggle" data-expand="taskPanel">查看任务 <i class="fas fa-chevron-down chevron"></i></span>
+      <div class="expand-panel" id="taskPanel">
+        <div class="item-list" id="taskList"></div>
+      </div>
+    </div>
+
+    <!-- 课程学习 -->
+    <div class="func-card" style="animation: cardReveal 0.5s ease backwards; animation-delay: 0.1s;">
+      <div class="card-header">
+        <span class="label"><span class="card-ico">🎓</span> 课程学习</span>
+        <span class="status" id="courseStatus">0 门</span>
+      </div>
+      <div class="card-body">
+        <span id="courseEmpty" class="empty-hint">暂无课程</span>
+        <span id="courseBody" style="display:none;">
+          <span class="num" id="courseCount">0</span><span class="unit">门</span>
+          <span style="margin:0 4px;color:#ddd;">·</span>
+          <span class="num" id="courseAvg">0</span><span class="unit">% 平均进度</span>
+        </span>
+      </div>
+      <a href="#" class="card-action" data-act="add-course">添加课程 ➜</a>
+      <span class="expand-toggle" data-expand="coursePanel">
+        查看全部 <i class="fas fa-chevron-down chevron"></i>
+      </span>
+      <div class="expand-panel" id="coursePanel">
+        <div class="item-list" id="courseList"></div>
+      </div>
+    </div>
+
+    <!-- 每日阅读 -->
+    <div class="func-card" style="animation: cardReveal 0.5s ease backwards; animation-delay: 0.15s;">
+      <div class="card-header">
+        <span class="label"><span class="card-ico">📖</span> 每日阅读</span>
+        <span class="status" id="readStatus">今日未开始</span>
+      </div>
+      <div class="card-body">
+        <span class="num" id="readBooks">0</span><span class="unit">本</span>
+        <span style="margin:0 4px;color:#ddd;">·</span>
+        <span class="num" id="readPages">0</span><span class="unit">页</span>
+      </div>
+      <a href="#" class="card-action" data-act="read">开启好书 ➜</a>
+      <span class="expand-toggle" data-expand="bookPanel">
+        查看书架 <i class="fas fa-chevron-down chevron"></i>
+      </span>
+      <div class="expand-panel" id="bookPanel">
+        <div class="item-list" id="bookList"></div>
+      </div>
+    </div>
+
+    <!-- 英语学习 -->
+    <div class="func-card" style="animation: cardReveal 0.5s ease backwards; animation-delay: 0.2s;">
+      <div class="card-header">
+        <span class="label"><span class="card-ico">🗣️</span> 英语学习</span>
+        <span class="status" id="englishStatus">今日未开始</span>
+      </div>
+      <div class="card-body">
+        <span class="num" id="englishCount">0</span><span class="unit">词</span>
+        <span style="margin:0 4px;color:#ddd;">·</span>
+        <span class="num" id="englishMinutes">0</span><span class="unit">分钟</span>
+      </div>
+      <a href="#" class="card-action" data-act="english">单词打卡 ➜</a>
+      <span class="expand-toggle" data-expand="englishPanel">
+        查看记录 <i class="fas fa-chevron-down chevron"></i>
+      </span>
+      <div class="expand-panel" id="englishPanel">
+        <div class="item-list" id="englishList"></div>
+      </div>
+    </div>
+
+    <!-- 深度专注 -->
+    <div class="func-card" style="animation: cardReveal 0.5s ease backwards; animation-delay: 0.25s;">
+      <div class="card-header">
+        <span class="label"><span class="card-ico">⏳</span> 深度专注</span>
+        <span class="status" id="focusStatus">今日未开始</span>
+      </div>
+      <div class="card-body">
+        <span class="num" id="focusCount">0</span><span class="unit">次</span>
+        <span style="margin:0 4px;color:#ddd;">·</span>
+        <span class="num" id="focusMinutes">0</span><span class="unit">分钟</span>
+      </div>
+      <a href="#" class="card-action" data-act="focus">开始专注 ➜</a>
+      <span class="expand-toggle" data-expand="focusPanel">
+        查看记录 <i class="fas fa-chevron-down chevron"></i>
+      </span>
+      <div class="expand-panel" id="focusPanel">
+        <div class="item-list" id="focusList"></div>
+      </div>
+    </div>
+
+    <!-- 每日运动（全宽） -->
+    <div class="func-card full" style="animation: cardReveal 0.5s ease backwards; animation-delay: 0.3s;">
+      <div class="card-header">
+        <span class="label"><span class="card-ico">🏃</span> 每日运动</span>
+        <span class="status" id="sportStatus">今日未开始</span>
+      </div>
+      <div class="card-body">
+        <span class="num" id="sportCount">0</span><span class="unit">次</span>
+        <span style="margin:0 4px;color:#ddd;">·</span>
+        <span class="num" id="sportCal">0</span><span class="unit">千卡</span>
+        <span id="sportTip" style="margin-left:12px;font-size:0.8rem;color:#b0aeb0;">💡 站起来伸个懒腰也不错</span>
+      </div>
+      <a href="#" class="card-action" data-act="sport">立即记录 ➜</a>
+      <span class="expand-toggle" data-expand="sportPanel">
+        查看记录 <i class="fas fa-chevron-down chevron"></i>
+      </span>
+      <div class="expand-panel" id="sportPanel">
+        <div class="item-list" id="sportList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 模态框：添加课程 ===== -->
+  <div class="modal-overlay" id="modalAddCourse">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>🎓 添加课程</h3>
+        <button class="modal-close" data-modal-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <label>课程名称</label>
+          <input id="courseName" type="text" placeholder="例如：数据结构与算法" maxlength="60"/>
+        </div>
+        <div class="form-row-inline">
+          <div class="form-row">
+            <label>总章节数</label>
+            <input id="courseTotal" type="number" min="1" max="999" value="20"/>
+          </div>
+          <div class="form-row">
+            <label>已学章节</label>
+            <input id="courseLearned" type="number" min="0" max="999" value="0"/>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-cancel" data-modal-close>取消</button>
+        <button class="btn-confirm" id="saveCourseBtn">✅ 添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 模态框：编辑课程 ===== -->
+  <div class="modal-overlay" id="modalEditCourse">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>✏️ 编辑课程</h3>
+        <button class="modal-close" data-modal-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <label>课程名称</label>
+          <input id="editCourseName" type="text" maxlength="60"/>
+        </div>
+        <div class="form-row-inline">
+          <div class="form-row">
+            <label>总章节数</label>
+            <input id="editCourseTotal" type="number" min="1" max="999"/>
+          </div>
+          <div class="form-row">
+            <label>已学章节</label>
+            <input id="editCourseLearned" type="number" min="0" max="999"/>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-cancel" data-modal-close>取消</button>
+        <button class="btn-confirm" id="updateCourseBtn">✅ 保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 模态框：添加书籍 ===== -->
+  <div class="modal-overlay" id="modalAddBook">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>📖 添加书籍</h3>
+        <button class="modal-close" data-modal-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <label>书名</label>
+          <input id="bookName" type="text" placeholder="例如：算法导论" maxlength="60"/>
+        </div>
+        <div class="form-row-inline">
+          <div class="form-row">
+            <label>总页数</label>
+            <input id="bookTotal" type="number" min="1" max="9999" value="300"/>
+          </div>
+          <div class="form-row">
+            <label>已读页数</label>
+            <input id="bookRead" type="number" min="0" max="9999" value="0"/>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-cancel" data-modal-close>取消</button>
+        <button class="btn-confirm" id="saveBookBtn">✅ 添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 模态框：编辑书籍 ===== -->
+  <div class="modal-overlay" id="modalEditBook">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>✏️ 编辑书籍</h3>
+        <button class="modal-close" data-modal-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <label>书名</label>
+          <input id="editBookName" type="text" maxlength="60"/>
+        </div>
+        <div class="form-row-inline">
+          <div class="form-row">
+            <label>总页数</label>
+            <input id="editBookTotal" type="number" min="1" max="9999"/>
+          </div>
+          <div class="form-row">
+            <label>已读页数</label>
+            <input id="editBookRead" type="number" min="0" max="9999"/>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-cancel" data-modal-close>取消</button>
+        <button class="btn-confirm" id="updateBookBtn">✅ 保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 模态框：添加运动 ===== -->
+  <div class="modal-overlay" id="modalAddSport">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>🏃 记录运动</h3>
+        <button class="modal-close" data-modal-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <label>运动项目</label>
+          <select id="sportType">
+            <option value="跑步">🏃 跑步</option>
+            <option value="游泳">🏊 游泳</option>
+            <option value="骑行">🚴 骑行</option>
+            <option value="跳绳">🤸 跳绳</option>
+            <option value="健身">💪 健身</option>
+            <option value="瑜伽">🧘 瑜伽</option>
+            <option value="篮球">🏀 篮球</option>
+            <option value="其他">📌 其他</option>
+          </select>
+        </div>
+        <div class="form-row-inline">
+          <div class="form-row">
+            <label>消耗千卡</label>
+            <input id="sportCal" type="number" min="1" max="9999" value="100"/>
+          </div>
+          <div class="form-row">
+            <label>时长（分钟）</label>
+            <input id="sportMin" type="number" min="1" max="999" value="30"/>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-cancel" data-modal-close>取消</button>
+        <button class="btn-confirm" id="saveSportBtn">✅ 记录</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 模态框：添加英语 ===== -->
+  <div class="modal-overlay" id="modalAddEnglish">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>🗣️ 英语学习</h3>
+        <button class="modal-close" data-modal-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row-inline">
+          <div class="form-row">
+            <label>背单词数</label>
+            <input id="engWords" type="number" min="1" max="999" value="20"/>
+          </div>
+          <div class="form-row">
+            <label>专注分钟数</label>
+            <input id="engMin" type="number" min="0" max="999" value="10"/>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-cancel" data-modal-close>取消</button>
+        <button class="btn-confirm" id="saveEngBtn">✅ 记录</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 模态框：添加任务 ===== -->
+  <div class="modal-overlay" id="modalAddTask">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>✏️ 新建任务</h3>
+        <button class="modal-close" data-modal-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <label>任务内容</label>
+          <input id="taskText" type="text" placeholder="例如：完成高数第三章习题" maxlength="80"/>
+        </div>
+        <div class="form-row">
+          <label>优先级</label>
+          <select id="taskPriority">
+            <option value="low">🟢 低优先</option>
+            <option value="mid" selected>🟡 中优先</option>
+            <option value="high">🔴 高优先</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-cancel" data-modal-close>取消</button>
+        <button class="btn-confirm" id="saveTaskBtn">✅ 添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 模态框：专注计时器 ===== -->
+  <div class="modal-overlay" id="modalFocusTimer">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>⏳ 深度专注</h3>
+        <button class="modal-close" data-modal-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <label>专注内容（可选）</label>
+          <input id="focusTask" type="text" placeholder="这段时间打算做什么？" maxlength="60"/>
+        </div>
+        <div class="form-row">
+          <label>时长</label>
+          <div class="focus-presets" id="focusPresets">
+            <button type="button" class="focus-preset" data-mins="25">25 分钟</button>
+            <button type="button" class="focus-preset active" data-mins="45">45 分钟</button>
+            <button type="button" class="focus-preset" data-mins="60">60 分钟</button>
+          </div>
+        </div>
+        <div class="focus-clock-wrap">
+          <div class="focus-clock" id="focusClock">45:00</div>
+          <div class="focus-prog"><div class="focus-prog-fill" id="focusProgBar" style="width:0%;"></div></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-cancel" id="focusGiveupBtn" style="display:none;">结束并记录</button>
+        <button class="btn-confirm" id="focusStartBtn">▶ 开始专注</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 确认对话框 ===== -->
+  <div class="confirm-overlay" id="confirmDialog">
+    <div class="confirm-box">
+      <h3 id="confirmTitle">确认操作</h3>
+      <p id="confirmText">确定要执行此操作吗？</p>
+      <div class="confirm-actions">
+        <button class="btn-cancel" id="confirmCancel">取消</button>
+        <button class="btn-delete" id="confirmOk">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 成长数据 ===== -->
+  <div class="data-section">
+    <div class="data-header">
+      <h3>📈 成长数据 · 本季度</h3>
+      <a href="#">查看全部 ➜</a>
+    </div>
+
+    <div class="data-grid">
+      <div class="data-item">
+        <div class="d-num" id="growthBooks">0</div>
+        <span class="d-label">累计阅读（本）</span>
+        <div style="font-size:0.65rem;color:#b0aeb0;">目标 12 本</div>
+        <div class="d-bar"><div class="d-fill" id="barBooks" style="width:0%;"></div></div>
+      </div>
+      <div class="data-item">
+        <div class="d-num" id="growthPages">0</div>
+        <span class="d-label">累计页数</span>
+        <div style="font-size:0.65rem;color:#b0aeb0;">目标 3,000 页</div>
+        <div class="d-bar"><div class="d-fill" id="barPages" style="width:0%;"></div></div>
+      </div>
+      <div class="data-item">
+        <div class="d-num" id="growthRate">0%</div>
+        <span class="d-label">计划完成率</span>
+        <div style="font-size:0.65rem;color:#b0aeb0;">目标 100%</div>
+        <div class="d-bar"><div class="d-fill" id="barRate" style="width:0%;"></div></div>
+      </div>
+      <div class="data-item">
+        <div class="d-num" id="growthFocus">0</div>
+        <span class="d-label">专注分钟</span>
+        <div style="font-size:0.65rem;color:#b0aeb0;">目标 1,500</div>
+        <div class="d-bar"><div class="d-fill" id="barFocus" style="width:0%;"></div></div>
+      </div>
+      <div class="data-item">
+        <div class="d-num" id="growthStudy">0</div>
+        <span class="d-label">学习次数</span>
+        <div style="font-size:0.65rem;color:#b0aeb0;">目标 60 次</div>
+        <div class="d-bar"><div class="d-fill" id="barStudy" style="width:0%;"></div></div>
+      </div>
+      <div class="data-item">
+        <div class="d-num" id="growthStreak">0</div>
+        <span class="d-label">连续天数</span>
+        <div style="font-size:0.65rem;color:#b0aeb0;">🔥 从今天开始积累</div>
+        <div class="d-bar"><div class="d-fill" id="barStreak" style="width:0%;"></div></div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /wb-view-home -->
+
+  <!-- ===== 视图：课程 ===== -->
+  <div id="wb-view-course" class="wb-view" hidden>
+    <div class="view-head">
+      <div>
+        <h2>📚 课程学习</h2>
+        <div class="view-sub">追踪每一门课程的进度，让努力看得见</div>
+      </div>
+      <button class="btn-wb" data-act="add-course"><i class="fas fa-plus"></i> 添加课程</button>
+    </div>
+    <div class="view-card">
+      <h3>🧭 我的课程 <span id="cvSummary" style="font-size:.75rem;color:#8a8a8a;font-weight:400;margin-left:6px;"></span></h3>
+      <div id="courseViewList"></div>
+    </div>
+  </div>
+
+  <!-- ===== 视图：管理 ===== -->
+  <div id="wb-view-manage" class="wb-view" hidden>
+    <div class="view-head">
+      <div>
+        <h2>⚙️ 管理</h2>
+        <div class="view-sub">外观偏好与数据管理</div>
+      </div>
+    </div>
+
+    <div class="view-card">
+      <h3>🎨 外观</h3>
+      <div class="view-row">
+        <span class="vr-label">背景主题</span>
+        <select class="wb-select" id="wbThemeSelect">
+          <option value="amber">晨光琥珀</option>
+          <option value="teal">青晨薄荷</option>
+          <option value="rose">暮色玫瑰</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="view-card">
+      <h3>💾 数据</h3>
+      <div class="view-row">
+        <span class="vr-label">导出全部数据（JSON 备份）</span>
+        <button class="btn-wb ghost" id="wbExportBtn">导出</button>
+      </div>
+      <div class="view-row">
+        <span class="vr-label">JSON 备份恢复（覆盖当前数据）</span>
+        <button class="btn-wb ghost" id="wbImportBtn">导入</button>
+        <input type="file" id="wbImportFile" accept=".json" style="display:none;">
+      </div>
+    </div>
+
+    <div class="view-card">
+      <h3>👤 账号</h3>
+      <div class="view-row">
+        <span class="vr-label">当前账号</span>
+        <span class="vr-value" id="wbManageUser">-</span>
+      </div>
+      <div class="view-row">
+        <span class="vr-label">退出登录并清除本机数据</span>
+        <button class="btn-wb danger" id="wbLogoutBtn">退出登录</button>
+      </div>
+    </div>
+
+    <div class="view-card">
+      <h3>ℹ️ 关于</h3>
+      <div class="view-row">
+        <span class="vr-label">晨光自律台 · 前端 v1.1（本地优先 + 云端同步）</span>
+        <span class="vr-value">☀</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 视图：我的 ===== -->
+  <div id="wb-view-profile" class="wb-view" hidden>
+    <div class="view-head">
+      <div>
+        <h2>🙋 我的</h2>
+        <div class="view-sub">你的自律足迹</div>
+      </div>
+      <a href="stats.html" class="btn-wb ghost" style="text-decoration:none;">历史数据 ➜</a>
+    </div>
+
+    <div class="profile-hero">
+      <div class="profile-avatar" id="pfAvatar">同</div>
+      <div class="profile-meta">
+        <div class="p-name" id="pfName">同学</div>
+        <div class="p-sub" id="pfEmail">未登录</div>
+        <div class="p-sub" id="pfDays">第 1 天 · 连续打卡 0 天</div>
+      </div>
+    </div>
+
+    <div class="p-stats">
+      <div class="p-stat"><div class="ps-num" id="pfCheckins">0</div><div class="ps-label">累计打卡</div></div>
+      <div class="p-stat"><div class="ps-num" id="pfTodos">0</div><div class="ps-label">完成任务</div></div>
+      <div class="p-stat"><div class="ps-num" id="pfFocus">0</div><div class="ps-label">专注分钟</div></div>
+      <div class="p-stat"><div class="ps-num" id="pfPages">0</div><div class="ps-label">累计阅读</div></div>
+    </div>
+
+    <div class="view-card" style="margin-top:16px;">
+      <h3>📅 最近 7 天打卡</h3>
+      <div class="mini-week" id="pfWeek"></div>
+    </div>
+
+    <div class="view-card" style="margin-top:16px;">
+      <h3>⚡ 快捷操作</h3>
+      <div class="view-row">
+        <span class="vr-label">导出我的数据备份</span>
+        <button class="btn-wb ghost" id="pfExportBtn">导出</button>
+      </div>
+      <div class="view-row">
+        <span class="vr-label">退出登录</span>
+        <button class="btn-wb danger" id="pfLogoutBtn">退出登录</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ===== 移动端底部 Tab 栏 ===== -->
+<nav class="mobile-tabbar">
+  <a href="#" class="active" data-nav="home"><i class="fas fa-home"></i>首页</a>
+  <a href="stats.html" data-nav="stats"><i class="fas fa-chart-line"></i>数据</a>
+  <a href="ai.html" data-nav="ai"><i class="fas fa-robot"></i>AI</a>
+  <a href="dashboard.html" data-nav="courses"><i class="fas fa-book"></i>课程</a>
+  <a href="dashboard.html" data-nav="manage"><i class="fas fa-cog"></i>管理</a>
+</nav>
+
+
+<!-- 模块 -->
+<script src="js/particles.js"></script>
+<script src="js/ripple.js"></script>
+<script type="module" src="pages/workbench.js"></script>
+
+
+</body>
+</html>

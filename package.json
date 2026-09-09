@@ -1,0 +1,17 @@
+{
+  "name": "chenguang-platform-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "晨光自律台前端 (Vite)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "legacy-build": "node build.js",
+    "clean": "node build.js --clean"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0",
+    "terser": "^5.31.0"
+  }
+}

@@ -1,0 +1,630 @@
+/* ============================================================
+   晨光自律台 · 共享设计系统
+   从 index.html 提取, 供 login/register/dashboard 等页面复用
+   暖石墨底 + 晨光琥珀/珊瑚 + 青瓷冷色
+   ============================================================ */
+
+/* ============================================================
+   CSS 变量定义
+   ============================================================
+   这里定义了整个应用的设计令牌（Design Tokens），
+   包括颜色、字体、间距、圆角、动画等。
+   所有组件都引用这些变量，确保视觉风格统一。
+   ============================================================ */
+:root{
+  /* 背景色系：从深到浅的 5 个层级 */
+  --bg-0:#090c11; --bg-1:#0d1016; --bg-2:#11151d; --bg-3:#171c26; --bg-4:#1e2430;
+  /* 品牌色系：琥珀色、珊瑚色、青色、天空蓝、玫瑰红 */
+  --amber:#f0b25c; --amber-2:#f5c06a; --coral:#f07a5a; --coral-2:#f0975a;
+  --teal:#5cc8b2; --teal-2:#7dd9c6; --sky:#7ba7d9; --sky-2:#a3c2e8; --rose:#f26d85; --rose-2:#f58fa3;
+  /* 渐变色：用于按钮、装饰等 */
+  --grad-amber:linear-gradient(135deg,#f5c06a 0%,#f0975a 48%,#f07a5a 100%);
+  --grad-teal:linear-gradient(135deg,#5cc8b2 0%,#7ba7d9 100%);
+  --grad-rose:linear-gradient(135deg,#f26d85 0%,#f07a5a 100%);
+  /* 文字色系：从亮到暗 */
+  --text-1:#f6f4ef; --text-2:#b0b8c4; --text-3:#7d8695; --text-4:#565f6e;
+  /* 边框色系 */
+  --line:rgba(255,255,255,.06); --line-strong:rgba(255,255,255,.12); --line-focus:rgba(240,178,92,.35);
+  /* 功能色：成功绿、错误红 */
+  --ok:#58b892; --ok-soft:rgba(88,184,146,.12); --err:#ef7a72; --err-soft:rgba(239,122,114,.12);
+  /* 字体优先级列表：按可用性排序 */
+  --font:"HarmonyOS Sans SC","MiSans","PingFang SC","Microsoft YaHei UI","Microsoft YaHei",system-ui,sans-serif;
+  /* 数字专用字体：等宽字体让数字对齐更整齐 */
+  --font-num:"SF Mono","JetBrains Mono","Bahnschrift","DIN Alternate","Segoe UI",var(--font);
+  /* 间距变量：从 s1 到 s12，用于 margin、padding 等 */
+  --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:20px;--s6:24px;--s7:28px;--s8:32px;--s10:40px;--s12:48px;
+  /* 圆角变量 */
+  --r-xs:8px;--r-sm:12px;--r-md:16px;--r-lg:20px;--r-xl:24px;--r-full:999px;
+  /* 缓动函数：控制动画的加速度曲线 */
+  --ease-out-quart:cubic-bezier(.25,1,.5,1); --ease-out-expo:cubic-bezier(.16,1,.3,1); --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  /* 过渡时间 */
+  --t-fast:.15s; --t-med:.35s; --t-slow:.7s;
+  /* 阴影 */
+  --shadow-card:0 0 0 1px rgba(255,255,255,.04) inset,0 14px 40px -16px rgba(0,0,0,.55);
+  --shadow-float:0 24px 60px -20px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.06) inset;
+  --shadow-glow:0 0 30px -6px rgba(240,178,92,.25);
+  /* 毛玻璃参数 */
+  --glass-blur:16px; --glass-alpha:.72;
+}
+
+/* ============================================================
+   全局重置（Reset）
+   ============================================================
+   浏览器对不同元素有默认样式（比如 body 有 8px 的 margin）。
+   这些默认样式会导致不同浏览器下显示不一致。
+   Reset 就是把这些默认样式全部清零，让我们从零开始定义样式。
+   ============================================================ */
+/* * 选择器匹配所有元素 */
+/* margin:0;padding:0 去除所有外边距和内边距 */
+/* box-sizing:border-box 让 padding 和 border 包含在元素的总宽度内 */
+*{margin:0;padding:0;box-sizing:border-box}
+
+/* 平滑滚动：点击锚点链接时，页面平滑滚动而不是瞬间跳转 */
+html{scroll-behavior:smooth}
+
+/* ============================================================
+   Body 基础样式
+   ============================================================ */
+body{
+  font-family:var(--font);         /* 使用定义好的字体 */
+  background:var(--bg-0);          /* 深色背景 */
+  color:var(--text-1);             /* 浅色文字（在深色背景上） */
+  min-height:100vh;                /* 至少占满整个视口高度 */
+  overflow-x:hidden;               /* 隐藏水平滚动条 */
+  line-height:1.6;                 /* 行高 1.6 倍，增加可读性 */
+  -webkit-font-smoothing:antialiased;  /* 字体抗锯齿：让文字更清晰 */
+  -moz-osx-font-smoothing:grayscale;
+  position:relative;
+  font-size:14px;                  /* 基础字号 */
+}
+
+/* ============================================================
+   选中文本的样式
+   ============================================================ */
+/* ::selection 是 CSS 伪元素，用于设置用户选中文本时的样式 */
+/* 这里选中的文本显示半透明金色背景 + 深色文字 */
+::selection{background:rgba(240,178,92,.35);color:#1a1205}
+
+/* ============================================================
+   自定义滚动条
+   ============================================================ */
+/* WebKit 内核浏览器（Chrome、Safari、Edge）支持的自定义滚动条样式 */
+::-webkit-scrollbar{width:6px;height:6px}       /* 滚动条宽度 6px */
+::-webkit-scrollbar-track{background:transparent} /* 滚动条轨道透明 */
+::-webkit-scrollbar-thumb{background:rgba(168,176,189,.18);border-radius:999px} /* 滚动条滑块：半透明灰色 + 圆角 */
+::-webkit-scrollbar-thumb:hover{background:rgba(168,176,189,.35)}  /* 鼠标悬停时变深 */
+
+/* ============================================================
+   基础元素样式重置
+   ============================================================ */
+/* 按钮：继承字体，清除默认样式，手势操作优化 */
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;touch-action:manipulation}
+/* 表单元素：继承字体和颜色 */
+input,select,textarea{font-family:inherit;color:var(--text-1);font-size:14px}
+/* 聚焦时去除默认轮廓线（后面会自定义聚焦样式） */
+input:focus,select:focus,textarea:focus{outline:none}
+/* 链接：琥珀色，无下划线，悬停时颜色变化 */
+a{color:var(--amber-2);text-decoration:none;transition:color var(--t-fast)}
+a:hover{color:var(--amber)}
+/* 数字元素：使用等宽字体，tabular-nums 让数字对齐 */
+.num{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+
+/* ============================================================
+   玻璃拟态（Glassmorphism）
+   ============================================================
+   毛玻璃效果是一种现代 UI 设计风格：
+   - 半透明背景：让用户能看到背景内容
+   - 背景模糊：让背景内容模糊，突出前景
+   - 边框：添加微妙的白色边框，增加层次感
+
+   这种效果在 iOS、macOS 等系统中广泛使用，
+   给人一种"磨砂玻璃"的质感。
+   ============================================================ */
+.glass{
+  background:rgba(23,28,38,var(--glass-alpha));           /* 深色半透明背景 */
+  backdrop-filter:blur(var(--glass-blur));                 /* CSS 背景模糊 */
+  -webkit-backdrop-filter:blur(var(--glass-blur));         /* 兼容 Safari */
+  border:1px solid var(--line)                             /* 微妙的白色边框 */
+}
+
+/* ============================================================
+   卡片组件
+   ============================================================
+   卡片是 UI 设计中常用的容器，用于组织相关内容。
+   这个卡片有：
+   - 渐变背景（从半透明白色到深色）
+   - 圆角边框
+   - 阴影效果
+   - 悬停动画（上浮 + 加深阴影）
+   ============================================================ */
+.card{
+  /* 背景：从上到下的微渐变 + 深色底色 */
+  background:linear-gradient(180deg,rgba(255,255,255,.03) 0%,rgba(255,255,255,0) 100%),var(--bg-2);
+  border:1px solid var(--line);                    /* 微妙边框 */
+  border-radius:var(--r-lg);                       /* 大圆角 */
+  box-shadow:var(--shadow-card);                   /* 卡片阴影 */
+  overflow:hidden;                                 /* 防止内容溢出圆角 */
+  /* 过渡动画：悬停时的上浮和阴影变化 */
+  transition:transform var(--t-med) var(--ease-out-quart),box-shadow var(--t-med) var(--ease-out-quart),border-color var(--t-fast);
+}
+/* 悬停效果：上浮 3px + 加深阴影 + 边框变亮 */
+.card:hover{transform:translateY(-3px);box-shadow:var(--shadow-float);border-color:var(--line-strong)}
+
+/* ============================================================
+   按钮系统
+   ============================================================
+   按钮是用户交互的核心元素。
+   这里定义了多种按钮变体：
+   - btn-primary: 主按钮（金色渐变，最醒目的操作）
+   - btn-ghost: 幽灵按钮（透明背景，次要操作）
+   - btn-danger: 危险按钮（红色，删除等危险操作）
+   - btn-sm: 小按钮
+   - btn-block: 全宽按钮（占满父容器宽度）
+
+   所有按钮都有：
+   - 圆角
+   - 悬停动画（上浮 1px + 阴影加深）
+   - 禁用状态（半透明 + 禁止光标）
+   ============================================================ */
+/* 按钮基础样式 */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;border-radius:var(--r-sm);font-size:13px;font-weight:600;transition:all var(--t-fast) var(--ease-out-quart);white-space:nowrap}
+/* 禁用状态：半透明 + 禁止点击 */
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
+/* 主按钮：金色渐变背景 + 深色文字 + 金色阴影 */
+.btn-primary{background:var(--grad-amber);color:#1a1205;box-shadow:0 4px 16px -4px rgba(240,178,92,.35)}
+/* 主按钮悬停：上浮 1px + 阴影加深 */
+.btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 22px -4px rgba(240,178,92,.45)}
+/* 主按钮按下：回到原位（不跳动） */
+.btn-primary:active:not(:disabled){transform:translateY(0)}
+/* 幽灵按钮：半透明背景 + 边框 */
+.btn-ghost{background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--text-1)}
+/* 幽灵按钮悬停：背景变亮 + 边框变亮 */
+.btn-ghost:hover:not(:disabled){background:rgba(255,255,255,.08);border-color:var(--line-strong)}
+/* 危险按钮：红色半透明背景 + 红色边框 + 红色文字 */
+.btn-danger{background:rgba(239,122,114,.12);border:1px solid rgba(239,122,114,.25);color:var(--err)}
+/* 危险按钮悬停：背景加深 */
+.btn-danger:hover:not(:disabled){background:rgba(239,122,114,.2)}
+/* 小按钮变体 */
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:var(--r-xs)}
+/* 全宽按钮：宽度 100% */
+.btn-block{width:100%}
+
+/* ============================================================
+   表单元素
+   ============================================================
+   输入框、文本域等表单元素的样式。
+   包括：
+   - 基础输入框样式
+   - 悬停/聚焦状态变化
+   - 错误状态
+   - 带图标的输入组
+   ============================================================ */
+/* 输入框基础样式 */
+.inp{width:100%;padding:11px 14px;background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--text-1);transition:border-color var(--t-fast),box-shadow var(--t-fast)}
+/* 悬停：边框变亮 */
+.inp:hover{border-color:var(--line-strong)}
+/* 聚焦：边框变金色 + 添加金色光晕 */
+.inp:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(240,178,92,.12)}
+/* 占位符颜色 */
+.inp::placeholder{color:var(--text-4)}
+/* 错误状态：红色边框 + 红色光晕 */
+.inp.err{border-color:var(--err);box-shadow:0 0 0 3px rgba(239,122,114,.1)}
+/* 多行文本框：最小高度 80px，可垂直拖拽调整大小 */
+textarea.inp{min-height:80px;resize:vertical;line-height:1.55}
+/* 输入组：用于带图标的输入框（如搜索框） */
+.inp-group{position:relative}
+.inp-group .inp{padding-left:42px}  /* 左侧留出图标位置 */
+/* 输入组内的图标：绝对定位，垂直居中 */
+.inp-group .ic{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-4);font-size:16px;pointer-events:none}
+/* 表单标签：小字号、加粗、灰色 */
+label.fl{display:block;font-size:12px;font-weight:600;color:var(--text-3);margin-bottom:6px;letter-spacing:.3px}
+
+/* ============================================================
+   标签和徽章组件
+   ============================================================ */
+/* 任务标签：琥珀色小标签 */
+.li-tag{display:inline-flex;align-items:center;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;color:var(--amber);background:rgba(240,178,92,.10)}
+/* 徽章：通用的小型标识组件 */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:var(--r-full);font-size:11px;font-weight:600}
+/* 成功徽章 */
+.badge-ok{color:var(--ok);background:var(--ok-soft)}
+/* 错误徽章 */
+.badge-err{color:var(--err);background:var(--err-soft)}
+
+/* ============================================================
+   Auth 页面布局 (login / register)
+   ============================================================
+   登录和注册页面的布局：
+   - 全屏居中显示
+   - 背景有微妙的渐变光晕（琥珀色 + 青色）
+   - 卡片居中，最大宽度 420px
+   ============================================================ */
+/* 页面容器：flexbox 居中，至少占满视口高度 */
+.auth-page{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:var(--s4);position:relative}
+/* 背景装饰：用伪元素创建两个径向渐变光晕 */
+.auth-page::before{
+  content:'';position:fixed;inset:0;z-index:-1;
+  background:
+    radial-gradient(ellipse 600px 400px at 20% 30%,rgba(240,178,92,.08),transparent),  /* 琥珀色光晕 */
+    radial-gradient(ellipse 500px 350px at 80% 70%,rgba(92,200,178,.06),transparent),  /* 青色光晕 */
+    var(--bg-0);
+}
+/* 登录/注册卡片 */
+.auth-card{width:100%;max-width:420px;padding:var(--s8);border-radius:var(--r-xl)}
+/* Logo 区域 */
+.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:var(--s6)}
+/* Logo 图标：金色渐变背景 */
+.auth-logo .dot{width:36px;height:36px;border-radius:var(--r-sm);background:var(--grad-amber);display:flex;align-items:center;justify-content:center;font-size:18px;color:#1a1205;font-weight:700}
+/* 应用名称 */
+.auth-logo h1{font-size:20px;font-weight:700}
+/* 副标题 */
+.auth-logo .sub{font-size:12px;color:var(--text-3);font-weight:400}
+/* 表单布局：垂直排列，间距 16px */
+.auth-form{display:flex;flex-direction:column;gap:var(--s4)}
+/* 底部链接区域 */
+.auth-foot{text-align:center;margin-top:var(--s5);font-size:13px;color:var(--text-3)}
+/* 字段错误提示：默认隐藏，有 .show 类时显示 */
+.field-err{font-size:12px;color:var(--err);margin-top:4px;display:none}
+.field-err.show{display:block}
+/* 表单提示框：成功或错误 */
+.auth-alert{padding:10px 14px;border-radius:var(--r-sm);font-size:13px;margin-bottom:var(--s4);display:none;align-items:center;gap:8px}
+.auth-alert.show{display:flex}
+/* 错误提示框：红色 */
+.auth-alert.err{color:var(--err);background:var(--err-soft);border:1px solid rgba(239,122,114,.2)}
+/* 成功提示框：绿色 */
+.auth-alert.ok{color:var(--ok);background:var(--ok-soft);border:1px solid rgba(88,184,146,.2)}
+/* "记住我" 行：左右分布 */
+.remember-row{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--text-3)}
+.remember-row label{display:flex;align-items:center;gap:6px;cursor:pointer}
+/* 自定义复选框颜色 */
+.remember-row input[type=checkbox]{width:15px;height:15px;accent-color:var(--amber)}
+/* 链接样式 */
+.link-amber{color:var(--amber-2);cursor:pointer}
+.link-amber:hover{color:var(--amber)}
+
+/* ============================================================
+   密码强度条
+   ============================================================
+   用 4 个小条来直观显示密码强度：
+   - s1（弱）：只有第 1 条变红
+   - s2（中弱）：前 2 条变橙
+   - s3（中强）：前 3 条变金
+   - s4（强）：全部 4 条变绿
+   ============================================================ */
+.pwd-strength{display:flex;gap:4px;margin-top:6px}
+.pwd-strength span{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.08);transition:background var(--t-fast)}
+/* 弱：第 1 条变红 */
+.pwd-strength.s1 span:nth-child(1){background:var(--err)}
+/* 中弱：前 2 条变橙 */
+.pwd-strength.s2 span:nth-child(-n+2){background:var(--coral)}
+/* 中强：前 3 条变金 */
+.pwd-strength.s3 span:nth-child(-n+3){background:var(--amber)}
+/* 强：全部 4 条变绿 */
+.pwd-strength.s4 span{background:var(--ok)}
+/* 密码提示文字 */
+.pwd-hint{font-size:11px;color:var(--text-4);margin-top:4px}
+
+/* ============================================================
+   Dashboard 布局
+   ============================================================
+   主面板页面的布局结构：
+   - 顶部导航栏：固定在顶部，毛玻璃效果
+   - 主内容区：最大宽度 960px，居中
+   - 统计卡片行：自适应网格
+   - 任务列表：垂直排列
+   ============================================================ */
+/* 顶部导航栏 */
+.dash-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:var(--s4) var(--s6);background:var(--bg-1);
+  border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);  /* 毛玻璃效果 */
+}
+/* 品牌 Logo 区域 */
+.dash-header .brand{display:flex;align-items:center;gap:10px}
+.dash-header .brand .dot{width:32px;height:32px;border-radius:var(--r-xs);background:var(--grad-amber);display:flex;align-items:center;justify-content:center;font-size:16px;color:#1a1205;font-weight:700}
+.dash-header .brand h1{font-size:16px;font-weight:700}
+/* 用户区域：头像 + 用户名 */
+.dash-header .user-area{display:flex;align-items:center;gap:var(--s3)}
+/* 头像：圆形，深色背景 */
+.dash-header .avatar{width:32px;height:32px;border-radius:var(--r-full);background:var(--bg-3);display:flex;align-items:center;justify-content:center;font-size:14px;border:1px solid var(--line-strong)}
+.dash-header .uname{font-size:13px;color:var(--text-2)}
+/* 主内容区：最大宽度 960px，居中 */
+.dash-main{max-width:960px;margin:0 auto;padding:var(--s6) var(--s4) var(--s10)}
+
+/* ============================================================
+   统计卡片行
+   ============================================================
+   使用 CSS Grid 布局，自动适应屏幕宽度：
+   - 每张卡片最小宽度 180px
+   - 自动填充到一行
+   - 小屏幕时自动换行
+   ============================================================ */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--s4);margin-bottom:var(--s6)}
+.stat-card{padding:var(--s5);border-radius:var(--r-lg)}
+.stat-card .label{font-size:12px;color:var(--text-3);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.stat-card .value{font-size:28px;font-weight:700;font-family:var(--font-num)}
+.stat-card .value .unit{font-size:14px;color:var(--text-3);font-weight:400;margin-left:4px}
+/* 不同统计卡片的图标颜色 */
+.stat-card .ic-amber{color:var(--amber)} .stat-card .ic-teal{color:var(--teal)} .stat-card .ic-coral{color:var(--coral)} .stat-card .ic-sky{color:var(--sky)}
+
+/* ============================================================
+   任务列表
+   ============================================================
+   每个任务项包含：
+   - 任务信息（名称 + 元数据）
+   - 连续天数
+   - 签到按钮
+   ============================================================ */
+.task-list{display:flex;flex-direction:column;gap:var(--s3)}
+/* 任务项：水平布局 */
+.task-item{display:flex;align-items:center;gap:var(--s4);padding:var(--s4) var(--s5);border-radius:var(--r-md);background:var(--bg-2);border:1px solid var(--line);transition:all var(--t-fast)}
+.task-item:hover{border-color:var(--line-strong)}
+/* 任务信息区域：flex:1 占据剩余空间 */
+.task-item .info{flex:1;min-width:0}
+/* 任务名称 */
+.task-item .info .name{font-size:14px;font-weight:600;color:var(--text-1)}
+/* 任务元数据（如创建时间） */
+.task-item .info .meta{font-size:12px;color:var(--text-3);margin-top:2px}
+/* 连续天数：金色大号数字 */
+.task-item .streak{font-size:13px;font-weight:700;color:var(--amber);font-family:var(--font-num)}
+/* 已完成的任务：降低透明度 + 删除线 */
+.task-item.done{opacity:.6}
+.task-item.done .name{text-decoration:line-through;color:var(--text-3)}
+/* 签到按钮：不允许收缩 */
+.task-item .checkin-btn{flex-shrink:0}
+
+/* ============================================================
+   空状态
+   ============================================================
+   当列表没有内容时显示的占位信息。
+   包含一个大图标 + 主文字 + 副文字。
+   ============================================================ */
+.empty{text-align:center;padding:var(--s12) var(--s4);color:var(--text-3)}
+.empty .ic{font-size:40px;margin-bottom:var(--s3);opacity:.5}
+.empty .txt{font-size:14px}
+.empty .sub{font-size:12px;color:var(--text-4);margin-top:6px}
+
+/* ============================================================
+   Toast 通知
+   ============================================================
+   Toast 是轻量级的弹出提示，通常出现在屏幕右上角。
+   本模块实现的 Toast 有：
+   - 从右侧滑入动画（CSS @keyframes）
+   - 自动消失（动画结束后移除）
+   - 多种类型：成功(.ok)、错误(.err)、信息(.info)
+   ============================================================ */
+/* Toast 容器：固定在右上角 */
+.toast-wrap{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+/* Toast 条目 */
+.toast{
+  padding:10px 16px;border-radius:var(--r-sm);font-size:13px;font-weight:500;
+  background:var(--bg-3);border:1px solid var(--line-strong);color:var(--text-1);
+  box-shadow:var(--shadow-float);
+  animation:toastIn .3s var(--ease-out-expo);  /* 入场动画：从右侧滑入 */
+  pointer-events:auto;display:flex;align-items:center;gap:8px;
+}
+/* 成功 Toast：绿色边框 + ✓ 图标 */
+.toast.ok{border-color:rgba(88,184,146,.3)} .toast.ok::before{content:'✓';color:var(--ok)}
+/* 错误 Toast：红色边框 + ! 图标 */
+.toast.err{border-color:rgba(239,122,114,.3)} .toast.err::before{content:'!';color:var(--err)}
+/* 信息 Toast：蓝色 ℹ 图标 */
+.toast.info::before{content:'ℹ';color:var(--sky)}
+/* 入场动画：从右侧 20px 位置滑入，同时淡入 */
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+/* 退场动画类：向右滑出 */
+.toast.out{animation:toastOut .3s var(--ease-out-quart) forwards}
+/* 退场动画：向右侧 20px 滑出，同时淡出 */
+@keyframes toastOut{to{opacity:0;transform:translateX(20px)}}
+
+/* ============================================================
+   全局 Loading 遮罩
+   ============================================================
+   当页面正在加载数据时显示的遮罩层。
+   包含一个旋转的加载动画（spinner）。
+   ============================================================ */
+/* 遮罩层：覆盖整个屏幕，半透明黑色背景 + 模糊 */
+.global-loader{
+  position:fixed;inset:0;z-index:9998;background:rgba(9,12,17,.6);
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  display:none;align-items:center;justify-content:center;  /* 默认隐藏 */
+}
+.global-loader.show{display:flex}  /* 有 .show 类时显示 */
+/* 加载动画：圆形边框旋转 */
+.global-loader .spinner{
+  width:40px;height:40px;border:3px solid rgba(255,255,255,.1);
+  border-top-color:var(--amber);border-radius:50%;  /* 只有顶部边框是金色 */
+  animation:spin .7s linear infinite;  /* 无限旋转 */
+}
+/* 旋转动画：从 0° 到 360° */
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ============================================================
+   响应式断点（Responsive Breakpoints）
+   ============================================================
+   响应式设计让网页在不同屏幕尺寸下都能正常显示。
+   @media 查询根据屏幕宽度应用不同的样式。
+
+   断点设置：
+   - max-width: 640px  → 手机竖屏
+   - max-width: 760px  → 手机横屏 / 小平板
+   - max-width: 860px  → 平板
+   ============================================================ */
+@media(max-width:640px){
+  .dash-main{padding:var(--s4) var(--s3)}  /* 减小边距 */
+  .stat-row{grid-template-columns:repeat(2,1fr)}  /* 统计卡片改为 2 列 */
+  .dash-header .uname{display:none}  /* 手机上隐藏用户名 */
+}
+
+/* ============================================================
+   实时动态流 (Feed)
+   ============================================================
+   实时动态流显示其他用户的签到动态。
+   布局：左侧主内容 + 右侧 320px 侧边栏。
+   小屏幕时侧边栏移到下方。
+   ============================================================ */
+/* 主内容 + 侧边栏的两栏布局 */
+.dash-grid{display:grid;grid-template-columns:1fr 320px;gap:var(--s6);margin-top:var(--s6)}
+/* 平板以下：改为单栏布局 */
+@media(max-width:860px){.dash-grid{grid-template-columns:1fr}}
+
+/* 区域卡片：用于分组内容 */
+.section-card{padding:var(--s5);border-radius:var(--r-lg)}
+/* 区域标题栏 */
+.section-card .sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--s4)}
+.section-card .sec-head h2{font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px}
+/* 实时状态指示灯：绿色脉冲动画 */
+.section-card .sec-head .live-dot{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:livePulse 2s infinite}
+/* 脉冲动画：从小到大扩散，同时变透明 */
+@keyframes livePulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(88,184,146,.4)}50%{opacity:.6;box-shadow:0 0 0 6px rgba(88,184,146,0)}}
+
+/* 动态列表：垂直排列，最大高度限制 */
+.feed-list{display:flex;flex-direction:column;gap:2px;max-height:520px;overflow-y:auto}
+/* 单条动态 */
+.feed-item{display:flex;gap:var(--s3);padding:var(--s3) 0;border-bottom:1px solid var(--line)}
+.feed-item:last-child{border-bottom:none}
+/* 新动态入场动画：从左侧滑入 + 背景闪烁 */
+.feed-item-new{animation:feedSlideIn .4s var(--ease-out-expo)}
+@keyframes feedSlideIn{from{opacity:0;transform:translateX(-12px);background:rgba(240,178,92,.06)}to{opacity:1;transform:translateX(0);background:transparent}}
+
+/* 动态用户头像 */
+.feed-avatar,.feed-avatar-placeholder{width:36px;height:36px;border-radius:var(--r-full);flex-shrink:0;object-fit:cover}
+/* 头像占位符：显示用户名首字 */
+.feed-avatar-placeholder{background:var(--bg-3);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--amber)}
+
+/* 动态内容区域 */
+.feed-body{flex:1;min-width:0}
+.feed-text{font-size:13px;line-height:1.5;color:var(--text-2)}
+/* 用户名：加粗 */
+.feed-user{font-weight:600;color:var(--text-1)}
+/* 任务名：金色 */
+.feed-task{font-weight:600;color:var(--amber-2)}
+
+/* 动态元信息（时间、连续天数等） */
+.feed-meta{display:flex;align-items:center;gap:var(--s3);margin-top:4px;font-size:11px;color:var(--text-4)}
+/* 连续天数：金色加粗 */
+.feed-streak{color:var(--amber);font-weight:600}
+
+/* ============================================================
+   排行榜样板 (Leaderboard)
+   ============================================================
+   显示用户排名，前三名有特殊颜色标识。
+   ============================================================ */
+.lb-list{display:flex;flex-direction:column;gap:4px}
+/* 排行榜单项 */
+.lb-item{display:flex;align-items:center;gap:var(--s3);padding:8px var(--s3);border-radius:var(--r-xs);transition:background var(--t-fast)}
+.lb-item:hover{background:rgba(255,255,255,.03)}
+/* 排名数字 */
+.lb-rank{width:20px;text-align:center;font-size:13px;font-weight:700;color:var(--text-4);font-family:var(--font-num)}
+/* 第 1 名：金色 */
+.lb-rank-1 .lb-rank{color:var(--amber)} .lb-rank-2 .lb-rank{color:var(--sky-2)} .lb-rank-3 .lb-rank{color:var(--coral-2)}
+/* 第 1 名背景 */
+.lb-rank-1{background:rgba(240,178,92,.06)}
+
+/* 排行榜头像 */
+.lb-avatar,.lb-avatar-placeholder{width:24px;height:24px;border-radius:var(--r-full);flex-shrink:0;object-fit:cover}
+.lb-avatar-placeholder{background:var(--bg-3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text-3)}
+
+/* 用户名：单行显示，溢出省略 */
+.lb-name{flex:1;font-size:13px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 排行数值：金色数字 */
+.lb-value{font-size:12px;font-weight:600;color:var(--amber);font-family:var(--font-num)}
+
+/* 排行榜空状态 */
+.lb-empty{padding:var(--s5);text-align:center;font-size:12px;color:var(--text-4)}
+
+/* ============================================================
+   实时连接状态指示
+   ============================================================
+   显示 WebSocket 或其他实时连接的状态：
+   - connected（已连接）：绿色脉冲点
+   - disconnected（断开）：红色点
+   ============================================================ */
+.rt-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-4)}
+.rt-status .dot{width:6px;height:6px;border-radius:50%;background:var(--text-4)}
+/* 已连接：绿色 + 脉冲动画 */
+.rt-status.connected .dot{background:var(--ok);animation:livePulse 2s infinite}
+/* 断开：红色 */
+.rt-status.disconnected .dot{background:var(--err)}
+
+/* ============================================================
+   统计图表页面 (Stats)
+   ============================================================
+   图表页面的布局：两栏网格。
+   小屏幕时改为单栏。
+   ============================================================ */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--s5);margin-bottom:var(--s6)}
+@media(max-width:760px){.stats-grid{grid-template-columns:1fr}}
+
+/* 图表卡片 */
+.chart-card{padding:var(--s5);border-radius:var(--r-lg);background:var(--bg-2);border:1px solid var(--line);box-shadow:var(--shadow-card)}
+.chart-card .ch-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--s4)}
+.chart-card .ch-head h3{font-size:14px;font-weight:700;color:var(--text-1)}
+.chart-card .ch-head .ch-sub{font-size:11px;color:var(--text-4)}
+/* 图表容器：固定高度 */
+.chart-canvas-wrap{position:relative;height:260px}
+.chart-canvas-wrap.sm{height:220px}
+
+/* ============================================================
+   统计总览数字卡片（KPI）
+   ============================================================
+   用于显示关键指标（如总签到次数、平均连续天数等）。
+   自适应网格布局。
+   ============================================================ */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:var(--s4);margin-bottom:var(--s6)}
+.kpi-card{padding:var(--s5);border-radius:var(--r-lg);background:var(--bg-2);border:1px solid var(--line)}
+.kpi-card .label{font-size:12px;color:var(--text-3);margin-bottom:6px}
+.kpi-card .value{font-size:24px;font-weight:700;font-family:var(--font-num);color:var(--text-1)}
+.kpi-card .value .unit{font-size:13px;color:var(--text-3);font-weight:400;margin-left:3px}
+
+/* ============================================================
+   热力图（GitHub 风格）
+   ============================================================
+   类似 GitHub 个人主页的贡献热力图：
+   - 每个小方格代表一天
+   - 颜色深浅表示活跃程度
+   - 0 级（最浅）到 4 级（最深）
+
+   结构：
+   - .hm-months: 月份标签行
+   - .hm-weekdays: 星期标签列（一~日）
+   - .hm-grid: 热力图主体（由多个 .hm-col 组成）
+   - .hm-cell: 单个日期方格
+   ============================================================ */
+.hm-container{overflow-x:auto;padding-bottom:var(--s2)}
+/* 月份标签行 */
+.hm-months{display:grid;grid-auto-columns:14px;grid-auto-flow:column;grid-template-rows:auto;margin-bottom:4px;font-size:10px;color:var(--text-4)}
+.hm-months span{white-space:nowrap}
+/* 热力图主体布局 */
+.hm-body{display:flex;gap:4px}
+/* 星期标签列（一~日） */
+.hm-weekdays{display:grid;grid-template-rows:repeat(7,14px);gap:3px;font-size:10px;color:var(--text-4);padding-top:0}
+.hm-weekdays span{display:flex;align-items:center;line-height:14px}
+/* 热力图列 */
+.hm-grid{display:flex;gap:3px}
+/* 单列：7 个方格（一周 7 天） */
+.hm-col{display:grid;grid-template-rows:repeat(7,14px);gap:3px}
+/* 单个日期方格：14x14 像素，圆角 */
+.hm-cell{width:14px;height:14px;border-radius:3px;background:rgba(255,255,255,.04)}
+/* 空白方格（无数据的日期） */
+.hm-cell.hm-empty{background:transparent}
+/* 活跃度等级 0-4：颜色从浅到深 */
+.hm-cell.hm-level-0{background:rgba(255,255,255,.04)}
+.hm-cell.hm-level-1{background:rgba(240,178,92,.20)}
+.hm-cell.hm-level-2{background:rgba(240,178,92,.40)}
+.hm-cell.hm-level-3{background:rgba(240,178,92,.65)}
+.hm-cell.hm-level-4{background:rgba(240,178,92,.90)}
+/* 方格悬停：添加金色边框 */
+.hm-cell:hover{outline:1px solid rgba(240,178,92,.5);outline-offset:1px}
+/* 图例：解释颜色含义 */
+.hm-legend{display:flex;align-items:center;gap:4px;margin-top:var(--s3);font-size:10px;color:var(--text-4)}
+.hm-legend .hm-cell{width:11px;height:11px}
+.hm-legend span{margin:0 2px}
+
+/* ============================================================
+   图表空状态
+   ============================================================
+   当图表没有数据时显示的占位信息。
+   ============================================================ */
+.chart-empty{text-align:center;padding:var(--s8);color:var(--text-4);font-size:13px}
+.chart-empty .ic{font-size:28px;margin-bottom:var(--s2);opacity:.5}
