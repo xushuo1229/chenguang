@@ -272,6 +272,7 @@ import '../js/sync.js';
       if ($('#bookPanel') && $('#bookPanel').classList.contains('show')) renderBookList();
       if ($('#sportPanel') && $('#sportPanel').classList.contains('show')) renderSportList();
       if ($('#englishPanel') && $('#englishPanel').classList.contains('show')) renderEnglishList();
+      if (typeof updateOnboardUI === 'function') updateOnboardUI();
     }
 
     /* ========== 列表渲染：课程 ========== */
@@ -1056,6 +1057,90 @@ import '../js/sync.js';
     // onUpdate 是一个「事件监听器」：数据变化时自动调用 updateUI()
     Store.onUpdate(updateUI);
 
+    /* ---------- 新手指引 ---------- */
+    function onboardState() {
+      return {
+        checkin: !!Store.isCheckedIn(today()),
+        course: (Store.getCourses() || []).length > 0,
+        todo: (Store.getTodosByDate(today()) || []).length > 0,
+      };
+    }
+
+    function hasAnyRecord() {
+      var s = onboardState();
+      return s.checkin || s.course || s.todo ||
+        (Store.getReadings() || []).length > 0 ||
+        (Store.getSports() || []).length > 0 ||
+        (Store.getEnglish() || []).length > 0 ||
+        (Store.getFocus() || []).length > 0;
+    }
+
+    function updateOnboardUI() {
+      var card = $('#onboardCard');
+      if (!card || card.classList.contains('hidden')) return;
+      var s = onboardState();
+      [['checkin', s.checkin], ['course', s.course], ['todo', s.todo]].forEach(function (pair) {
+        var btn = document.querySelector('#onboardActions [data-ob="' + pair[0] + '"]');
+        if (btn) btn.classList.toggle('done', pair[1]);
+      });
+      var doneCount = (s.checkin ? 1 : 0) + (s.course ? 1 : 0) + (s.todo ? 1 : 0);
+      setText('#onboardProgress', doneCount + ' / 3');
+      if (doneCount === 3) finishOnboard(true);
+    }
+
+    function maybeShowOnboard() {
+      var card = $('#onboardCard');
+      if (!card) return;
+      try {
+        var u = Store.getUser() || {};
+        if (u.onboarded || hasAnyRecord()) return;
+      } catch (_) { return; }
+      card.classList.remove('hidden');
+      updateOnboardUI();
+    }
+
+    function finishOnboard(silent) {
+      var card = $('#onboardCard');
+      if (card) card.classList.add('hidden');
+      try { Store.setUser({ onboarded: true }); } catch (_) {}
+      if (!silent) toast('🎉 新手指引完成，开始记录你的成长吧！', 'success');
+    }
+
+    function runOnboardAction(action) {
+      if (action === 'checkin') {
+        if (!Store.isCheckedIn(today())) {
+          Store.addCheckin(today(), 'done');
+          updateUI();
+          toast('✅ 今日打卡成功！', 'success');
+        }
+        return;
+      }
+      if (action === 'course') {
+        $('#courseName').value = '';
+        $('#courseTotal').value = 20;
+        $('#courseLearned').value = 0;
+        openModal('modalAddCourse');
+        return;
+      }
+      if (action === 'todo') {
+        var taskTextEl = $('#taskText');
+        if (taskTextEl) taskTextEl.value = '';
+        var priSel = $('#taskPriority');
+        if (priSel) priSel.value = 'mid';
+        openModal('modalAddTask');
+        setTimeout(function () { taskTextEl && taskTextEl.focus(); }, 120);
+      }
+    }
+
+    var obCloseBtn = $('#onboardClose');
+    if (obCloseBtn) obCloseBtn.addEventListener('click', function () {
+      finishOnboard(true);
+      toast('已跳过新手引导，随时可以从零开始添加记录 ✨', 'info');
+    });
+    document.querySelectorAll('#onboardActions [data-ob]').forEach(function (btn) {
+      btn.addEventListener('click', function () { runOnboardAction(this.getAttribute('data-ob')); });
+    });
+
     /* ---------- 首次加载（初始化） ---------- */
     // init() 在页面加载完毕后执行，负责：
     //   1. 从云端同步最新数据（如果有登录态）
@@ -1063,7 +1148,12 @@ import '../js/sync.js';
     //   3. 更新页面显示
     function init() {
       if (window.CGSync && CGStore.getToken && CGStore.getToken()) {
-        try { window.CGSync.afterLogin().then(updateUI).catch(updateUI); } catch (_) {}
+        try {
+          window.CGSync.afterLogin().then(function () {
+            updateUI();
+            maybeShowOnboard();
+          }).catch(updateUI);
+        } catch (_) {}
       }
       var wd0 = $('#welcomeDate'); if (wd0) wd0.textContent = fmtDate(new Date());
       // 恢复主题偏好
@@ -1080,6 +1170,7 @@ import '../js/sync.js';
       var wantView = new URLSearchParams(location.search).get('view');
       if (WB_VIEWS.indexOf(wantView) === -1) wantView = 'home';
       switchWbView(wantView);
+      maybeShowOnboard();
     }
 
     // DOM 加载时机判断：
