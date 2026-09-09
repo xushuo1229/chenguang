@@ -10,8 +10,8 @@
 前端多页 (静态文件)               数据与同步层 (js/)              后端 (backend/)
 ┌─────────────┐              ┌──────────────────┐          ┌─────────────────────┐
 │ index.html  │              │ store.js · CGStore│          │ Express + JWT API    │
-│ dashboard   │◄────────────►│ 统一数据层         │◄────────►│ 端口 3000             │
-│ workbench   │              │ 单一 key 全页共享  │  同步层   │ /api/data 整份快照    │
+│ workbench   │◄────────────►│ 统一数据层         │◄────────►│ 端口 3000             │
+│ stats / ai  │              │ 单一 key 全页共享  │  同步层   │ /api/data 整份快照    │
 │ ...         │              │ sync.js · CGSync  │          │ SQLite 按用户隔离      │
 └─────────────┘              │ 登录拉取/防抖回写  │          └─────────────────────┘
                              └──────────────────┘
@@ -19,7 +19,7 @@
 
 | 层级 | 技术 | 说明 |
 |------|------|------|
-| 前端 | 原生 HTML/CSS/JS（多页静态） | index（落地/注册登录）、dashboard（课程/书架/运动/英语）、workbench（工作台总览） |
+| 前端 | 原生 HTML/CSS/JS（多页静态） | index（落地/注册登录）、workbench（工作台）、stats（数据统计）、ai（AI 助手） |
 | 数据层 | `js/store.js`（CGStore） | 所有页面共享**单一 key** `chenguangData`，八类数据：user/checkins/sports/readings/courses/english/todos/focus；写入即派发 `chenguang:update` 事件跨页实时刷新 |
 | 同步层 | `js/sync.js`（CGSync） | 登录后「先推后拉」同步云端；本地变更防抖 400ms 回写；离线/无 token 静默走本地 |
 | 后端 | Node.js + Express + SQLite（better-sqlite3）+ JWT | `backend/` 目录，注册/登录/鉴权，按用户隔离，多设备数据一致 |
@@ -43,7 +43,7 @@ python -m http.server 8080
 浏览器打开 http://localhost:8080/index.html
 
 ### 3. 验证多设备同步
-- 注册账号 → 在 dashboard「课程进度」添加一门课
+- 注册账号 → 在 workbench「课程」添加一门课
 - 换一个浏览器（或清空本地存储）用**同一账号**登录 → 课程依然存在，完全一致
 
 ## 功能特性
@@ -70,22 +70,29 @@ python -m http.server 8080
 ```
 chenguang-platform/
 ├── index.html                # 落地页（注册/登录入口）
-├── dashboard.html            # 仪表盘：课程/书架/运动/英语/统计（功能最全）
 ├── workbench.html            # 工作台：今日计划/四卡总览/成长数据
-├── login.html / register.html # 认证页
 ├── stats.html                # 数据统计
+├── ai.html                   # AI 学习助手
 ├── js/
 │   ├── store.js              # 【核心】统一数据层 CGStore（单 key 真源）
 │   ├── sync.js               # 【核心】云端同步层 CGSync（先推后拉）
 │   └── apiClient.js          # API 客户端（基址 localhost:3000/api）
+├── css/
+│   ├── variables.css         # 设计变量
+│   ├── shared.css            # 公共组件样式
+│   ├── tech.css              # 科技感视觉升级
+│   └── app.css               # 落地页样式
 ├── backend/                  # 【当前后端】Node + Express + SQLite + JWT
-│   ├── src/server.js         # 路由 + 静态托管
-│   ├── src/db.js             # SQLite 初始化/读写
-│   ├── src/auth.js           # JWT + bcrypt
-│   └── schema.sql            # 建表 SQL
+│   ├── schema.sql            # 建表 SQL
+│   └── src/
+│       ├── server.js         # 服务入口
+│       ├── app.js            # Express 装配
+│       ├── config/env.js     # 环境变量
+│       ├── routes/           # API 路由
+│       ├── controllers/      # 控制器
+│       ├── services/         # 业务逻辑
+│       └── db/               # SQLite 数据访问
 ├── service-worker.js         # 静态资源缓存（版本化清理）
-├── css/ styles.css           # 样式
-└── server/                   # 【已废弃】早期 MySQL/Supabase 版后端，仅保留参考
 ```
 
 ## 离线 / 后端未启动行为
@@ -96,7 +103,7 @@ chenguang-platform/
 
 ## 数据导出 / 导入
 
-- dashboard 个人中心提供「导出数据」（下载 JSON 备份）与「导入数据」（从备份恢复）。
+- workbench「管理」页提供「导出数据」（下载 JSON 备份）与「导入数据」（从备份恢复）。
 - 建议定期导出，防止误操作或本地存储丢失。
 
 ## 生产部署提示

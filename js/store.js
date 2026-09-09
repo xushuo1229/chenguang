@@ -1,7 +1,7 @@
 /**
  * 晨光自律台 · 统一本地数据层 (ES Module)
  * --------------------------------------------------------------------------
- * 所有页面（index / dashboard / workbench）共享同一份数据，统一写入
+ * 所有页面（index / workbench / stats / ai）共享同一份数据，统一写入
  * localStorage 的单个 key：`chenguangData`。
  *
  * 设计原则：

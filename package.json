@@ -6,9 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "legacy-build": "node build.js",
-    "clean": "node build.js --clean"
+    "preview": "vite preview"
   },
   "devDependencies": {
     "vite": "^6.0.0",

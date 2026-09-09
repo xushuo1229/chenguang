@@ -39,8 +39,8 @@ backend/
 ├── js/sync.js            # 【新增】云端同步层
 ├── js/apiClient.js       # API 基址 http://localhost:3000/api（已存在）
 ├── index.html            # 登录/注册成功后调用 CGSync.afterLogin()
-├── dashboard.html        # 加载 sync.js；进入时先 pull 云端数据
-└── workbench.html        # 加载 sync.js；进入时先 pull 云端数据
+├── workbench.html        # 加载 sync.js；进入时先 pull 云端数据
+└── stats.html            # 加载 sync.js；进入时先 pull 云端数据
 ```
 
 ---
@@ -81,7 +81,7 @@ python -m http.server 8080
 > 此时前后端同源（同端口 3000），免 CORS。
 
 ### 4. 验证
-- 注册一个新账号 → 自动跳转到 `dashboard.html`。
+- 注册一个新账号 → 自动跳转到 `workbench.html`。
 - 在「课程进度」添加一门课 → 数据立即写入后端。
 - **换一个浏览器（或清掉 localStorage 后）用同一账号登录** → 课程依然存在，完全一致。
 

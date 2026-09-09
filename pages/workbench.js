@@ -1052,7 +1052,7 @@ import '../js/sync.js';
     $('#pfLogoutBtn')?.addEventListener('click', doLogout);
 
     /* ---------- 跨页面同步 ---------- */
-    // 当其他页面（如 dashboard）修改了数据时，自动刷新当前页面的显示
+    // 当其他页面（如 stats / ai）修改了数据时，自动刷新当前页面的显示
     // onUpdate 是一个「事件监听器」：数据变化时自动调用 updateUI()
     Store.onUpdate(updateUI);
 

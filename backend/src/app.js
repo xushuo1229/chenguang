@@ -147,7 +147,7 @@ app.use('/api', routes);                               // 第10步：业务路�
 // ===== 静态文件托管（可选，用于托管前端打包后的 SPA） =====
 // 如果配置了静态目录（比如前端构建产物目录），就把该目录下的文件直接返回
 // SPA（单页应用）的兜底：任何未匹配的路径都返回 index.html
-// 这样前端的路由（如 /login、/dashboard）才能正常工作
+// 这样前端的多页面路由才能正常工作
 if (config.staticDir && fs.existsSync(path.resolve(config.staticDir))) {
   const staticDir = path.resolve(config.staticDir);
   app.use(express.static(staticDir));
