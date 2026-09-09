@@ -12,9 +12,10 @@
   var ctx = null;
   var particles = [];
   var mouse = { x: -1000, y: -1000 };
-  var PARTICLE_COUNT = 50;
+  var PARTICLE_COUNT = 85;
   var MOUSE_RADIUS = 120;
   var SCATTER_FORCE = 8;
+  var PALETTE = [187, 195, 205, 271, 300, 330, 160];
 
   function resize() {
     if (!canvas) return;
@@ -32,10 +33,10 @@
     this.vy = 0;
     this.speed = 0.02 + Math.random() * 0.03;
     this.opacity = 0.15 + Math.random() * 0.25;
-    // 青绿色系
-    var hue = 150 + Math.random() * 40;
-    var sat = 80 + Math.random() * 20;
-    var light = 55 + Math.random() * 20;
+    // 赛博能量色系：青 / 蓝 / 紫 / 品红 / 薄荷 混合
+    var hue = PALETTE[Math.floor(Math.random() * PALETTE.length)] + (Math.random() * 8 - 4);
+    var sat = 85 + Math.random() * 15;
+    var light = 58 + Math.random() * 20;
     this.color = 'hsla(' + hue + ',' + sat + '%,' + light + '%,';
   }
 
