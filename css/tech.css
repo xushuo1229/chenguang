@@ -54,7 +54,7 @@ body::after {
 }
 
 /* 主要内容提到光斑之上 */
-.main, .chat-sidebar, .mobile-tabbar, .topbar {
+.main, .chat-sidebar, .mobile-tabbar {
   position: relative;
   z-index: 1;
 }
@@ -360,4 +360,159 @@ body::after {
   body::after,
   .sidebar .logo,
   .func-card.hero-card .btn-primary { animation: none !important; }
+}
+
+/* ============================================================
+ * 落地页桥接：把「晨光琥珀/金」换成同一套「青紫霓虹」
+ * ------------------------------------------------------------
+ * index.html 原本是另一套暖色设计系统，这里做关键覆盖，
+ * 让登录前的落地页与登录后的工作台看起来属于同一款产品。
+ * ============================================================ */
+
+/* 顶部导航：深空玻璃 */
+header.topbar,
+.topbar.scrolled {
+  background: rgba(8, 9, 26, 0.78) !important;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.18) !important;
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  box-shadow: 0 8px 30px -18px rgba(0, 0, 0, 0.8);
+}
+
+header.topbar .logo {
+  background: linear-gradient(135deg, #00d4ff, #a855f7);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+header.topbar .logo i {
+  color: #00d4ff;
+  -webkit-text-fill-color: #00d4ff;
+  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.8));
+}
+header.topbar nav a:hover,
+header.topbar nav a.active {
+  color: #7df5ff !important;
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.7) !important;
+}
+
+/* 徽标与主按钮：霓虹渐变 */
+.badge-gold {
+  background: rgba(0, 212, 255, 0.10) !important;
+  color: #8fe9ff !important;
+  border: 1px solid rgba(0, 212, 255, 0.28) !important;
+  box-shadow: 0 0 18px rgba(0, 212, 255, 0.12);
+}
+
+header.topbar .btn-primary,
+.hero-actions .btn-primary {
+  background: linear-gradient(135deg, #00d4ff 0%, #7c3aed 55%, #ec4899 120%) !important;
+  background-size: 170% 170% !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 8px 24px -8px rgba(0, 212, 255, 0.65) !important;
+  animation: cgBtnBreath 3.8s ease-in-out infinite;
+}
+header.topbar .btn-outline,
+.hero-actions .btn-outline {
+  background: rgba(0, 212, 255, 0.06) !important;
+  border: 1.5px solid rgba(0, 212, 255, 0.38) !important;
+  color: #8fe9ff !important;
+  box-shadow: none !important;
+}
+header.topbar .btn-outline:hover,
+.hero-actions .btn-outline:hover {
+  background: rgba(0, 212, 255, 0.12) !important;
+  box-shadow: 0 0 22px rgba(0, 212, 255, 0.25) !important;
+}
+
+/* 首屏标题与数据：渐变发光 */
+.hero h1 span {
+  background: linear-gradient(135deg, #7df5ff 0%, #00d4ff 35%, #a855f7 70%, #ec4899 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  filter: drop-shadow(0 0 22px rgba(0, 212, 255, 0.25));
+}
+.hero-stats-item .num {
+  background: linear-gradient(135deg, #7df5ff, #00d4ff 45%, #a855f7);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter: drop-shadow(0 0 12px rgba(0, 212, 255, 0.35));
+}
+
+/* 各区卡片：换成深空玻璃 */
+.pain-card,
+.solution-card,
+.results-numbers,
+.testimonial,
+.cta-section,
+.results-section,
+.feature-card {
+  background:
+    linear-gradient(165deg, rgba(18, 20, 50, 0.90), rgba(7, 8, 24, 0.96)) !important;
+  border: 1px solid rgba(0, 212, 255, 0.16) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 20px 50px -28px rgba(0, 0, 0, 0.9),
+    0 0 26px -18px rgba(0, 212, 255, 0.4);
+}
+.pain-card:hover,
+.solution-card:hover,
+.feature-card:hover {
+  border-color: rgba(0, 212, 255, 0.45) !important;
+  box-shadow:
+    0 26px 55px -26px rgba(0, 0, 0, 0.95),
+    0 0 32px -8px rgba(0, 212, 255, 0.5) !important;
+}
+
+/* 金色图标 → 霓虹 */
+.pain-card i,
+.solution-card i,
+.cta-trust i,
+.why-card i {
+  color: #00d4ff !important;
+  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.7));
+}
+.results-numbers .num-block .big {
+  background: linear-gradient(135deg, #7df5ff, #a855f7 75%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter: drop-shadow(0 0 14px rgba(0, 212, 255, 0.3));
+}
+
+/* 卡片按钮 */
+.feature-action {
+  background: rgba(0, 212, 255, 0.08) !important;
+  border: 1px solid rgba(0, 212, 255, 0.28) !important;
+  color: #8fe9ff !important;
+}
+.feature-action:hover {
+  background: rgba(0, 212, 255, 0.16) !important;
+  box-shadow: 0 0 16px rgba(0, 212, 255, 0.3);
+}
+
+/* 表单聚焦、确认按钮、链接 */
+.form-row input:focus {
+  border-color: #00d4ff !important;
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.18) !important;
+}
+.modal-actions .confirm {
+  background: linear-gradient(135deg, #00d4ff, #7c3aed 55%, #ec4899) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 22px -8px rgba(0, 212, 255, 0.6) !important;
+}
+.tip-row a,
+.footer-links a:hover,
+.topbar nav a:hover {
+  color: #7df5ff !important;
+}
+
+/* 链接默认色 */
+a {
+  color: #5cd9f5;
 }

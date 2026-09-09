@@ -20,6 +20,7 @@ server/.vercel/
 dist/
 build/
 *.log
+.pwtest/
 
 # ---------- 本地数据库 ----------
 *.db

@@ -48,6 +48,18 @@ import '../js/sync.js';
     // 所有数据（课程、书籍、运动、待办、打卡记录等）都通过 Store 来读写
     var Store = window.CGStore;
 
+    /* ---------- 弹窗位置修复 ---------- */
+    // 页面早期把所有弹窗写在了「首页视图」里面：一旦切到课程/管理/我的视图，
+    // 首页被隐藏，弹窗也跟着隐形，导致“点了没反应”。
+    // 这里把弹窗统一挪到 <body> 最外层，任何视图下都能正常弹出。
+    try {
+      document.querySelectorAll('.modal-overlay, .confirm-overlay').forEach(function (el) {
+        if (el.parentElement && el.parentElement !== document.body) {
+          document.body.appendChild(el);
+        }
+      });
+    } catch (_) {}
+
     // today() 返回今天日期的字符串，格式如 "2026-09-08"
     // Store.today() 内部会做时区处理，确保返回的是「本地日期」
     function today() { return Store.today(); }
@@ -73,6 +85,15 @@ import '../js/sync.js';
       confirmCb = null;
     });
 
+    // ESC 键关闭当前弹窗 / 确认框
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      document.querySelectorAll('.modal-overlay.open').forEach(function (m) {
+        closeModal(m.id);
+      });
+      document.getElementById('confirmDialog').classList.remove('show');
+    });
+
     /* ---------- 展开面板切换 ---------- */
     // 页面上有很多可折叠的面板（课程列表、书籍列表等）
     // 点击「展开」按钮时，切换面板的显示/隐藏
@@ -84,15 +105,17 @@ import '../js/sync.js';
       if (closeBtn) {
         var overlay = closeBtn.closest('.modal-overlay');
         if (overlay) {
-          overlay.classList.remove('show');
+          closeModal(overlay.id);
         }
         return;
       }
 
       // 点击模态框遮罩层关闭
-      if (e.target.classList.contains('modal-overlay') && e.target.classList.contains('show')) {
-        e.target.classList.remove('show');
-        return;
+      if (e.target.classList && e.target.classList.contains('modal-overlay')) {
+        if (e.target.classList.contains('open') || e.target.classList.contains('show')) {
+          closeModal(e.target.id);
+          return;
+        }
       }
 
       var toggle = e.target.closest('.expand-toggle');
