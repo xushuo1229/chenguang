@@ -400,7 +400,10 @@
       justify-content: center;
       padding: 20px;
     }
-    .modal-overlay.show { display: flex; }
+    /* openModal() 统一添加 .open，这里同时兼容旧的 .show */
+    .modal-overlay.show,
+    .modal-overlay.open { display: flex; }
+    .modal-overlay.hidden { display: none !important; }
     .modal-box {
       background: rgba(15,15,40,0.95);
       border-radius: 18px;
@@ -1341,8 +1344,8 @@
   <a href="#" class="active" data-nav="home"><i class="fas fa-home"></i>首页</a>
   <a href="stats.html" data-nav="stats"><i class="fas fa-chart-line"></i>数据</a>
   <a href="ai.html" data-nav="ai"><i class="fas fa-robot"></i>AI</a>
-  <a href="dashboard.html" data-nav="courses"><i class="fas fa-book"></i>课程</a>
-  <a href="dashboard.html" data-nav="manage"><i class="fas fa-cog"></i>管理</a>
+  <a href="#" data-nav="course"><i class="fas fa-book"></i>课程</a>
+  <a href="#" data-nav="manage"><i class="fas fa-cog"></i>管理</a>
 </nav>
 
 

@@ -821,26 +821,39 @@ import '../js/sync.js';
     /* ---------- 内嵌视图切换（首页 / 课程 / 管理 / 我的） ---------- */
     // 工作台页面有 4 个视图：home（首页）、course（课程）、manage（管理）、profile（个人中心）
     // switchWbView() 切换显示哪个视图，同时更新侧边栏的高亮状态
+    var WB_VIEWS = ['home', 'course', 'manage', 'profile'];
     function switchWbView(key) {
-      ['home', 'course', 'manage', 'profile'].forEach(function (v) {
+      WB_VIEWS.forEach(function (v) {
         var el = document.getElementById('wb-view-' + v);
         if (el) el.hidden = (v !== key);
       });
-      $$('.sidebar .nav-item', document).forEach(function (a) {
+      // 桌面侧边栏 + 移动端底部栏一起更新高亮
+      $$('.sidebar .nav-item, .mobile-tabbar a[data-nav]').forEach(function (a) {
         a.classList.toggle('active', a.getAttribute('data-nav') === key);
       });
       if (key === 'course') renderCourseView();
       if (key === 'profile') renderProfileView();
+      try { history.replaceState(null, '', '?view=' + key); } catch (_) {}
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    $$('.sidebar .nav-item').forEach(function (a) {
-      a.addEventListener('click', function (e) {
-        var key = this.getAttribute('data-nav');
-        if (key === 'stats') return; // 数据页保持跳转
-        e.preventDefault();
-        switchWbView(key);
+    // 桌面侧边栏和移动端底部栏统一处理：
+    //   home/course/manage/profile → 页面内切换
+    //   stats/ai → 交给浏览器正常跳转到对应页面
+    function bindWbNav() {
+      $$('.sidebar .nav-item, .mobile-tabbar a[data-nav]').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+          var key = this.getAttribute('data-nav');
+          if (!key || WB_VIEWS.indexOf(key) === -1) return; // stats/ai 正常跳转
+          e.preventDefault();
+          switchWbView(key);
+        });
       });
-    });
+    }
+    // 兼容页面上原有的重复绑定（只保留一处生效，避免事件叠加）
+    if (!window.__cgWbNavBound) {
+      window.__cgWbNavBound = true;
+      bindWbNav();
+    }
 
     /* ---------- 课程视图 ---------- */
     // 渲染「课程」页面：显示所有课程的进度条，支持 +1 章、编辑、删除操作
@@ -1040,6 +1053,10 @@ import '../js/sync.js';
         setText('wbManageUser', (cu && (cu.nickname || cu.email)) || '本地模式');
       } catch (_) {}
       updateUI();
+      // 支持从其它页面直达：workbench.html?view=course / manage / profile
+      var wantView = new URLSearchParams(location.search).get('view');
+      if (WB_VIEWS.indexOf(wantView) === -1) wantView = 'home';
+      switchWbView(wantView);
     }
 
     // DOM 加载时机判断：
