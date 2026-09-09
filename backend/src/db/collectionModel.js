@@ -1,13 +1,13 @@
 /**
- * 晨光自律台 · 业务明细表通用 CRUD 数据访问层 (PostgreSQL)
+ * 晨光自律台 · 业务明细表通用 CRUD 数据访问层 (SQLite)
  * ============================================================
  * 为 7 张业务明细表（courses/sports/readings/english/checkins/todos/focus）
  * 提供通用的增删查功能。
  *
- * PostgreSQL 自带查询计划缓存，不需要手动管理 prepared statement。
+ * SQLite 通过 better-sqlite3 自动缓存 prepared statement，无需手动管理。
  * 所有函数都是 async 的，调用方需要 await。
  */
-const { pool } = require('./index');
+const { query } = require('./index');
 const { VALID_NAMES } = require('../config/collectionConfig');
 
 /**
@@ -32,7 +32,7 @@ function validateTableName(table) {
 async function listByUser(table, userId, { limit = 500, offset = 0 } = {}) {
   validateTableName(table);
   var sql = 'SELECT * FROM ' + table + ' WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3';
-  var result = await pool.query(sql, [userId, limit, offset]);
+  var result = await query(sql, [userId, limit, offset]);
   return result.rows;
 }
 
@@ -50,7 +50,7 @@ async function insertRecord(table, userId, rec) {
   var placeholders = cols.map(function (_, i) { return '$' + (i + 2); }).join(', ');
   var sql = 'INSERT INTO ' + table + ' (user_id, ' + cols.join(', ') + ') VALUES ($1, ' + placeholders + ')';
   var values = [userId].concat(cols.map(function (c) { return rec[c]; }));
-  await pool.query(sql, values);
+  await query(sql, values);
   return rec;
 }
 
@@ -64,7 +64,7 @@ async function insertRecord(table, userId, rec) {
 async function deleteRecord(table, userId, id) {
   validateTableName(table);
   var sql = 'DELETE FROM ' + table + ' WHERE user_id = $1 AND id = $2';
-  var result = await pool.query(sql, [userId, id]);
+  var result = await query(sql, [userId, id]);
   return result.rowCount;
 }
 

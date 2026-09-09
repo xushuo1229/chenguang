@@ -117,6 +117,13 @@ const config = {
   port: parseInt(process.env.PORT, 10) || 3000, // 服务端口（默认 3000）
 
   // --- 数据库 ---
+  // 本地开发使用 SQLite 文件数据库（零安装、开箱即用）。
+  // DB_PATH 可通过 backend/.env 配置，默认是 backend/chenguang.db
+  dbPath: process.env.DB_PATH
+    ? require('path').resolve(process.env.DB_PATH)
+    : require('path').join(__dirname, '..', '..', 'chenguang.db'),
+
+  // 保留 PostgreSQL 连接串配置，方便以后需要切换到云端 PostgreSQL 部署
   databaseUrl: process.env.DATABASE_URL || 'postgresql://localhost:5432/chenguang',
 
   // --- JWT 认证 ---
