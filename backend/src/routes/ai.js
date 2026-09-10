@@ -1,0 +1,28 @@
+/**
+ * 晨光自律台 · AI 助手路由
+ * ============================================================
+ * 【文件职责】
+ * 定义 AI 助手相关的 API 路由。当前只有一个对话接口：
+ * POST /api/ai/chat —— 把用户消息转发给大模型，返回回复。
+ *
+ * 【安全设计】
+ * - authRequired：必须登录才能调用，防止未授权用户消耗额度。
+ * - aiLimiter：限流（每分钟 15 次），防止被刷爆接口。
+ *
+ * 【与其他文件的关系】
+ * - routes/index.js：引入本文件，挂载到 /ai 路径
+ * - controllers/aiController.js：对话业务处理
+ * - middleware/auth.js：authRequired 中间件
+ * - middleware/rateLimit.js：aiLimiter 限流
+ */
+const router = require('express').Router();
+const ctrl = require('../controllers/aiController');
+const { aiLimiter } = require('../middleware/rateLimit');
+const { authRequired } = require('../middleware/auth');
+
+// POST /api/ai/chat → AI 对话
+// 请求体：{ messages: [{ role, content }, ...] }
+// 响应体：{ data: { reply, model } }
+router.post('/chat', authRequired, aiLimiter, ctrl.chat);
+
+module.exports = router;

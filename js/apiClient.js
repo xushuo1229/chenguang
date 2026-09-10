@@ -286,11 +286,11 @@ function request(method, path, data) {
  * 【分组】
  *   - config: 配置相关（如修改 API 地址）
  *   - auth: 认证相关（登录、注册、获取用户信息）
- *   - stats: 统计相关（总览、周报、月报等）
- *   - checkins: 打卡相关
- *   - tasks: 任务相关
- *   - study: 学习相关
- *   - leaderboard: 排行榜相关
+ *   - ai: AI 助手相关（对话，由后端代理转发大模型）
+ *
+ * 【职责边界】
+ *   apiClient 是「用户交互 API 客户端」：处理登录/注册/资料 + AI 对话。
+ *   后台数据同步（整份快照推拉/ETag/防抖）由 js/sync.js 独立负责。
  *
  * 【使用示例】
  *   CGAPI.auth.login('user@example.com', 'password')
@@ -425,146 +425,37 @@ var CGAPI = {
     getToken: function () { return getToken(); }
   },
 
-  /* ===== 统计接口 ===== */
-
-  /**
-   * stats —— 数据统计相关接口
-   *
-   * 【用途】仪表盘页面调用这些接口获取各种统计数据。
-   * 【注意】这些接口需要登录才能访问（会自动带上 Token）。
-   */
-  stats: {
-    /**
-     * overview() —— 获取总览统计
-     * 【返回值】总打卡天数、总运动时长、总阅读页数等汇总数据
-     */
-    overview: function () { return request('GET', '/stats/overview'); },
+  /* ===== AI 助手接口 ===== */
 
     /**
-     * weekly() —— 获取本周统计
-     * 【返回值】本周每天的打卡、运动、阅读等数据
-     */
-    weekly: function () { return request('GET', '/stats/weekly'); },
-
-    /**
-     * monthly() —— 获取本月统计
-     * 【返回值】本月每天的打卡、运动、阅读等数据
-     */
-    monthly: function () { return request('GET', '/stats/monthly'); },
-
-    /**
-     * today() —— 获取今日统计
-     * 【返回值】今天的打卡、运动、阅读等数据
-     */
-    today: function () { return request('GET', '/stats/today'); },
-
-    /**
-     * heatmap() —— 获取热力图数据
-     * 【返回值】一年中每天的活跃程度数据，用于在日历上显示热力图
-     */
-    heatmap: function () { return request('GET', '/stats/heatmap'); }
-  },
-
-  /* ===== 打卡接口 ===== */
-
-  /**
-   * checkins —— 打卡记录相关接口
-   */
-  checkins: {
-    /**
-     * list() —— 获取所有打卡记录
-     * 【返回值】打卡记录数组
-     */
-    list: function () { return request('GET', '/checkins'); },
-
-    /**
-     * stats() —— 获取打卡统计数据
-     * 【返回值】连续打卡天数、总打卡天数等
-     */
-    stats: function () { return request('GET', '/checkins/stats'); },
-
-    /**
-     * create(data) —— 创建一条打卡记录
-     * 【参数】data —— 打卡数据，如 { date: '2024-01-15', status: 'done' }
-     */
-    create: function (data) { return request('POST', '/checkins', data); }
-  },
-
-  /* ===== 任务接口 ===== */
-
-  /**
-   * tasks —— 待办任务相关接口
-   */
-  tasks: {
-    /**
-     * list() —— 获取所有任务
-     * 【返回值】任务数组
-     */
-    list: function () { return request('GET', '/tasks'); },
-
-    /**
-     * create(data) —— 创建一个新任务
-     * 【参数】data —— 任务数据，如 { text: '完成作业', priority: 'high' }
-     */
-    create: function (data) { return request('POST', '/tasks', data); },
-
-    /**
-     * remove(id) —— 删除一个任务
-     * 【参数】id —— 任务的唯一标识符
-     */
-    remove: function (id) { return request('DELETE', '/tasks/' + id); }
-  },
-
-  /* ===== 学习接口 ===== */
-
-  /**
-   * study —— 学习记录相关接口
-   */
-  study: {
-    /**
-     * list() —— 获取所有学习记录
-     * 【返回值】学习记录数组（如英语单词、课程学习等）
-     */
-    list: function () { return request('GET', '/study'); },
-
-    /**
-     * stats() —— 获取学习统计数据
-     * 【返回值】学习时长、完成课程数等
-     */
-    stats: function () { return request('GET', '/study/stats'); },
-
-    /**
-     * create(data) —— 创建一条学习记录
-     * 【参数】data —— 学习数据
-     */
-    create: function (data) { return request('POST', '/study', data); }
-  },
-
-  /* ===== 排行榜接口 ===== */
-
-  /**
-   * leaderboard —— 排行榜相关接口
-   */
-  leaderboard: {
-    /**
-     * list(limit) —— 获取排行榜
+     * ai —— AI 助手相关接口（OpenAI 兼容代理）
      *
-     * 【参数】limit —— 可选，返回的排名数量（如 10 表示前 10 名）
-     * 【返回值】排行榜数组，按某种规则排序（如连续打卡天数）
+     * 【什么是 ai.chat？】
+     * 把对话消息发送到后端的 POST /api/ai/chat，由后端代理转发给大模型。
+     * API Key 只存在后端，前端只需携带登录 Token。
      *
-     * 【URL 构建】
-     *   如果传了 limit，URL 变成 /leaderboard?limit=10
-     *   没传则使用默认值（服务器端决定返回多少条）
+     * 【参数】messages —— 对话消息数组，形如：
+     *   [{ role: 'system', content: '...' },
+     *    { role: 'user',   content: '你好' }]
+     *   role 只能是 system / user / assistant。
+     *
+     * 【返回值】Promise，resolve 时返回 { data: { reply, model } }
+     * 【错误】未配置 AI key / 上游不可用 / 超时 → reject 并携带中文 message，调用方可做离线兜底
      */
-    list: function (limit) {
-      var p = (limit && Number.isFinite(limit)) ? ('?limit=' + limit) : '';
-      return request('GET', '/leaderboard' + p);
+    ai: {
+      /**
+       * chat(messages) —— 发起一轮 AI 对话
+       * 【参数】messages —— 对话消息数组（含可选的 system 上下文）
+       * 【返回值】Promise，resolve 时返回 { data: { reply, model } }
+       */
+      chat: function (messages) {
+        return request('POST', '/ai/chat', { messages: messages || [] });
+      }
     }
-  }
-};
+  };
 
-// 暴露到全局，方便不使用 ES Module 的代码访问
-globalThis.CGAPI = CGAPI;
+  // 暴露到全局，方便不使用 ES Module 的代码访问
+  globalThis.CGAPI = CGAPI;
 
 export default CGAPI;
 export { CGAPI };

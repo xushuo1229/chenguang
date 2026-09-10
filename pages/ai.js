@@ -18,6 +18,8 @@
 'use strict';
 
 import '../js/utils/dom.js';
+import '../js/apiClient.js'; // 提供 globalThis.CGAPI（auth + ai）
+import '../js/store.js';     // 提供 globalThis.CGStore（读取自律数据构造 AI 上下文）
 
 /* ============================================================
    1. 数据层 — 会话 CRUD
@@ -534,6 +536,84 @@ function addMessage(text, role) {
   renderChatList();
 }
 
+/* ============================================================
+   10b. 真实 AI 调用（后端代理，失败回退本地模板）
+   ============================================================ */
+
+/**
+ * buildSystemPrompt() —— 从本地自律数据构造 system 上下文
+ *
+ * 让大模型能结合用户真实的打卡/课程/专注等数据给出个性化建议。
+ * 只挑选少量关键数字，避免对话过长浪费 token。
+ */
+function buildSystemPrompt() {
+  var data = { user: { name: '', totalDays: 0, continuousDays: 0, startDate: '' } };
+  try { if (globalThis.CGStore) data = globalThis.CGStore.get() || data; } catch (_) {}
+
+  function sum(arr, key) {
+    if (!Array.isArray(arr)) return 0;
+    return arr.reduce(function (s, x) { return s + (Number(x && x[key]) || 0); }, 0);
+  }
+
+  var courses = data.courses || [];
+  var todos = data.todos || [];
+  var doneTodos = todos.filter(function (t) { return t.done; }).length;
+
+  var d = data.user || {};
+  var summary =
+    '用户信息：' + (d.name ? '昵称 ' + d.name + '，' : '未设置昵称，') +
+    '已坚持 ' + (d.continuousDays || 0) + ' 天' +
+    (d.startDate ? '（始于 ' + d.startDate + '）' : '') + '。\n' +
+    '当前数据：' +
+    '打卡 ' + (Array.isArray(data.checkins) ? data.checkins.length : 0) + ' 天；' +
+    '课程 ' + courses.length + ' 门（平均完成 ' + (courses.length ? Math.round(sum(courses, 'progress') / courses.length) : 0) + '%）；' +
+    '待办 ' + todos.length + ' 项，已完成 ' + doneTodos + ' 项；' +
+    '专注累计 ' + sum(data.focus, 'minutes') + ' 分钟；' +
+    '阅读累计 ' + sum(data.readings, 'pages') + ' 页；' +
+    '英语累计 ' + data.english.length + ' 次；' +
+    '运动累计 ' + sum(data.sports, 'calories') + ' 千卡。';
+
+  return '你是「晨光自律台」的 AI 学习与自律助手，面对的是大学生用户。' +
+    '回答要简洁、实用、可执行，最好结合下面的用户自律数据给出个性化建议。' +
+    '如果用户没有相关数据，就给出通用的学习方法建议。\n\n' + summary +
+    '\n\n请用中文回答，语气友善，可适当使用分段和简单结构。';
+}
+
+/**
+ * requestAIReply(chat) —— 调用后端 AI 代理获取回复
+ *
+ * - 带最近若干条消息上下文（含 system 数据摘要）
+ * - 成功：把 assistant 回复写入会话
+ * - 失败（未配置 key / 上游不可用 / 超时 / 离线）→ 回退本地模板，保证始终能回复
+ */
+function requestAIReply(chat) {
+  var MAX_CTX = 20;
+  var recent = chat.messages.slice(-MAX_CTX).map(function (m) {
+    return { role: m.role, content: m.content };
+  });
+  var payload = [{ role: 'system', content: buildSystemPrompt() }].concat(recent);
+
+  var fallback = function () {
+    removeTyping();
+    addMessage(getAIReply(), 'ai'); // 离线/未配置时用本地模板兜底
+  };
+
+  if (!globalThis.CGAPI || !globalThis.CGAPI.ai || !globalThis.CGAPI.ai.chat) {
+    fallback();
+    return;
+  }
+
+  globalThis.CGAPI.ai.chat(payload).then(function (res) {
+    var reply = res && res.data && res.data.reply;
+    if (!reply) { fallback(); return; }
+    removeTyping();
+    addMessage(reply, 'ai');
+  }).catch(function (err) {
+    console.warn('[AI] 请求失败，已回退本地回复', err && err.message || err);
+    fallback();
+  });
+}
+
 function sendMessage() {
   var text = chatInput.value.trim();
   if (!text) return;
@@ -543,11 +623,7 @@ function sendMessage() {
 
   // 打字动画
   addTyping();
-  var delay = 600 + Math.random() * 800;
-  setTimeout(function () {
-    removeTyping();
-    addMessage(getAIReply(), 'ai');
-  }, delay);
+  requestAIReply(getActiveChat());
 }
 
 function addTyping() {

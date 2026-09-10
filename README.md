@@ -12,7 +12,7 @@
 │ index.html  │              │ store.js · CGStore│          │ Express + JWT API    │
 │ workbench   │◄────────────►│ 统一数据层         │◄────────►│ 端口 3000             │
 │ stats / ai  │              │ 单一 key 全页共享  │  同步层   │ /api/data 整份快照    │
-│ ...         │              │ sync.js · CGSync  │          │ SQLite 按用户隔离      │
+│ ...         │              │ sync.js · CGSync  │          │ SQLite 单快照 + AI 代理│
 └─────────────┘              │ 登录拉取/防抖回写  │          └─────────────────────┘
                              └──────────────────┘
 ```
@@ -22,7 +22,8 @@
 | 前端 | 原生 HTML/CSS/JS（多页静态） | index（落地/注册登录）、workbench（工作台）、stats（数据统计）、ai（AI 助手） |
 | 数据层 | `js/store.js`（CGStore） | 所有页面共享**单一 key** `chenguangData`，八类数据：user/checkins/sports/readings/courses/english/todos/focus；写入即派发 `chenguang:update` 事件跨页实时刷新 |
 | 同步层 | `js/sync.js`（CGSync） | 登录后「先推后拉」同步云端；本地变更防抖 400ms 回写；离线/无 token 静默走本地 |
-| 后端 | Node.js + Express + SQLite（better-sqlite3）+ JWT | `backend/` 目录，注册/登录/鉴权，按用户隔离，多设备数据一致 |
+| 后端 | Node.js + Express + SQLite（better-sqlite3）+ JWT | `backend/` 目录，注册/登录/鉴权，按用户隔离，多设备数据一致；数据以**单张 `user_data` 快照表**为唯一真源（早期 7 张明细表已精简移除） |
+| 智能层 | OpenAI 兼容代理（默认 DeepSeek） | AI 助手对话 `POST /api/ai/chat`，由后端代理转发大模型，`API Key` 只存后端 `.env`，浏览器不接触；未配置/离线自动回退本地模板 |
 
 ## 快速开始
 
@@ -54,6 +55,7 @@ python -m http.server 8080
 
 ### 核心功能
 - **用户系统**：注册 / 登录（bcrypt 密码加密 + JWT 鉴权）
+- **AI 学习助手**：接入真实大模型对话（OpenAI 兼容国内大模型，默认 DeepSeek），把本地自律数据注入上下文给出个性化建议；未配置/离线自动回退本地模板
 - **每日打卡**：一键打卡、连续天数统计
 - **课程进度**：添加课程、编辑总章节/已学章节、进度条实时刷新
 - **每日阅读**：书架管理（书名/总页数/已读页数）、累计阅读统计
@@ -80,22 +82,26 @@ chenguang-platform/
 ├── js/
 │   ├── store.js              # 【核心】统一数据层 CGStore（单 key 真源）
 │   ├── sync.js               # 【核心】云端同步层 CGSync（先推后拉）
-│   └── apiClient.js          # API 客户端（基址 localhost:3000/api）
+│   └── apiClient.js          # API 客户端（auth 登录/注册 + ai 对话）
 ├── css/
 │   ├── variables.css         # 设计变量
 │   ├── shared.css            # 公共组件样式
 │   ├── tech.css              # 科技感视觉升级
 │   └── app.css               # 落地页样式
 ├── backend/                  # 【当前后端】Node + Express + SQLite + JWT
-│   ├── schema.sql            # 建表 SQL
+│   ├── schema.sql            # 建表 SQL（users + user_data 单快照表）
+│   ├── test/                 # node:test 单元测试（auth / sync）
 │   └── src/
 │       ├── server.js         # 服务入口
 │       ├── app.js            # Express 装配
-│       ├── config/env.js     # 环境变量
-│       ├── routes/           # API 路由
-│       ├── controllers/      # 控制器
-│       ├── services/         # 业务逻辑
-│       └── db/               # SQLite 数据访问
+│       ├── config/env.js     # 环境变量（含 AI_* 配置）
+│       ├── routes/           # API 路由（auth / data / ai）
+│       ├── controllers/      # 控制器（auth / sync / ai）
+│       ├── services/         # 业务逻辑（auth / sync / ai）
+│       └── db/               # SQLite 数据访问（users / user_data）
+├── tests/                    # Vitest 单元测试（store / sync 数据层）
+├── vite.config.js            # Vite 多页构建配置
+├── vitest.config.mjs         # Vitest 配置（jsdom）
 ├── service-worker.js         # 静态资源缓存（版本化清理）
 ```
 
@@ -104,6 +110,19 @@ chenguang-platform/
 - 无令牌（未登录）：纯本地存储，行为与纯前端版一致。
 - 已登录但后端临时不可用：pull/push 静默失败并 `console.warn`，页面继续用本地缓存，恢复后自动重试回写。
 - 注册/登录连不上后端：回退「演示登录」，不影响使用。
+- AI 未配置（后端未设 `AI_API_KEY`）或大模型接口不可用：AI 助手自动回退本地模板回复，应用不中断。
+
+## 自动化测试
+
+```bash
+# 后端 node:test（auth / sync 单元测试）
+cd backend && npm test
+
+# 前端 Vitest（store / sync 数据层测试）
+npm test
+```
+
+后端测试会为每个进程使用独立的临时 SQLite 库，互不影响。
 
 ## 数据导出 / 导入
 
@@ -112,8 +131,9 @@ chenguang-platform/
 
 ## 生产部署提示
 
-- 后端：设置强随机 `JWT_SECRET` 环境变量；SQLite 适合个人/小团队，高并发可换 PostgreSQL（表结构一致）。
+- 后端：设置强随机 `JWT_SECRET` 环境变量；SQLite 适合个人/小团队，高并发可换 PostgreSQL。
 - 前端：可部署到任意静态托管（GitHub Pages / CloudStudio / Nginx）。
+- AI：在 `backend/.env` 设置 `AI_API_KEY`（如 DeepSeek），可选 `AI_BASE_URL` / `AI_MODEL` / `AI_TIMEOUT_MS`；Key 只存后端，绝不下发浏览器。
 - `chenguang.db` 是用户数据，请在 `.gitignore` 排除并定期备份。
 
 ## License

@@ -86,4 +86,16 @@ const writeLimiter = rateLimit({
   },
 });
 
-module.exports = { apiLimiter, authLimiter, writeLimiter };
+// AI 助手限流：每分钟 15 次
+// 保护 AI 对话接口，防止被刷爆（每次调用都会消耗大模型额度/token）
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000,                 // 1 分钟时间窗口
+  max: 15,                             // 最多 15 次对话
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: { code: 'AI_RATE_LIMITED', message: 'AI 请求过于频繁，请稍后再试' },
+  },
+});
+
+module.exports = { apiLimiter, authLimiter, writeLimiter, aiLimiter };

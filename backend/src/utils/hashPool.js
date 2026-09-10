@@ -23,6 +23,9 @@ let seq = 0;
 
 function spawnWorker() {
   const w = new Worker(WORKER_FILE);
+  // 不把 worker 当作保活事件源：服务端靠 HTTP listener 保活，
+  // 测试进程（node --test）才能在所有用例跑完后正常退出。
+  w.unref();
   w.__job = null;
 
   w.on('message', (msg) => {
@@ -84,4 +87,19 @@ function compare(plain, hashValue) {
   return run('compare', { plain, hash: hashValue });
 }
 
-module.exports = { hash, compare };
+/**
+ * 关闭线程池并终止所有 worker。
+ * 仅在进程即将退出时调用（如测试 teardown、优雅停机），
+ * 否则 worker 线程会让 node 进程保持存活而无法退出。
+ */
+function close() {
+  initialized = false;
+  workers.slice().forEach(function (w) {
+    try { w.terminate(); } catch (_) { /* 已终止则忽略 */ }
+  });
+  workers.length = 0;
+  free.length = 0;
+  queue.length = 0;
+}
+
+module.exports = { hash, compare, close };

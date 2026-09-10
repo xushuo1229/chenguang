@@ -85,11 +85,13 @@ async function saveData(userId, payload) {
     // 增量模式：只更新前端发来的集合
     const current = await getData(userId);
     PAYLOAD_KEYS.forEach((k) => {
+      if (k === 'user') return; // user 走下方的深合并，避免先被部分覆盖
       if (payload[k] !== undefined) {
         current[k] = payload[k];
       }
     });
     if (payload.user && typeof payload.user === 'object') {
+      // 深合并：以服务端现有 user 为基础，只覆盖本轮传过来的字段
       current.user = Object.assign(emptyPayload().user, current.user, payload.user);
     }
     await userDataModel.saveUserData(userId, JSON.stringify(current));
