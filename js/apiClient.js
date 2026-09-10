@@ -287,6 +287,7 @@ function request(method, path, data) {
  *   - config: 配置相关（如修改 API 地址）
  *   - auth: 认证相关（登录、注册、获取用户信息）
  *   - ai: AI 助手相关（对话，由后端代理转发大模型）
+ *   - course: 课表导入相关（通过链接抓取并解析课程）
  *
  * 【职责边界】
  *   apiClient 是「用户交互 API 客户端」：处理登录/注册/资料 + AI 对话。
@@ -450,6 +451,27 @@ var CGAPI = {
        */
       chat: function (messages) {
         return request('POST', '/ai/chat', { messages: messages || [] });
+      }
+    },
+
+    /* ===== 课表导入接口 ===== */
+
+    /**
+     * course —— 课表导入相关接口
+     *
+     * 【importFromUrl(url)】通过学校课表页面链接抓取并解析课程
+     *   → 后端代理抓取（规避浏览器 CORS），返回课程列表
+     *
+     * 【参数】url —— 可公开访问、无需登录的课表 HTML 页面链接
+     * 【返回值】Promise，resolve 时返回 { data: { courses: [...], source } }
+     * 【错误】非法协议 / 页面无表格 / 需登录 / 网络失败 → reject 携带中文 message
+     */
+    course: {
+      /**
+       * importFromUrl(url) —— 通过课表链接导入课程
+       */
+      importFromUrl: function (url) {
+        return request('POST', '/course/import', { url: url });
       }
     }
   };

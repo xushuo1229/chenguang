@@ -155,6 +155,13 @@ const config = {
   aiMaxMessages: parseInt(process.env.AI_MAX_MESSAGES, 10) || 20, // 对话消息条数上限
   aiMaxMsgLength: parseInt(process.env.AI_MAX_MSG_LENGTH, 10) || 8000, // 单条消息长度上限
 
+  // --- 课表导入（代理抓取外部课表 HTML） ---
+  // 通过后端代理抓取学校课表页并解析课程，天然规避浏览器 CORS
+  importTimeoutMs: parseInt(process.env.IMPORT_TIMEOUT_MS, 10) || 15000, // 抓取超时（毫秒）
+  importMaxUrlLen: parseInt(process.env.IMPORT_MAX_URL_LEN, 10) || 2000, // URL 长度上限
+  importMaxCourse: parseInt(process.env.IMPORT_MAX_COURSE, 10) || 50,    // 单次最多导入课程数
+  importMaxBodyBytes: parseInt(process.env.IMPORT_MAX_BODY_BYTES, 10) || 2 * 1024 * 1024, // 响应体上限
+
   // --- Supabase（可选，用于 Realtime 广播） ---
   supabaseUrl: process.env.SUPABASE_URL || '',
   supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY || '',

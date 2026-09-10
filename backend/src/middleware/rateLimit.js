@@ -98,4 +98,16 @@ const aiLimiter = rateLimit({
   },
 });
 
-module.exports = { apiLimiter, authLimiter, writeLimiter, aiLimiter };
+// 课表导入限流：每分钟 10 次
+// 保护外部课表抓取接口，防止把本服务当作无限制的代理去刷外网（SSRF 风险兜底）
+const importLimiter = rateLimit({
+  windowMs: 60 * 1000,                 // 1 分钟时间窗口
+  max: 10,                             // 最多 10 次抓取
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: { code: 'IMPORT_RATE_LIMITED', message: '课表导入过于频繁，请稍后再试' },
+  },
+});
+
+module.exports = { apiLimiter, authLimiter, writeLimiter, aiLimiter, importLimiter };

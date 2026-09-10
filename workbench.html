@@ -1019,6 +1019,30 @@
     </div>
   </div>
 
+  <!-- ===== 模态框：导入课表 ===== -->
+  <div class="modal-overlay" id="modalImportCourse">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>🔗 从课表链接导入</h3>
+        <button class="modal-close" data-modal-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <label>课表页面链接</label>
+          <input id="importCourseUrl" type="url" placeholder="例如：https://jw.xxx.edu.cn/schedule" maxlength="2000"/>
+        </div>
+        <div class="form-hint" style="margin-top:10px;font-size:.8rem;color:#8a8a8a;line-height:1.7;">
+          粘贴你学校<b>可公开访问、无需登录</b>的课表网页链接，系统会自动抓取并解析其中的课表表格，按课程名合并去重加入你的课程列表。<br>
+          若链接是<b>纯图片课表</b>或<b>需登录</b>的教务页面，将无法解析，请改用「添加课程」手动录入。
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-cancel" data-modal-close>取消</button>
+        <button class="btn-confirm" id="importCourseBtn">🔗 抓取并导入</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== 模态框：编辑课程 ===== -->
   <div class="modal-overlay" id="modalEditCourse">
     <div class="modal-box">
@@ -1303,6 +1327,7 @@
         <div class="view-sub">追踪每一门课程的进度，让努力看得见</div>
       </div>
       <button class="btn-wb" data-act="add-course"><i class="fas fa-plus"></i> 添加课程</button>
+      <button class="btn-wb ghost" data-act="import-course"><i class="fas fa-link"></i> 导入课表</button>
     </div>
     <div class="view-card">
       <h3>🧭 我的课程 <span id="cvSummary" style="font-size:.75rem;color:#8a8a8a;font-weight:400;margin-left:6px;"></span></h3>

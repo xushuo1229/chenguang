@@ -56,4 +56,9 @@ router.put('/data', authRequired, writeLimiter, syncCtrl.saveData);
 // 需要登录 + 限流（防止刷接口烧 token）
 router.use('/ai', ai);
 
+// ===== 课表导入 =====
+// /api/course/* 的所有请求都交给 scheduleImport 子路由处理
+// 内挂 POST /import（抓取并解析课表）
+router.use('/course', require('./scheduleImport'));
+
 module.exports = router;

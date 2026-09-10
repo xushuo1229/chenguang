@@ -484,6 +484,13 @@ import '../js/sync.js';
         return;
       }
 
+      // 导入课表 → 打开模态框（通过课表链接导入）
+      if (act === 'import-course') {
+        $('#importCourseUrl').value = '';
+        openModal('modalImportCourse');
+        return;
+      }
+
       // 编辑课程
       if (trigger.hasAttribute('data-edit-course')) {
         var cid = trigger.getAttribute('data-edit-course');
@@ -647,6 +654,49 @@ import '../js/sync.js';
       updateUI();
       closeModal('modalAddCourse');
       toast('✅ 课程已添加：' + name, 'success');
+    });
+
+    // 导入课表：通过链接抓取并解析课程，按名称去重合并进 Store
+    $('#importCourseBtn').addEventListener('click', function () {
+      var url = $('#importCourseUrl').value.trim();
+      if (!url) { toast('请输入课表页面链接', 'warn'); return; }
+      if (!/^https?:\/\//i.test(url)) {
+        toast('链接需以 http:// 或 https:// 开头', 'warn');
+        return;
+      }
+      var btn = $('#importCourseBtn');
+      var original = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '抓取中…';
+      CGAPI.course.importFromUrl(url)
+        .then(function (res) {
+          var list = res && res.data && res.data.courses;
+          if (!list || !list.length) throw new Error('未解析到课程');
+          // 按名称去重，跳过已存在的同名课程（保留原进度）
+          var existing = {};
+          Store.getCourses().forEach(function (c) { if (c.name) existing[c.name] = true; });
+          var added = 0;
+          var skipped = 0;
+          list.forEach(function (item) {
+            var name = (item && item.name || '').trim();
+            if (!name || existing[name]) { skipped++; return; }
+            Store.addCourse({ name: name, progress: 0, status: 'todo', totalChapters: 0, learnedChapters: 0 });
+            existing[name] = true;
+            added++;
+          });
+          closeModal('modalImportCourse');
+          updateUI();
+          if (added > 0) toast('✅ 已导入 ' + added + ' 门课程' + (skipped ? '，跳过重名 ' + skipped + ' 门' : ''), 'success');
+          else toast('解析到课程均已在列表中，未新增', 'info');
+        })
+        .catch(function (err) {
+          var msg = (err && err.message) || '无法解析该课表，请确认是可公开访问的表格页面';
+          toast('导入失败：' + msg, 'warn');
+        })
+        .finally(function () {
+          btn.disabled = false;
+          btn.textContent = original;
+        });
     });
 
     // 更新课程
