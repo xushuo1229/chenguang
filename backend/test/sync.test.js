@@ -4,6 +4,9 @@
  * 覆盖：空用户拉取空结构、全量模式清洗未知字段、全量覆盖、增量 partial 合并、
  * 非法输入拒绝。
  * 运行：cd backend && NODE_ENV=test node --test test/sync.test.js
+ *
+ * Phase 8：getData/saveData 改为返回 envelope { data, revision, updatedAt, deviceId }，
+ * 相关断言同步更新（这是契约升级，不是掩盖 bug）。
  */
 'use strict';
 
@@ -25,13 +28,17 @@ before(async () => {
 });
 
 describe('syncService.getData', () => {
-  test('无记录用户返回默认空结构', async () => {
+  test('无记录用户返回默认空结构（envelope）', async () => {
     const data = await syncService.getData(userId);
-    assert.equal(data.user.name, '');
+    // envelope：业务负载在 .data 下
+    assert.equal(data.data.user.name, '');
     for (const k of ['checkins', 'sports', 'readings', 'courses', 'english', 'todos', 'focus']) {
-      assert.ok(Array.isArray(data[k]));
-      assert.equal(data[k].length, 0);
+      assert.ok(Array.isArray(data.data[k]));
+      assert.equal(data.data[k].length, 0);
     }
+    // 版本元信息
+    assert.equal(data.revision, 1);
+    assert.equal(data.deviceId, '');
   });
 });
 
@@ -42,20 +49,20 @@ describe('syncService.saveData（全量模式）', () => {
       courses: [{ id: 'c1', name: '高数', progress: 50 }],
       hacker: 'should-be-stripped', // 未知字段
     });
-    assert.equal(saved.hacker, undefined);
-    assert.equal(saved.user.name, '张三');
-    assert.equal(saved.courses.length, 1);
+    assert.equal(saved.data.hacker, undefined);
+    assert.equal(saved.data.user.name, '张三');
+    assert.equal(saved.data.courses.length, 1);
     // 回读确认已持久化且仍是清洗后的结构
     const got = await syncService.getData(userId);
-    assert.equal(got.hacker, undefined);
-    assert.equal(got.courses[0].name, '高数');
+    assert.equal(got.data.hacker, undefined);
+    assert.equal(got.data.courses[0].name, '高数');
   });
 
   test('全量覆盖：第二次保存只留白名单内的数据', async () => {
     await syncService.saveData(userId, { checkins: [{ date: '2026-09-09', status: 'done' }] });
     const got = await syncService.getData(userId);
-    assert.equal(got.courses.length, 0);   // 上个测试的 courses 被覆盖清除
-    assert.equal(got.checkins.length, 1);  // 只剩本次写入的集合
+    assert.equal(got.data.courses.length, 0);   // 上个测试的 courses 被覆盖清除
+    assert.equal(got.data.checkins.length, 1);  // 只剩本次写入的集合
   });
 });
 
@@ -72,10 +79,10 @@ describe('syncService.saveData（partial 增量模式）', () => {
       user: { continuousDays: 5 },
     });
 
-    assert.equal(saved.courses.length, 1);           // courses 未被覆盖
-    assert.equal(saved.user.name, '张三');            // user 深层字段保留
-    assert.equal(saved.user.continuousDays, 5);       // 新字段合并进来
-    assert.equal(saved.checkins.length, 1);           // checkins 更新
+    assert.equal(saved.data.courses.length, 1);           // courses 未被覆盖
+    assert.equal(saved.data.user.name, '张三');            // user 深层字段保留
+    assert.equal(saved.data.user.continuousDays, 5);       // 新字段合并进来
+    assert.equal(saved.data.checkins.length, 1);           // checkins 更新
   });
 });
 

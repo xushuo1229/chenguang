@@ -18,8 +18,13 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- ---------- 用户数据快照表（整份 chenguangData 落库，source of truth）----------
+-- Phase 8 新增：
+--   revision  版本号，每保存一次 +1；前端用它做乐观并发校验（落后 → 409）
+--   device_id 最近一次写入的设备 ID（用于提示"上次在哪台设备改的"）
 CREATE TABLE IF NOT EXISTS user_data (
   user_id      INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   payload      TEXT NOT NULL,
+  revision     INTEGER NOT NULL DEFAULT 1,
+  device_id    TEXT NOT NULL DEFAULT '',
   updated_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

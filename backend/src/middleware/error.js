@@ -67,9 +67,11 @@ function notFound(req, _res, next) {
 function handler(err, _req, res, _next) {
   // ApiError：业务错误，按其声明的 status/code/message 响应
   if (err instanceof ApiError) {
-    return res.status(err.status).json({
-      error: { code: err.code, message: err.message },
-    });
+    const errBody = { code: err.code, message: err.message };
+    // 额外字段（如冲突时的 serverRevision / serverData）随错误一起返回，
+    // 前端据它做防线式合并
+    if (err.details) Object.assign(errBody, err.details);
+    return res.status(err.status).json({ error: errBody });
   }
 
   // 未知错误：打印错误日志（方便服务器端排查），返回 500

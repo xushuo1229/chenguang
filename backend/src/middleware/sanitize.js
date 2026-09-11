@@ -63,6 +63,12 @@ const SKIP_ENCODE_FIELDS = new Set([
   'confirmPassword',  // 确认密码
 ]);
 
+// 数据同步快照接口：业务字段按原始字符往返（仅 stripDangerous、不 HTML 编码）。
+// HTML 实体编码会把课程名/待办文本里的 & < > ' 存成 &amp; &lt; 等，
+// 而前端渲染还会再转义一次 → 双重编码乱码。对 /data 快照必须保原始字符。
+// （渲染侧 XSS 由前端 textContent/esc() 负责，见 pages/*.js）
+const RAW_BODY_SYNC_PATHS = new Set(['/data', '/api/data']);
+
 /**
  * HTML 实体编码函数
  *
@@ -109,11 +115,19 @@ function stripDangerous(str) {
  *
  * @param {*} value 要净化的值
  * @param {string} [key] 当前字段名（用于判断是否跳过编码）
+ * @param {Object} [opts] { escape } —— escape=true（默认）执行 HTML 实体编码；
+ *   escape=false 仅移除危险内容，保留原始字符（用于数据同步快照，
+ *   HTML 编码会破坏 &<>' 文本的同步往返一致性）。
  */
-function sanitizeValue(value, key) {
+function sanitizeValue(value, key, opts) {
+  const escape = !opts || opts.escape !== false;
   if (typeof value === 'string') {
     // 密码/邮箱等字段只移除危险内容，不做 HTML 编码（避免破坏认证）
     if (key && SKIP_ENCODE_FIELDS.has(key)) {
+      return stripDangerous(value);
+    }
+    if (!escape) {
+      // 同步快照：仅剔除危险内容，保留原始字符（& < > ' 等原样往返）
       return stripDangerous(value);
     }
     // 普通字符串：先移除危险内容，再 HTML 实体编码
@@ -121,13 +135,13 @@ function sanitizeValue(value, key) {
   }
   // 数组：递归处理每个元素
   if (Array.isArray(value)) {
-    return value.map((item) => sanitizeValue(item, key));
+    return value.map((item) => sanitizeValue(item, key, opts));
   }
   // 对象：递归处理每个属性
   if (value !== null && typeof value === 'object') {
     const result = {};
     for (const k of Object.keys(value)) {
-      result[k] = sanitizeValue(value[k], k);
+      result[k] = sanitizeValue(value[k], k, opts);
     }
     return result;
   }
@@ -150,13 +164,15 @@ function sanitizeValue(value, key) {
  */
 function sanitizeInput(req, _res, next) {
   try {
+    // /data 同步快照：仅剥离危险脚本标记，保留原始字符（保同步往返一致）
+    const rawBody = RAW_BODY_SYNC_PATHS.has(req.path);
     // 净化请求体
     if (req.body && typeof req.body === 'object') {
-      req.body = sanitizeValue(req.body);
+      req.body = sanitizeValue(req.body, null, rawBody ? { escape: false } : undefined);
     }
     // 净化查询参数
     if (req.query && typeof req.query === 'object') {
-      req.query = sanitizeValue(req.query);
+      req.query = sanitizeValue(req.query, null, rawBody ? { escape: false } : undefined);
     }
     // 不净化 req.params：路由参数由 Express 路由器控制，不是用户输入
     // 且 HTML 编码会破坏 UUID 等参数值

@@ -149,3 +149,93 @@ describe('onUpdate 事件', () => {
   });
 });
 
+// ====================================================================
+// Phase 8：版本号 / REMOTE 应用 / 墓碑 / 跨标签页
+// ====================================================================
+describe('Phase 8：版本号 bump（Test1）', () => {
+  test('本机每次业务写操作版本号恰好 +1（同一次操作只 +1，不二次累加）', () => {
+    expect(CGStore.getRevision()).toBe(0);
+    const c = CGStore.addCourse({ name: '高数' });          // 操作1 → 1
+    expect(CGStore.getRevision()).toBe(1);
+    CGStore.updateCourse(c.id, { progress: 20 });           // 操作2 → 2
+    expect(CGStore.getRevision()).toBe(2);
+    CGStore.toggleTodo(CGStore.addTodo({ text: 'x' }).id);  // 添加(3) + 切换(4)
+    expect(CGStore.getRevision()).toBe(4);
+    CGStore.removeCourse(c.id);                              // 操作5 → 5
+    expect(CGStore.getRevision()).toBe(5);
+  });
+
+  test('set 本机全量替换只 bump 一次，且 updatedAt/deviceId 已记录', () => {
+    CGStore.set({ user: { name: '' }, courses: [{ id: 'a', name: 'A', progress: 0 }] });
+    expect(CGStore.getRevision()).toBe(1);
+    const m = CGStore.getMeta();
+    expect(m.updatedAt).toBeTruthy();
+    expect(typeof m.deviceId).toBe('string');
+    expect(m.deviceId).toBeTruthy();
+  });
+});
+
+describe('Phase 8：REMOTE 应用不 bump（Test2）', () => {
+  test('set kind=REMOTE 采用服务器版本号，本地不 +1', () => {
+    CGStore.addCourse({ name: '旧本地' }); // rev=1
+    CGStore.set(
+      { user: { name: '云' }, courses: [{ id: 'r', name: '云课', progress: 0 }] },
+      { kind: 'REMOTE', revision: 7, updatedAt: '2026-09-11T00:00:00.000Z', deviceId: 'server-device' }
+    );
+    expect(CGStore.getRevision()).toBe(7);               // 直接采用服务器版本
+    const m = CGStore.getMeta();
+    expect(m.deviceId).toBe('server-device');
+    // 之后再新增 = 又一次本机操作 → 8
+    CGStore.addCourse({ name: '本地新' });
+    expect(CGStore.getRevision()).toBe(8);
+  });
+
+  test('merge kind=REMOTE 不 bump、不标脏、不覆盖 _meta', () => {
+    CGStore.set({}, { kind: 'REMOTE', revision: 3 });
+    expect(CGStore.getRevision()).toBe(3);
+    CGStore.merge({ courses: [{ id: 'r', name: '云课', progress: 0 }] }, { kind: 'REMOTE', revision: 3 });
+    expect(CGStore.getRevision()).toBe(3);              // REMOTE 合并不 bump
+    expect(CGStore.getDirtyCategories()).not.toContain('courses');
+    expect(CGStore.get()._meta.revision).toBe(3);
+  });
+});
+
+describe('Phase 8：墓碑（Test3）', () => {
+  test('本机删除记录后记录墓碑；clearTombstones 显式清空', () => {
+    expect(CGStore.getTombstones('courses')).toEqual([]);
+    const c = CGStore.addCourse({ name: '要删' });
+    CGStore.removeCourse(c.id);
+    expect(CGStore.getTombstones('courses')).toContain(c.id);
+    CGStore.clearTombstones('courses');
+    expect(CGStore.getTombstones('courses')).toEqual([]);
+  });
+
+  test('删除失败（记录不存在）不写墓碑', () => {
+    expect(CGStore.removeCourse('not-exist')).toBe(false);
+    expect(CGStore.getTombstones('courses')).toEqual([]);
+  });
+});
+
+describe('Phase 8：跨标签页 storage 事件不 bump（Test4）', () => {
+  test('另一标签页写入同值仅刷新缓存，本地版本号不变化', () => {
+    CGStore.addCourse({ name: 'A' });                     // rev=1
+    const frozen = CGStore.getRevision();
+    // 模拟另一标签页把同份数据写回 localStorage，本页收到 storage 事件
+    localStorage.setItem(CGStore.KEY, JSON.stringify(CGStore.get()));
+    window.dispatchEvent(new StorageEvent('storage', { key: CGStore.KEY }));
+    expect(CGStore.getCourses()).toHaveLength(1);         // 缓存已刷新
+    expect(CGStore.getRevision()).toBe(frozen);           // 版本号不动
+  });
+});
+
+describe('Phase 8：迁移过的旧数据自动补 _meta（Test5）', () => {
+  test('无 _meta 的旧 payload 读入后自动初始化 _meta', () => {
+    localStorage.setItem(CGStore.KEY, JSON.stringify({ user: { name: '' }, courses: [], todos: [] }));
+    window.dispatchEvent(new StorageEvent('storage', { key: CGStore.KEY }));
+    const m = CGStore.getMeta();
+    expect(m.revision).toBe(0);
+    expect(m.deviceId).toBeTruthy();
+    expect(m.tombstones).toEqual({});
+  });
+});
+

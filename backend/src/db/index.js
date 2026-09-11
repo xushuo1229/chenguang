@@ -105,6 +105,13 @@ function query(sql, params) {
 async function initDatabase() {
   var schema = fs.readFileSync(schemaPath, 'utf8');
   db.exec(schema);
+
+  // Phase 8：老库迁移 —— 旧版 user_data 建表时没有 revision / device_id 列，
+  // 这里为已存在的数据库补列（新库 schema.sql 已含，ALTER 会因列已存在而报错，
+  // 用 try-catch 静默跳过，属于预期）。
+  try { db.exec("ALTER TABLE user_data ADD COLUMN revision INTEGER NOT NULL DEFAULT 1"); } catch (_) {}
+  try { db.exec("ALTER TABLE user_data ADD COLUMN device_id TEXT NOT NULL DEFAULT ''"); } catch (_) {}
+
   console.log('[DB] SQLite 表结构初始化完成 → ' + config.dbPath);
 }
 

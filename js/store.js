@@ -56,6 +56,13 @@ var TOKEN_KEY = 'cg_token';
  */
 var USER_KEY = 'cg_user';
 
+/**
+ * 设备 ID 的 localStorage 键名（Phase 8）
+ * 每个浏览器/设备首次运行时生成一个稳定 ID，后续复用。
+ * 用于区分多设备、标记"最后一次是谁写的"，不随刷新页面改变。
+ */
+var DEVICE_KEY = 'chenguangDeviceId';
+
 /* ===== 工具函数 ===== */
 
 /**
@@ -119,6 +126,118 @@ function todayStr(d) {
   var m = ('0' + (d.getMonth() + 1)).slice(-2);
   var day = ('0' + d.getDate()).slice(-2);
   return d.getFullYear() + '-' + m + '-' + day;
+}
+
+/* ===== Phase 8：版本号 / 设备 ID / 墓碑（供离线同步与冲突合并使用） ===== */
+
+/** 当前操作类型：'LOCAL'（用户在本机操作，唯一允许 bump 版本号） / 'REMOTE'（来自服务器或另一页签） */
+var _activeOp = 'LOCAL';
+
+/**
+ * 最近一次写入是否为 REMOTE 语义。
+ * 注意：_activeOp 在 _runAs 的 finally 里会立即复位，而真正的 emit 要等
+ * flushPersist 的延迟定时器（100ms）才会跑——若在 emit 里读 _activeOp，
+ * 永远读到 LOCAL，导致"服务器数据落本地"被误判成本机修改而触发自激 push。
+ * 所以必须在这里持久记录"最近一次写入的语义"。
+ */
+var _lastWriteRemote = false;
+
+/**
+ * nowIso() —— 获得当前 ISO 时间字符串，用于记录"这次改动发生在什么时候"
+ */
+function nowIso() {
+  return new Date().toISOString();
+}
+
+/**
+ * getDeviceId() —— 获取（或首次生成）本设备的稳定 ID
+ * 存在 localStorage 的 `chenguangDeviceId` 键里，跨刷新、跨页面复用。
+ */
+function getDeviceId() {
+  try {
+    var id = globalThis.localStorage.getItem(DEVICE_KEY);
+    if (!id) {
+      id = uid();
+      globalThis.localStorage.setItem(DEVICE_KEY, id);
+    }
+    return id;
+  } catch (_) {
+    return '';
+  }
+}
+
+/**
+ * ensureMeta(d) —— 保证数据对象里有 `_meta` 元信息块
+ * 旧版本 localStorage 没有 `_meta`，读到后自动补默认值（版本号从 0 开始，
+ * 一旦首次推送到服务器，就会用服务器的版本号覆盖）。
+ */
+function ensureMeta(d) {
+  if (!d || typeof d !== 'object') return;
+  if (d._meta && typeof d._meta === 'object') {
+    if (!d._meta.tombstones || typeof d._meta.tombstones !== 'object') d._meta.tombstones = {};
+    return;
+  }
+  d._meta = { revision: 0, updatedAt: null, deviceId: getDeviceId(), tombstones: {} };
+}
+
+/**
+ * _bump(col) —— 为"本机用户操作"递增版本号
+ *
+ * 【关键约定（用户拍板）】版本号在且只在本机业务写操作里 +1：
+ *   - persist() / emit / 事件回调 / schedulePush / pull / 合并 一律不允许再 bump。
+ *   - 也就是"用户每做一次操作，版本号 +1"，服务器用它判断谁更新。
+ *
+ * 【例外】_activeOp === 'REMOTE' 时（pull、合并应用、跨页签刷新），不 bump ——
+ * 服务器数据即便落进本机 Store，也不算本机新改动。
+ */
+function _bump(col) {
+  if (_activeOp !== 'LOCAL') return;
+  var d = _cache; // 写方法在调用本函数前已经把数据加载进 _cache
+  if (!d || !d._meta) return;
+  d._meta.revision = (Number(d._meta.revision) || 0) + 1;
+  d._meta.updatedAt = nowIso();
+  d._meta.deviceId = getDeviceId();
+}
+
+/**
+ * _addTombstone(name, id) —— 记录一条删除"墓碑"
+ * 标记"这个 id 的记录在本机被删掉了"。同步合并时，墓碑拥有最高优先级：
+ * 服务器旧副本里如果还留着该 id，也不能复活。
+ */
+function _addTombstone(name, id) {
+  var d = _cache;
+  if (!d || !d._meta) return;
+  ensureMeta(d);
+  if (!d._meta.tombstones) d._meta.tombstones = {};
+  var arr = d._meta.tombstones[name] || (d._meta.tombstones[name] = []);
+  if (arr.indexOf(id) === -1) arr.push(id);
+}
+
+/**
+ * _runAs(kind, fn) —— 临时切换操作类型，执行完恢复
+ * 用于 set / merge 的 REMOTE 调用：期间任何合并产生的写操作都不会 bump 版本号，
+ * 也不会把服务器数据标成"本机脏集合"。
+ */
+function _runAs(kind, fn) {
+  var prev = _activeOp;
+  _activeOp = (kind === 'REMOTE') ? 'REMOTE' : 'LOCAL';
+  try { return fn(); } finally {
+    // 在 _activeOp 复位前，把本次写入语义记录到持久副本，供延迟的 emit 读取
+    _lastWriteRemote = (kind === 'REMOTE');
+    _activeOp = prev;
+  }
+}
+
+/**
+ * _applyRemoteMeta(d, opts) —— 把服务器的修订元信息写进本地 _meta
+ * 服务器记录 revision / updatedAt / deviceId（最近一次写入者的设备）。
+ * 仅 REMOTE 应用时调用；不改版本号（版本号来自服务器，直接赋值）。
+ */
+function _applyRemoteMeta(d, opts) {
+  if (!d || !d._meta) return;
+  if (opts && opts.revision != null) d._meta.revision = Number(opts.revision);
+  if (opts && opts.updatedAt != null) d._meta.updatedAt = opts.updatedAt;
+  if (opts && opts.deviceId != null) d._meta.deviceId = opts.deviceId;
 }
 
 /* ===== localStorage 读写封装 ===== */
@@ -402,6 +521,7 @@ function load() {
     writeRaw(data);
   }
   _cache = data;
+  ensureMeta(_cache);
   return _cache;
 }
 
@@ -510,7 +630,15 @@ if (globalThis.document) {
 function emit() {
   try {
     var evt = globalThis.document.createEvent('CustomEvent');
-    evt.initCustomEvent('chenguang:update', false, false, { key: STORAGE_KEY });
+    // detail.remote 标记这次更新是否由"远程数据落本地"（REMOTE 语义）引发。
+    // 同步层据此跳过调度推送，避免 pull/合并成功 → emit → 又排一次 push 的
+    // 自激循环；页面 UI 刷新不受影响（事件照常广播）。
+    // 读 _lastWriteRemote 而非 _activeOp：_activeOp 早已被 _runAs 的 finally 复位，
+    // emit 走 100ms 延迟定时器，读到的一律是 LOCAL（从而永久漏掉防回环）。
+    evt.initCustomEvent('chenguang:update', false, false, {
+      key: STORAGE_KEY,
+      remote: _lastWriteRemote
+    });
     globalThis.dispatchEvent(evt);
   } catch (_) {}
 }
@@ -532,6 +660,8 @@ function emit() {
 globalThis.addEventListener('storage', function (e) {
   if (e.key === STORAGE_KEY || e.key == null) {
     _cache = null;
+    // 别处写回 → 语义为远端刷新，本页不得再调度 push（防多标签互推）
+    _lastWriteRemote = true;
     emit();
   }
 });
@@ -568,45 +698,110 @@ var CGStore = {
    */
   get: function () { return load(); },
 
-  /**
-   * set(data) —— 用新数据完全替换当前数据
-   *
-   * 【作用】通常用于云端数据拉取后，用服务器数据覆盖本地数据。
-   * 【参数】data —— 新的完整数据对象
-   * 【返回值】替换后的数据对象
-   */
-  set: function (data) {
-    _cache = data || emptyData();
+  /* ===== Phase 8：版本元信息 API（供同步层使用） ===== */
+
+  /** getMeta() —— 取 { revision, updatedAt, deviceId, tombstones } 的浅拷贝 */
+  getMeta: function () {
+    var d = load();
+    ensureMeta(d);
+    return {
+      revision: Number(d._meta.revision) || 0,
+      updatedAt: d._meta.updatedAt || null,
+      deviceId: d._meta.deviceId || getDeviceId(),
+      tombstones: Object.assign({}, d._meta.tombstones || {})
+    };
+  },
+  /** getRevision() —— 取当前本地版本号 */
+  getRevision: function () { return this.getMeta().revision; },
+  /** getDeviceId() —— 取本设备稳定 ID */
+  getDeviceId: getDeviceId,
+  /** getTombstones(name) —— 取某集合的墓碑 ID 列表（不存在返回空数组） */
+  getTombstones: function (name) {
+    var m = this.getMeta();
+    return m.tombstones[name] ? m.tombstones[name].slice() : [];
+  },
+  /** clearTombstones(name) —— 清空某集合的墓碑（仅在确认服务器已吸收删除后调用） */
+  clearTombstones: function (name) {
+    var d = load();
+    ensureMeta(d);
+    if (d._meta.tombstones && d._meta.tombstones[name]) delete d._meta.tombstones[name];
     persist();
-    return _cache;
   },
 
   /**
-   * merge(patch) —— 合并部分数据（不覆盖未提及的字段）
+   * set(data, opts) —— 用新数据完全替换当前数据
+   *
+   * 【作用】通常用于云端数据拉取后，用服务器数据覆盖本地数据。
+   * 【参数】
+   *   - data —— 新的完整数据对象
+   *   - opts.kind —— 'LOCAL'（默认，本机操作，版本号 +1）或 'REMOTE'（来自服务器，不 bump，采用服务器版本号）
+   *   - opts.revision / opts.updatedAt / opts.deviceId —— kind 为 REMOTE 时传入服务器元信息
+   * 【返回值】替换后的数据对象
+   */
+  set: function (data, opts) {
+    opts = opts || {};
+    return _runAs(opts.kind || 'LOCAL', function () {
+      var prev = _cache || null;
+      _cache = data || emptyData();
+      ensureMeta(_cache);
+      if (_activeOp === 'LOCAL') {
+        _bump('user');
+      } else {
+        // 保留本机墓碑：REMOTE 全量替换不该丢掉"删除过谁"的记忆，
+        // 否则服务器旧副本会在后续合并时把已删除的记录复活。
+        // 确认服务器已吸收删除后，才允许 clearTombstones: true。
+        if (!opts.clearTombstones && prev && prev._meta && prev._meta.tombstones) {
+          _cache._meta.tombstones = prev._meta.tombstones;
+        }
+        _applyRemoteMeta(_cache, opts);
+      }
+      persist();
+      return _cache;
+    });
+  },
+
+  /**
+   * merge(patch, opts) —— 合并部分数据（不覆盖未提及的字段）
    *
    * 【作用】云端同步时，服务器可能只返回了部分更新的数据，
    * 这个方法把新数据合并到现有数据中，保留未提及的字段。
    *
-   * 【参数】patch —— 需要合并的字段和值，如 { sports: [...], user: {...} }
+   * 【参数】
+   *   - patch —— 需要合并的字段和值，如 { sports: [...], user: {...} }
+   *   - opts.kind —— 'LOCAL'（默认）或 'REMOTE'（服务器数据）
+   *   - opts.revision/updatedAt/deviceId —— kind 为 REMOTE 时传入服务器元信息
    * 【返回值】合并后的完整数据
    *
    * 【与 set() 的区别】
    *   set() 会完全替换所有字段
    *   merge() 只覆盖 patch 中提到的字段，其他字段保持不变
+   *
+   * 【REMOTE 时注意事项】服务器数据落进本地不算"本机新改动"：
+   *   不 bump 版本号，也不标记脏集合（避免把服务器数据原样推回去）。
    */
-  merge: function (patch) {
-    var d = load();
-    if (patch && typeof patch === 'object') {
-      for (var k in patch) {
-        if (Object.prototype.hasOwnProperty.call(patch, k)) {
-          d[k] = patch[k];
-          // 标记这个集合被修改了，用于增量同步
-          _dirtyCategories.add(k);
+  merge: function (patch, opts) {
+    opts = opts || {};
+    return _runAs(opts.kind || 'LOCAL', function () {
+      var d = load();
+      ensureMeta(d);
+      if (patch && typeof patch === 'object') {
+        for (var k in patch) {
+          if (Object.prototype.hasOwnProperty.call(patch, k)) {
+            if (k === '_meta') continue; // 元信息单独处理，不当作业务集合
+            d[k] = patch[k];
+            // 标记这个集合被修改了，用于增量同步（仅本机操作才标记）
+            if (_activeOp === 'LOCAL') _dirtyCategories.add(k);
+          }
         }
       }
-    }
-    persist();
-    return d;
+      if (_activeOp === 'LOCAL') {
+        _bump('user');
+      } else {
+        _applyRemoteMeta(d, opts);
+      }
+      persist();
+      return d;
+    });
   },
 
   /**
@@ -616,7 +811,13 @@ var CGStore = {
    * 【注意】会保留 emptyData() 的结构，但内容全部清空。
    */
   resetData: function () {
+    // 清空业务数据，同时重置版本号/墓碑（保留设备 ID，因为它属于"这台设备"而非"账号数据"）
     _cache = emptyData();
+    ensureMeta(_cache);
+    _cache._meta.revision = 0;
+    _cache._meta.updatedAt = null;
+    _cache._meta.tombstones = {};
+    _cache._meta.deviceId = getDeviceId();
     persist();
     return _cache;
   },
@@ -639,8 +840,10 @@ var CGStore = {
    */
   setUser: function (u) {
     var d = load();
+    ensureMeta(d);
     d.user = Object.assign(emptyData().user, d.user, u || {});
     _dirtyCategories.add('user');
+    _bump('user');
     persist();
     return d.user;
   },
@@ -670,10 +873,12 @@ var CGStore = {
    */
   _add: function (name, item) {
     var d = load();
+    ensureMeta(d);
     if (!Array.isArray(d[name])) d[name] = [];
     var rec = Object.assign({ id: uid() }, item);
     d[name].push(rec);
     _dirtyCategories.add(name);
+    _bump(name);
     persist();
     return rec;
   },
@@ -690,9 +895,10 @@ var CGStore = {
    */
   _update: function (name, id, patch) {
     var d = load();
+    ensureMeta(d);
     var arr = Array.isArray(d[name]) ? d[name] : [];
     for (var i = 0; i < arr.length; i++) {
-      if (arr[i].id === id) { arr[i] = Object.assign({}, arr[i], patch); _dirtyCategories.add(name); persist(); return arr[i]; }
+      if (arr[i].id === id) { arr[i] = Object.assign({}, arr[i], patch); _dirtyCategories.add(name); _bump(name); persist(); return arr[i]; }
     }
     return null;
   },
@@ -706,10 +912,18 @@ var CGStore = {
    */
   _remove: function (name, id) {
     var d = load();
+    ensureMeta(d);
     if (!Array.isArray(d[name])) return false;
     var before = d[name].length;
     d[name] = d[name].filter(function (x) { return x.id !== id; });
-    if (d[name].length !== before) { _dirtyCategories.add(name); persist(); return true; }
+    if (d[name].length !== before) {
+      // 记录墓碑：此 id 在本机被删除，防止服务器旧副本在合并时把记录"复活"
+      _addTombstone(name, id);
+      _dirtyCategories.add(name);
+      _bump(name);
+      persist();
+      return true;
+    }
     return false;
   },
 
@@ -743,8 +957,20 @@ var CGStore = {
    */
   addCheckin: function (date, status) {
     date = date || todayStr();
-    var exist = this._list('checkins').filter(function (x) { return x.date === date; })[0];
-    if (exist) return this._update('checkins', exist.id, { status: status || 'done' });
+    var d = load();
+    var exist = (Array.isArray(d.checkins) ? d.checkins : []).filter(function (x) { return x.date === date; })[0];
+    if (exist) {
+      // 历史迁移产生的新打卡记录可能没有 id（旧版数据结构本无 id），
+      // 用 id 更新会找不到 —— 这种情况下直接改对象并 bump（Phase 8 顺带修复）
+      if (!exist.id) {
+        exist.status = status || 'done';
+        _dirtyCategories.add('checkins');
+        _bump('checkins');
+        persist();
+        return exist;
+      }
+      return this._update('checkins', exist.id, { status: status || 'done' });
+    }
     return this._add('checkins', { date: date, status: status || 'done' });
   },
 
@@ -882,7 +1108,7 @@ var CGStore = {
   toggleTodo: function (id) {
     var arr = this._list('todos');
     for (var i = 0; i < arr.length; i++) {
-      if (arr[i].id === id) { arr[i].done = !arr[i].done; _dirtyCategories.add('todos'); persist(); return arr[i]; }
+      if (arr[i].id === id) { arr[i].done = !arr[i].done; _dirtyCategories.add('todos'); _bump('todos'); persist(); return arr[i]; }
     }
     return null;
   },
@@ -1024,7 +1250,7 @@ var CGStore = {
  *   unsub();
  */
 CGStore.onUpdate = function (fn) {
-  var handler = function () { try { fn(); } catch (_) {} };
+  var handler = function (e) { try { fn(e); } catch (_) {} };
   globalThis.addEventListener('chenguang:update', handler);
   return function () { globalThis.removeEventListener('chenguang:update', handler); };
 };
@@ -1033,4 +1259,4 @@ CGStore.onUpdate = function (fn) {
 globalThis.CGStore = CGStore;
 
 export default CGStore;
-export { CGStore, uid, todayStr };
+export { CGStore, uid, todayStr, getDeviceId };
