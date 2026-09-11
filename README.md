@@ -93,9 +93,8 @@ chenguang-platform/
 │   ├── ui/                   # 通用 UI 组件（modal.js / toast.js）
 │   └── utils/                # 工具函数（date.js / dom.js）
 ├── css/
-│   ├── variables.css         # 设计变量
-│   ├── shared.css            # 公共组件样式
-│   ├── tech.css              # 科技感视觉升级
+│   ├── variables.css         # 设计变量（「晨光·静 Calm Dawn」设计系统 token + 旧名兼容）
+│   ├── shared.css            # 公共组件样式（按钮 / 卡片 / 弹窗 / 侧边栏 / Toast）
 │   └── app.css               # 落地页样式
 ├── backend/                  # 【当前后端】Node + Express + SQLite + JWT
 │   ├── schema.sql            # 建表 SQL（users + user_data 单快照表）

@@ -416,16 +416,6 @@ function initFeatureCards() {
   } catch (e) { console.warn('[feature] 数据加载失败', e); }
 
   $$('.feature-card').forEach(function(card) {
-    card.addEventListener('mouseenter', function() {
-      card.style.borderColor = 'rgba(0,212,255,0.3)';
-      card.style.boxShadow = '0 12px 40px rgba(0,212,255,0.15)';
-      card.style.transform = 'translateY(-6px)';
-    });
-    card.addEventListener('mouseleave', function() {
-      card.style.borderColor = '';
-      card.style.boxShadow = '';
-      card.style.transform = '';
-    });
     card.addEventListener('click', function() {
       var feature = card.getAttribute('data-feature');
       var names = { sports: '每日运动', courses: '课程学习', readings: '每日阅读', english: '英语学习', focus: '深度专注', checkins: '打卡统计' };
@@ -441,8 +431,6 @@ function initFeatureCards() {
         toast('正在打开' + (names[feature] || feature) + '功能...', 'success');
         setTimeout(function() { window.location.href = 'workbench.html'; }, 600);
       });
-      actionBtn.addEventListener('mouseenter', function() { this.style.background = 'rgba(0,212,255,0.2)'; });
-      actionBtn.addEventListener('mouseleave', function() { this.style.background = ''; });
     }
   });
 }
@@ -461,13 +449,7 @@ if ('IntersectionObserver' in window) {
 var topbar = document.querySelector('.topbar');
 if (topbar) window.addEventListener('scroll', function() { topbar.classList.toggle('scrolled', window.scrollY > 20); });
 
-// ==================== 功能卡片样式 ====================
-var featureCSS = document.createElement('style');
-featureCSS.textContent = '.feature-card{background:rgba(15,18,35,0.6);border:1px solid rgba(0,212,255,0.08);border-radius:28px;padding:28px;transition:all 0.4s cubic-bezier(0.22,1,0.36,1);cursor:pointer;}.feature-card:hover{border-color:rgba(0,212,255,0.3);box-shadow:0 12px 40px rgba(0,212,255,0.15);transform:translateY(-6px);}';
-document.head.appendChild(featureCSS);
-
 // ==================== DOMContentLoaded ====================
 document.addEventListener('DOMContentLoaded', function() {
-  $$('.reveal').forEach(function(el) { el.classList.add('visible'); });
   initFeatureCards();
 });

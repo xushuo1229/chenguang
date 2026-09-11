@@ -40,8 +40,7 @@ var container = null;
 function getContainer() {
   if (!container) {
     container = document.createElement('div');  // 创建一个空 div
-    container.className = 'cg-toast-container';
-    container.style.cssText = 'position:fixed;top:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:10px;pointer-events:none;';
+    container.className = 'toast-wrap';  // 容器样式由 shared.css 提供
     document.body.appendChild(container);  // 添加到页面 body 中
   }
   return container;
@@ -65,12 +64,13 @@ function getIcon(type) {
 // getColor 函数 - 根据类型返回对应颜色
 // ============================================================
 // 每种类型使用不同的颜色，让用户一眼就能识别消息类型：
-//   success → 绿色 (#10b981) — 操作成功
-//   error   → 红色 (#ef4444) — 出错了
-//   warn    → 黄色 (#f59e0b) — 需要注意
-//   info    → 青色 (#06b6d4) — 普通信息
+//   success → 青瓷色 var(--success) — 操作成功
+//   error   → 珊瑚色 var(--danger) — 出错了
+//   warn    → 明黄色 var(--warning) — 需要注意
+//   info    → 天青色 var(--info) — 普通信息
+// 颜色直接引用「晨光·静」设计 token（暗底页面下依然协调）
 function getColor(type) {
-  var colors = { success: '#10b981', error: '#ef4444', warn: '#f59e0b', info: '#06b6d4' };
+  var colors = { success: 'var(--success)', error: 'var(--danger)', warn: 'var(--warning)', info: 'var(--info)' };
   return colors[type] || colors.info;
 }
 
@@ -108,13 +108,14 @@ function toast(msg, type, duration) {
   if (type === undefined) type = 'info';
   if (duration === undefined) duration = 3000;
   var wrap = getContainer();
-  // 创建 Toast 元素
+  // 创建 Toast 元素：盒子样式全部来自 shared.css 的 .toast / .toast-{type}，
+  // 这里只保留动态进出场动画的内联状态（透明 + 右侧滑入起点）
   var el = document.createElement('div');
-  // 初始状态：透明 + 位于右侧外面（translateX(100px)）
-  // transition: all 0.3s ease 让样式变化有 0.3 秒的过渡动画
-  el.style.cssText = 'display:flex;align-items:center;gap:8px;padding:12px 20px;background:rgba(255,255,255,0.95);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);border-left:4px solid ' + getColor(type) + ';opacity:0;transform:translateX(100px);transition:all 0.3s ease;min-width:200px;max-width:400px;pointer-events:auto;';
-  // 内容：图标 + 消息文本（文本经过 esc 转义，防止 XSS）
-  el.innerHTML = '<span style="color:' + getColor(type) + ';font-weight:bold;font-size:16px;">' + getIcon(type) + '</span><span style="color:#1e1e2a;font-size:14px;">' + esc(msg) + '</span>';
+  var typeClass = type === 'warn' ? 'warning' : type;   // warn → warning 对齐 CSS 类名
+  el.className = 'toast' + (typeClass === 'info' ? '' : ' toast-' + typeClass);
+  el.style.cssText = 'display:flex;align-items:center;gap:10px;min-width:200px;opacity:0;transform:translateX(100px);transition:all 0.3s ease;';
+  // 内容：图标（用类型强调色）+ 消息文本（文本经过 esc 转义，防止 XSS）
+  el.innerHTML = '<span style="color:' + getColor(type) + ';font-weight:700;font-size:14px;">' + getIcon(type) + '</span><span style="font-weight:500;">' + esc(msg) + '</span>';
   wrap.appendChild(el);  // 添加到容器中
 
   // requestAnimationFrame：等浏览器渲染完这一帧后，再修改样式

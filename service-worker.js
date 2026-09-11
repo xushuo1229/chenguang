@@ -31,7 +31,7 @@
 // ==================== 缓存版本号 ====================
 // 每次发布新版本时，递增这个值（如 cgl-v10 → cgl-v11）
 // 这会强制清除用户的旧缓存，确保他们获取最新资源
-const CACHE_VERSION = 'cgl-v11';
+const CACHE_VERSION = 'cgl-v12';
 
 // 两个缓存空间：
 //   - CACHE_STATIC：存放预缓存的核心静态资源（构建时确定）
@@ -52,7 +52,6 @@ const PRECACHE_URLS = [
   '/ai.html',             // AI 助手
   '/css/variables.css',   // CSS 变量（主题色等）
   '/css/shared.css',      // 公共组件样式
-  '/css/tech.css',        // 科技感视觉升级
   '/css/app.css',         // 落地页样式
   '/js/utils/dom.js',     // DOM 工具函数
   '/js/utils/date.js',    // 日期工具函数
@@ -65,8 +64,6 @@ const PRECACHE_URLS = [
   '/pages/workbench.js',  // 工作台脚本
   '/pages/stats.js',      // 统计页脚本
   '/pages/ai.js',         // AI 助手脚本
-  '/js/particles.js',     // 粒子背景
-  '/js/ripple.js',        // 点击波纹
   '/assets/vendor/fontawesome/css/all.min.css',       // FontAwesome 图标库样式
   '/assets/vendor/fontawesome/webfonts/fa-solid-900.woff2',    // FontAwesome 字体文件
   '/assets/vendor/fontawesome/webfonts/fa-regular-400.woff2',

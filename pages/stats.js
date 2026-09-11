@@ -33,16 +33,16 @@ import '../js/sync.js';
     return true;
   }
 
-  /* ---------- 浅色主题颜色 ---------- */
+  /* ---------- 图表颜色（对齐「晨光·静」品牌 token） ---------- */
   // 定义图表使用的颜色常量，统一视觉风格
   // 这些颜色在绘制图表时会用到，如折线颜色、背景色等
   var C = {
-    amber: '#d68f2c', amberAlpha: 'rgba(245,176,66,.2)',
-    teal: '#10b981', tealAlpha: 'rgba(16,185,129,.2)',
-    sky: '#3b82f6', skyAlpha: 'rgba(59,130,246,.15)',
-    text1: '#1e1e2a', text2: '#5a5a6e', text3: '#8a8a9a',
-    cardBg: '#ffffff', border: '#e8e5e0',
-    line: 'rgba(0,0,0,.06)', lineStrong: 'rgba(0,0,0,.12)',
+    amber: '#e8a85c', amberAlpha: 'rgba(232,168,92,.18)',
+    teal: '#4fc3b4', tealAlpha: 'rgba(79,195,180,.16)',
+    sky: '#7ba7d9', skyAlpha: 'rgba(123,167,217,.14)',
+    text1: '#f2efe8', text2: '#b8b3a8', text3: '#8d887d',
+    cardBg: '#191c22', border: '#21252d',
+    line: 'rgba(255,255,255,.07)', lineStrong: 'rgba(255,255,255,.14)',
   };
 
   /* ---------- Chart.js 加载 ---------- */
@@ -166,8 +166,8 @@ import '../js/sync.js';
     charts.weekly = new Chart(ctx, {
       type: 'line',
       data: { labels: labels, datasets: [
-        { label: '打卡数', data: data.map(function(d){return d.checkin_count;}), borderColor: C.amber, backgroundColor: gradient(ctx, C.amberAlpha, 'rgba(245,176,66,0)'), borderWidth: 2.5, fill: true, tension: .35, pointBackgroundColor: C.amber, pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 7, yAxisID: 'y' },
-        { label: '学习时长(分钟)', data: data.map(function(d){return d.study_minutes;}), borderColor: C.teal, backgroundColor: gradient(ctx, C.tealAlpha, 'rgba(16,185,129,0)'), borderWidth: 2.5, fill: true, tension: .35, pointBackgroundColor: C.teal, pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 7, yAxisID: 'y1' },
+        { label: '打卡数', data: data.map(function(d){return d.checkin_count;}), borderColor: C.amber, backgroundColor: gradient(ctx, C.amberAlpha, 'rgba(232,168,92,0)'), borderWidth: 2.5, fill: true, tension: .35, pointBackgroundColor: C.amber, pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 7, yAxisID: 'y' },
+        { label: '学习时长(分钟)', data: data.map(function(d){return d.study_minutes;}), borderColor: C.teal, backgroundColor: gradient(ctx, C.tealAlpha, 'rgba(79,195,180,0)'), borderWidth: 2.5, fill: true, tension: .35, pointBackgroundColor: C.teal, pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 7, yAxisID: 'y1' },
       ]},
       options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
         plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8 } },
@@ -292,7 +292,7 @@ import '../js/sync.js';
   //   2. 渲染 KPI 指标卡片
   //   3. 渲染折线图、环形图、柱状图、热力图
   async function loadAll() {
-    try { await loadChartJS(); } catch (e) { showToast('图表库加载失败，请检查网络', 'err'); return; }
+    try { await loadChartJS(); } catch (e) { toast('图表库加载失败，请检查网络', 'error'); return; }
     renderKPI(getOverview());
     renderWeekly(getWeeklyData());
     renderCompletion(getCourseCompletion());
@@ -304,7 +304,7 @@ import '../js/sync.js';
   // 点击「刷新数据」按钮时，重新加载所有图表数据
   document.getElementById('refreshBtn').addEventListener('click', function () {
     var btn = this; btn.disabled = true; btn.textContent = '刷新中…';
-    loadAll().then(function () { showToast('数据已刷新', 'ok'); btn.disabled = false; btn.textContent = '刷新数据'; });
+    loadAll().then(function () { toast('数据已刷新', 'success'); btn.disabled = false; btn.textContent = '刷新数据'; });
   });
 
   /* ---------- 初始化 ---------- */

@@ -12,21 +12,22 @@
    所有组件都引用这些变量，确保视觉风格统一。
    ============================================================ */
 :root{
-  /* 背景色系：从深到浅的 5 个层级 */
-  --bg-0:#090c11; --bg-1:#0d1016; --bg-2:#11151d; --bg-3:#171c26; --bg-4:#1e2430;
+  /* 与 variables.css「晨光·静」对齐：本文件仅作落地页别名层 */
+  /* 背景色系：从深到浅的 5 个层级（映射新表面 token） */
+  --bg-0:var(--bg-page); --bg-1:var(--bg-soft); --bg-2:var(--bg-card); --bg-3:var(--bg-elev); --bg-4:#2a303b;
   /* 品牌色系：琥珀色、珊瑚色、青色、天空蓝、玫瑰红 */
-  --amber:#f0b25c; --amber-2:#f5c06a; --coral:#f07a5a; --coral-2:#f0975a;
-  --teal:#5cc8b2; --teal-2:#7dd9c6; --sky:#7ba7d9; --sky-2:#a3c2e8; --rose:#f26d85; --rose-2:#f58fa3;
-  /* 渐变色：用于按钮、装饰等 */
-  --grad-amber:linear-gradient(135deg,#f5c06a 0%,#f0975a 48%,#f07a5a 100%);
-  --grad-teal:linear-gradient(135deg,#5cc8b2 0%,#7ba7d9 100%);
-  --grad-rose:linear-gradient(135deg,#f26d85 0%,#f07a5a 100%);
+  --amber:var(--brand-amber); --amber-2:var(--brand-amber-strong); --coral:#e8835e; --coral-2:#efa080;
+  --teal:var(--brand-teal); --teal-2:#7dd9c6; --sky:var(--brand-sky); --sky-2:#a3c2e8; --rose:var(--brand-rose); --rose-2:#f58fa3;
+  /* 旧渐变名 → 实色（不再使用渐变按钮/装饰） */
+  --grad-amber:var(--brand-amber);
+  --grad-teal:var(--brand-teal);
+  --grad-rose:var(--brand-rose);
   /* 文字色系：从亮到暗 */
-  --text-1:#f6f4ef; --text-2:#b0b8c4; --text-3:#7d8695; --text-4:#565f6e;
+  --text-1:var(--text-hi); --text-2:#b8b3a8; --text-3:var(--text-muted); --text-4:var(--text-light);
   /* 边框色系 */
-  --line:rgba(255,255,255,.06); --line-strong:rgba(255,255,255,.12); --line-focus:rgba(240,178,92,.35);
+  --line:var(--border-soft); --line-strong:var(--border-strong); --line-focus:rgba(232,168,92,.35);
   /* 功能色：成功绿、错误红 */
-  --ok:#58b892; --ok-soft:rgba(88,184,146,.12); --err:#ef7a72; --err-soft:rgba(239,122,114,.12);
+  --ok:var(--brand-teal); --ok-soft:rgba(79,195,180,.12); --err:var(--brand-rose); --err-soft:rgba(232,121,111,.12);
   /* 字体优先级列表：按可用性排序 */
   --font:"HarmonyOS Sans SC","MiSans","PingFang SC","Microsoft YaHei UI","Microsoft YaHei",system-ui,sans-serif;
   /* 数字专用字体：等宽字体让数字对齐更整齐 */
@@ -34,17 +35,17 @@
   /* 间距变量：从 s1 到 s12，用于 margin、padding 等 */
   --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:20px;--s6:24px;--s7:28px;--s8:32px;--s10:40px;--s12:48px;
   /* 圆角变量 */
-  --r-xs:8px;--r-sm:12px;--r-md:16px;--r-lg:20px;--r-xl:24px;--r-full:999px;
+  --r-xs:6px;--r-sm:10px;--r-md:14px;--r-lg:20px;--r-xl:24px;--r-full:999px;
   /* 缓动函数：控制动画的加速度曲线 */
   --ease-out-quart:cubic-bezier(.25,1,.5,1); --ease-out-expo:cubic-bezier(.16,1,.3,1); --ease-spring:cubic-bezier(.34,1.56,.64,1);
   /* 过渡时间 */
   --t-fast:.15s; --t-med:.35s; --t-slow:.7s;
-  /* 阴影 */
-  --shadow-card:0 0 0 1px rgba(255,255,255,.04) inset,0 14px 40px -16px rgba(0,0,0,.55);
-  --shadow-float:0 24px 60px -20px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.06) inset;
-  --shadow-glow:0 0 30px -6px rgba(240,178,92,.25);
-  /* 毛玻璃参数 */
-  --glass-blur:16px; --glass-alpha:.72;
+  /* 阴影（克制，无发光） */
+  --shadow-card:0 1px 2px rgba(0,0,0,.25);
+  --shadow-float:0 6px 20px rgba(0,0,0,.32);
+  --shadow-glow:0 0 0 rgba(0,0,0,0);
+  /* 毛玻璃：禁用（实心代玻） */
+  --glass-blur:0px; --glass-alpha:.72;
 }
 
 /* ============================================================
@@ -121,10 +122,8 @@ a:hover{color:var(--amber)}
    给人一种"磨砂玻璃"的质感。
    ============================================================ */
 .glass{
-  background:rgba(23,28,38,var(--glass-alpha));           /* 深色半透明背景 */
-  backdrop-filter:blur(var(--glass-blur));                 /* CSS 背景模糊 */
-  -webkit-backdrop-filter:blur(var(--glass-blur));         /* 兼容 Safari */
-  border:1px solid var(--line)                             /* 微妙的白色边框 */
+  background:var(--bg-2);                                  /* 实心深色背景（不再玻璃拟态） */
+  border:1px solid var(--line);                            /* 微妙边框 */
 }
 
 /* ============================================================
@@ -138,8 +137,8 @@ a:hover{color:var(--amber)}
    - 悬停动画（上浮 + 加深阴影）
    ============================================================ */
 .card{
-  /* 背景：从上到下的微渐变 + 深色底色 */
-  background:linear-gradient(180deg,rgba(255,255,255,.03) 0%,rgba(255,255,255,0) 100%),var(--bg-2);
+  /* 背景：实底深色卡片（无渐变） */
+  background:var(--bg-2);
   border:1px solid var(--line);                    /* 微妙边框 */
   border-radius:var(--r-lg);                       /* 大圆角 */
   box-shadow:var(--shadow-card);                   /* 卡片阴影 */
@@ -171,9 +170,9 @@ a:hover{color:var(--amber)}
 /* 禁用状态：半透明 + 禁止点击 */
 .btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
 /* 主按钮：金色渐变背景 + 深色文字 + 金色阴影 */
-.btn-primary{background:var(--grad-amber);color:#1a1205;box-shadow:0 4px 16px -4px rgba(240,178,92,.35)}
+.btn-primary{background:var(--brand-amber);color:var(--text-on-accent);box-shadow:var(--shadow-card)}
 /* 主按钮悬停：上浮 1px + 阴影加深 */
-.btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 22px -4px rgba(240,178,92,.45)}
+.btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:var(--shadow-float)}
 /* 主按钮按下：回到原位（不跳动） */
 .btn-primary:active:not(:disabled){transform:translateY(0)}
 /* 幽灵按钮：半透明背景 + 边框 */
@@ -254,7 +253,7 @@ label.fl{display:block;font-size:12px;font-weight:600;color:var(--text-3);margin
 /* Logo 区域 */
 .auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:var(--s6)}
 /* Logo 图标：金色渐变背景 */
-.auth-logo .dot{width:36px;height:36px;border-radius:var(--r-sm);background:var(--grad-amber);display:flex;align-items:center;justify-content:center;font-size:18px;color:#1a1205;font-weight:700}
+.auth-logo .dot{width:36px;height:36px;border-radius:var(--r-sm);background:var(--brand-amber);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text-on-accent);font-weight:700}
 /* 应用名称 */
 .auth-logo h1{font-size:20px;font-weight:700}
 /* 副标题 */
@@ -318,11 +317,10 @@ label.fl{display:block;font-size:12px;font-weight:600;color:var(--text-3);margin
   display:flex;align-items:center;justify-content:space-between;
   padding:var(--s4) var(--s6);background:var(--bg-1);
   border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100;
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);  /* 毛玻璃效果 */
 }
 /* 品牌 Logo 区域 */
 .dash-header .brand{display:flex;align-items:center;gap:10px}
-.dash-header .brand .dot{width:32px;height:32px;border-radius:var(--r-xs);background:var(--grad-amber);display:flex;align-items:center;justify-content:center;font-size:16px;color:#1a1205;font-weight:700}
+.dash-header .brand .dot{width:32px;height:32px;border-radius:var(--r-xs);background:var(--brand-amber);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text-on-accent);font-weight:700}
 .dash-header .brand h1{font-size:16px;font-weight:700}
 /* 用户区域：头像 + 用户名 */
 .dash-header .user-area{display:flex;align-items:center;gap:var(--s3)}
@@ -423,10 +421,9 @@ label.fl{display:block;font-size:12px;font-weight:600;color:var(--text-3);margin
    当页面正在加载数据时显示的遮罩层。
    包含一个旋转的加载动画（spinner）。
    ============================================================ */
-/* 遮罩层：覆盖整个屏幕，半透明黑色背景 + 模糊 */
+/* 遮罩层：覆盖整个屏幕，半透明黑色背景 */
 .global-loader{
   position:fixed;inset:0;z-index:9998;background:rgba(9,12,17,.6);
-  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
   display:none;align-items:center;justify-content:center;  /* 默认隐藏 */
 }
 .global-loader.show{display:flex}  /* 有 .show 类时显示 */
@@ -474,9 +471,7 @@ label.fl{display:block;font-size:12px;font-weight:600;color:var(--text-3);margin
 .section-card .sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--s4)}
 .section-card .sec-head h2{font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px}
 /* 实时状态指示灯：绿色脉冲动画 */
-.section-card .sec-head .live-dot{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:livePulse 2s infinite}
-/* 脉冲动画：从小到大扩散，同时变透明 */
-@keyframes livePulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(88,184,146,.4)}50%{opacity:.6;box-shadow:0 0 0 6px rgba(88,184,146,0)}}
+.section-card .sec-head .live-dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
 
 /* 动态列表：垂直排列，最大高度限制 */
 .feed-list{display:flex;flex-direction:column;gap:2px;max-height:520px;overflow-y:auto}
@@ -543,7 +538,7 @@ label.fl{display:block;font-size:12px;font-weight:600;color:var(--text-3);margin
 .rt-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-4)}
 .rt-status .dot{width:6px;height:6px;border-radius:50%;background:var(--text-4)}
 /* 已连接：绿色 + 脉冲动画 */
-.rt-status.connected .dot{background:var(--ok);animation:livePulse 2s infinite}
+.rt-status.connected .dot{background:var(--ok)}
 /* 断开：红色 */
 .rt-status.disconnected .dot{background:var(--err)}
 

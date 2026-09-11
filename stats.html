@@ -49,7 +49,7 @@
       color: var(--text-dark);
       font-size: 0.85rem;
       font-weight: 500;
-      border: 1px solid rgba(0,212,255,0.15);
+      border: 1px solid rgba(232,168,92,0.15);
       transition: 0.2s;
     }
 
@@ -74,7 +74,7 @@
       background: var(--bg-card);
       border-radius: 18px;
       padding: 20px;
-      border: 1px solid rgba(0,212,255,0.15);
+      border: 1px solid rgba(232,168,92,0.15);
       text-align: center;
       transition: 0.2s;
       position: relative;
@@ -82,15 +82,15 @@
     }
 
     .kpi-card:hover {
-      border-color: rgba(0,212,255,0.3);
-      box-shadow: 0 4px 16px rgba(0,212,255,0.04);
+      border-color: rgba(232,168,92,0.3);
+      box-shadow: 0 4px 16px rgba(232,168,92,0.04);
     }
 
     .kpi-card .kpi-icon {
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      background: rgba(0,212,255,0.1);
+      background: rgba(232,168,92,0.1);
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -113,7 +113,7 @@
     /* KPI 卡片颜色区分 */
     .kpi-card:nth-child(1) { --kpi-color: var(--primary); }
     .kpi-card:nth-child(2) { --kpi-color: var(--success); }
-    .kpi-card:nth-child(3) { --kpi-color: #8b5cf6; }
+    .kpi-card:nth-child(3) { --kpi-color: var(--brand-iris); }
     .kpi-card:nth-child(4) { --kpi-color: var(--info); }
 
     .kpi-card::before {
@@ -141,7 +141,7 @@
       background: var(--bg-card);
       border-radius: 18px;
       padding: 20px 22px 22px;
-      border: 1px solid rgba(0,212,255,0.15);
+      border: 1px solid rgba(232,168,92,0.15);
       margin-bottom: 20px;
     }
 
@@ -181,7 +181,7 @@
       position: absolute;
       top: -50%; right: -50%;
       width: 100%; height: 100%;
-      background: radial-gradient(circle, rgba(0,212,255,0.04) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(232,168,92,0.04) 0%, transparent 70%);
       pointer-events: none;
     }
 
@@ -205,7 +205,7 @@
       background: var(--bg-card);
       border-radius: 18px;
       padding: 20px 22px 22px;
-      border: 1px solid rgba(0,212,255,0.15);
+      border: 1px solid rgba(232,168,92,0.15);
       margin-bottom: 20px;
     }
 
@@ -270,17 +270,17 @@
 
     .hm-cell:hover {
       transform: scale(1.3);
-      box-shadow: 0 0 8px rgba(0,212,255,0.4);
+      box-shadow: 0 0 8px rgba(232,168,92,0.4);
     }
 
     .hm-empty { background: transparent; }
 
     /* 热力图改用琥珀色调 */
-    .hm-level-0 { background: #1a1a2e; }
-    .hm-level-1 { background: rgba(0,212,255,0.15); }
-    .hm-level-2 { background: rgba(0,212,255,0.35); }
-    .hm-level-3 { background: var(--neon-blue); }
-    .hm-level-4 { background: var(--neon-blue); }
+    .hm-level-0 { background: var(--bg-input); }
+    .hm-level-1 { background: rgba(232,168,92,0.15); }
+    .hm-level-2 { background: rgba(232,168,92,0.35); }
+    .hm-level-3 { background: var(--brand-amber); }
+    .hm-level-4 { background: var(--brand-amber-strong); }
 
     .hm-legend {
       display: flex;
@@ -310,7 +310,7 @@
       gap: 6px;
       padding: 8px 18px;
       border-radius: 40px;
-      border: 1px solid rgba(0,212,255,0.15);
+      border: 1px solid rgba(232,168,92,0.15);
       background: var(--bg-card);
       color: var(--text-dark);
       font-size: 0.85rem;
@@ -361,8 +361,7 @@
       .topbar .actions a { padding: 6px 12px; font-size: 0.75rem; }
     }
   </style>
-  <link rel="stylesheet" href="css/tech.css">
-</head>
+  </head>
 <body>
 
 <!-- ===== 左侧导航 ===== -->
@@ -468,13 +467,12 @@
   <a href="ai.html" data-nav="ai"><i class="fas fa-robot"></i>AI</a>
   <a href="workbench.html?view=course" data-nav="course"><i class="fas fa-book"></i>课程</a>
   <a href="workbench.html?view=manage" data-nav="manage"><i class="fas fa-cog"></i>管理</a>
+  <a href="workbench.html?view=profile" data-nav="profile"><i class="fas fa-user"></i>我的</a>
 </nav>
 
 <!-- Toast 容器 -->
 <div id="toastContainer"></div>
 
-<script src="js/particles.js"></script>
-<script src="js/ripple.js"></script>
 <script type="module" src="pages/stats.js"></script>
 
 </body>

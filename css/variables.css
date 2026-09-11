@@ -1,82 +1,133 @@
 /**
- * 晨光自律台 · 科技未来感设计变量
+ * 晨光自律台 · Design System 设计变量　「晨光 · 静 Calm Dawn」
  * ============================================================
- * 深色背景 + 霓虹蓝/紫色渐变，打造科幻学习氛围
+ * 【本文件使命】
+ * 这是全站唯一的 token 来源。四个页面（index/workbench/stats/ai）
+ * 以及所有 CSS 组件都从这里取值。
+ *
+ * 【兼容性承诺】
+ * 本文件保留历史上出现过的**每一个**变量名 —— pages/*.js、
+ * 各页 HTML 内联 <style> 里的 var(--xxx) 沿用旧名引用，值全部按
+ * 新设计系统重定义，因此 HTML/JS 无需改名即可继承新主题。
+ * 例：旧 --neon-blue:#00d4ff（荧光青）→ 新沉静青蓝；--primary 指向晨光琥珀。
+ *
+ * 【设计语言】
+ * 品牌色锚定「晨光琥珀」（产品名与 logo 意象），青瓷做正反馈、
+ * 珊瑚做警示、天青做信息、紫做 AI 点缀；
+ * 消除霓虹/发光/玻璃/深空——换成暖石墨实心表面 + 极简两层阴影。
+ * 比例：spacing 4/8/12/16/20/24/32/40/48/64；
+ * radius 6/10/14/20/999；duration 120/200/320ms。
+ * ============================================================
  */
 :root {
-  /* ========== 主色调（霓虹渐变） ========== */
-  --neon-blue: #00d4ff;
-  --neon-purple: #a855f7;
-  --neon-pink: #ec4899;
-  --neon-cyan: #06ffc7;
-  --neon-glow: 0 0 10px rgba(0,212,255,0.5), 0 0 30px rgba(0,212,255,0.2);
+  /* ========== 品牌色（暖晨四色 + 点缀） ========== */
+  --brand-amber: #e8a85c;          /* 晨光琥珀 · 主品牌 */
+  --brand-amber-strong: #f2ba6f;   /* 琥珀强调 / hover */
+  --brand-amber-weak: rgba(232, 168, 92, 0.14); /* 琥珀浅底 */
+  --brand-teal: #4fc3b4;           /* 青瓷 · 正反馈 */
+  --brand-sky: #7ba7d9;            /* 天青 · 信息 */
+  --brand-rose: #e8796f;           /* 珊瑚 · 警示/错误 */
+  --brand-iris: #a78dc9;           /* 紫 · AI/点缀 */
 
-  --primary: #00d4ff;
-  --primary-dark: #00a8cc;
-  --primary-light: rgba(0,212,255,0.15);
+  /* ========== 语义色（旧名兼容：HTML/JS 引用） ========== */
+  --primary: var(--brand-amber);
+  --primary-dark: #c98a3e;
+  --primary-light: rgba(232, 168, 92, 0.14);
+  --success: var(--brand-teal);
+  --success-light: rgba(79, 195, 180, 0.12);
+  --warning: #ddb35c;
+  --warning-light: rgba(221, 179, 92, 0.12);
+  --danger: var(--brand-rose);
+  --danger-light: rgba(232, 121, 111, 0.12);
+  --info: var(--brand-sky);
+  --info-light: rgba(123, 167, 217, 0.12);
 
-  /* ========== 语义色（霓虹版） ========== */
-  --success: #06ffc7;
-  --success-light: rgba(6,255,199,0.12);
-  --warning: #fbbf24;
-  --warning-light: rgba(251,191,36,0.12);
-  --danger: #ff4d6a;
-  --danger-light: rgba(255,77,106,0.12);
-  --info: #a855f7;
-  --info-light: rgba(168,85,247,0.12);
+  /* ========== neon 兼容（值降饱和/灭发光，旧引用自动继承） ========== */
+  --neon-blue: #6fa9c7;            /* 沉静青蓝（原荧光青） */
+  --neon-purple: #a78dc9;          /* 沉静紫（原亮紫） */
+  --neon-pink: #d69ab0;            /* 沉静玫粉 */
+  --neon-cyan: #5ec8b4;            /* = 青瓷 */
+  --neon-glow: transparent;        /* 原霓虹发光 → 无 */
 
-  /* ========== 背景（深色系） ========== */
-  --bg-page: #0a0a1a;
-  --bg-soft: #0f0f2a;
-  --bg-card: rgba(15,15,40,0.8);
-  --bg-glass: rgba(10,10,30,0.6);
-  --bg-glass-strong: rgba(10,10,30,0.85);
+  /* ========== 表面（暖石墨 5 阶，实心 / 不玻璃） ========== */
+  --bg-page: #0f1114;              /* 页面底 */
+  --bg-soft: #14161b;              /* 次级底 */
+  --bg-card: #191c22;              /* 卡片底 */
+  --bg-elev: #21252d;              /* 弹窗/悬浮 */
+  --bg-input: #121419;             /* 输入框 */
+  --bg-glass: #191c22;             /* 兼容名 → 卡片底 */
+  --bg-glass-strong: #21252d;      /* 兼容名 → 悬浮底 */
+  --bg-hover: rgba(255, 255, 255, 0.045);
+  --bg-active: rgba(255, 255, 255, 0.07);
 
-  /* ========== 文本 ========== */
-  --text-dark: #e8e8f0;
-  --text-muted: #8888aa;
-  --text-light: #555577;
+  /* ========== 文本（暖白 4 阶 + 实底反色） ========== */
+  --text-hi: #f2efe8;              /* 主文字 */
+  --text-mid: #b8b3a8;             /* 次要 */
+  --text-muted: #8d887d;           /* 三级（旧名兼容） */
+  --text-light: #6a665c;           /* 最弱/占位（旧名兼容） */
   --text-white: #ffffff;
+  --text-dark: var(--text-hi);     /* 旧名 → 主文字（暗底亮字） */
+  --text-on-accent: #211407;       /* 琥珀/青瓷等亮底上的深字 */
 
-  /* ========== 边框（霓虹发光） ========== */
-  --border-light: rgba(0,212,255,0.2);
-  --border-soft: rgba(0,212,255,0.1);
-  --border-default: rgba(255,255,255,0.08);
-  --border-neon: rgba(0,212,255,0.3);
-  --border-glow: 0 0 8px rgba(0,212,255,0.3), inset 0 0 8px rgba(0,212,255,0.05);
+  /* ========== 边界（中性，琥珀微光仅给高亮） ========== */
+  --border-default: rgba(255, 255, 255, 0.08);
+  --border-soft: rgba(255, 255, 255, 0.06);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-light: rgba(232, 168, 92, 0.16);       /* 旧名 → 琥珀微 */
+  --border-neon: rgba(232, 168, 92, 0.28);        /* 旧名 → 琥珀中 */
+  --border-glow: 0 0 0 3px rgba(232, 168, 92, 0.16); /* 旧名 → 焦点环 */
 
-  /* ========== 阴影（霓虹光晕） ========== */
-  --shadow-xs: 0 1px 3px rgba(0,0,0,0.3);
-  --shadow-sm: 0 4px 16px rgba(0,0,0,0.4);
-  --shadow-md: 0 8px 32px rgba(0,0,0,0.5);
-  --shadow-lg: 0 16px 48px rgba(0,0,0,0.6);
-  --shadow-hover: 0 8px 32px rgba(0,212,255,0.15);
-  --shadow-neon: 0 0 15px rgba(0,212,255,0.3), 0 0 45px rgba(0,212,255,0.1);
-  --shadow-neon-purple: 0 0 15px rgba(168,85,247,0.3), 0 0 45px rgba(168,85,247,0.1);
+  /* ========== 阴影（两层制，无发光） ========== */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.18);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.22);
+  --shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.32);
+  --shadow-neon: transparent;          /* 旧名 → 无（原霓虹光晕） */
+  --shadow-neon-purple: transparent;   /* 旧名 → 无 */
 
-  /* ========== 圆角 ========== */
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-card: 24px;
-  --radius-btn: 60px;
-  --radius-full: 9999px;
+  /* ========== 圆角（统一 6/10/14/20/999） ========== */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 24px;
+  --r-pill: 999px;
+  /* 旧名兼容 */
+  --radius-xs: var(--r-xs);
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
+  --radius-card: var(--r-lg);
+  --radius-btn: var(--r-pill);
+  --radius-full: 999px;
 
-  /* ========== 间距 ========== */
+  /* ========== 间距（4 起步、8 步进） ========== */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
   --space-lg: 24px;
   --space-xl: 32px;
   --space-2xl: 48px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
 
   /* ========== 字体 ========== */
-  --font-ui: "PingFang SC", "Microsoft YaHei", "Inter", "Segoe UI", system-ui, sans-serif;
+  --font: "HarmonyOS Sans SC", "MiSans", "PingFang SC", "Microsoft YaHei UI",
+          "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+  --font-ui: var(--font);                     /* 旧名 → 统一字体 */
   --font-mono: "SF Mono", "Fira Code", "Consolas", monospace;
 
-  /* ========== 字号 ========== */
+  /* ========== 字号（12/14/16/18/20/24/30/36） ========== */
   --text-xs: 12px;
   --text-sm: 14px;
   --text-base: 16px;
@@ -91,10 +142,11 @@
   --leading-normal: 1.5;
   --leading-relaxed: 1.75;
 
-  /* ========== 过渡 ========== */
-  --transition-fast: 150ms ease;
-  --transition-normal: 250ms ease;
-  --transition-slow: 350ms ease;
+  /* ========== 过渡（克制 ≤320ms，缓动统一） ========== */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --transition-fast: 120ms var(--ease);
+  --transition-normal: 200ms var(--ease);
+  --transition-slow: 320ms var(--ease);
 
   /* ========== z-index ========== */
   --z-dropdown: 1000;
@@ -106,34 +158,51 @@
   --z-tooltip: 1070;
   --z-toast: 10000;
 
-  /* ========== 毛玻璃 ========== */
-  --glass-blur: blur(20px) saturate(150%);
+  /* ========== 玻璃（业界弃用，仅作兼容值） ========== */
+  --glass-blur: blur(0);           /* 旧名 → 无模糊 */
 }
 
-/* 全局深色背景 + 网格线 */
+/* ================= 全局基线 ================= */
 html {
   background: var(--bg-page);
-  color: var(--text-dark);
+  color: var(--text-hi);
   scrollbar-width: thin;
-  scrollbar-color: rgba(0,212,255,0.3) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
-html::-webkit-scrollbar { width: 6px; }
+html::-webkit-scrollbar { width: 8px; }
 html::-webkit-scrollbar-track { background: transparent; }
 html::-webkit-scrollbar-thumb {
-  background: rgba(0,212,255,0.3);
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 4px;
 }
-html::-webkit-scrollbar-thumb:hover {
-  background: rgba(0,212,255,0.5);
-}
+html::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.26); }
 
 body {
   background: var(--bg-page);
-  color: var(--text-dark);
+  color: var(--text-hi);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* 选中文本颜色 */
+/* 选中文本 */
 ::selection {
-  background: rgba(0,212,255,0.3);
-  color: #fff;
+  background: rgba(232, 168, 92, 0.28);
+  color: var(--text-on-accent);
+}
+
+/* 焦点可见性（无障碍核心） */
+:focus-visible {
+  outline: 2px solid var(--brand-amber);
+  outline-offset: 2px;
+}
+
+/* 尊重减弱动态偏好：全局停用常驻动画 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

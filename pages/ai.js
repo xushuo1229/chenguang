@@ -756,7 +756,7 @@ planSubmit.addEventListener('click', function () {
   var goal = planGoal.value.trim();
   if (!goal) {
     planGoal.focus();
-    planGoal.style.borderColor = '#ef4444';
+    planGoal.style.borderColor = 'var(--danger)';
     setTimeout(function () { planGoal.style.borderColor = ''; }, 2000);
     return;
   }
