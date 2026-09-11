@@ -5,6 +5,7 @@ import '../js/ui/modal.js';
 import '../js/apiClient.js';
 import '../js/store.js';
 import '../js/sync.js';
+import Analytics, { isValidDateStr } from '../js/analytics.js';
 
 // ====================================================================
 // 晨光自律台 · 统计数据页面 (Stats Page)
@@ -79,74 +80,74 @@ import '../js/sync.js';
   }
   function gradient(ctx, c1, c2) { var g = ctx.createLinearGradient(0,0,0,260); g.addColorStop(0,c1); g.addColorStop(1,c2); return g; }
 
-  /* ---------- 数据计算 ---------- */
-  // 以下函数从 CGStore 数据存储中读取原始数据，计算图表需要的统计值
-  // 每个函数返回一个数组或对象，供对应的图表渲染函数使用
-  function getWeeklyData() {
-    // getWeeklyData() 获取近 7 天的数据：每天的打卡次数和学习时长
-    // days 数组包含 7 个元素，每个元素格式如：{ date: "2026-09-08", checkin_count: 1, study_minutes: 30 }
-    var days = [];
-    var days = [];
-    for (var i = 6; i >= 0; i--) {
-      var ds = dateStr(i);
-      var cin = (Store.getCheckins ? Store.getCheckins() : []).filter(function (c) { return c.date === ds; }).length;
-      var eng = Store.getEnglishByDate(ds).reduce(function (s, x) { return s + (Number(x.minutes)||0); }, 0);
-      var foc = Store.getFocusByDate(ds).reduce(function (s, x) { return s + (Number(x.minutes)||0); }, 0);
-      days.push({ date: ds, checkin_count: cin, study_minutes: eng + foc });
-    }
-    return days;
-  }
-  function getMonthlyData() {
-    // getMonthlyData() 获取近 30 天的数据，用于绘制柱状图
-    var days = [];
-    var days = [];
-    for (var i = 29; i >= 0; i--) {
-      var ds = dateStr(i);
-      var eng = Store.getEnglishByDate(ds).reduce(function (s, x) { return s + (Number(x.minutes)||0); }, 0);
-      var foc = Store.getFocusByDate(ds).reduce(function (s, x) { return s + (Number(x.minutes)||0); }, 0);
-      days.push({ date: ds, study_minutes: eng + foc });
-    }
-    return days;
-  }
-  function getHeatmapData() {
-    // getHeatmapData() 获取全年活动数据，用于绘制热力图
-    // 热力图类似 GitHub 的贡献图：每天一个格子，颜色越深表示活动越多
-    // 活动包括：打卡、运动、阅读
-    var map = {};
-    var map = {};
-    (Store.getCheckins ? Store.getCheckins() : []).forEach(function (c) { map[c.date] = (map[c.date]||0)+1; });
-    Store.getSports().forEach(function (s) { map[s.date] = (map[s.date]||0)+1; });
-    Store.getReadings().forEach(function (r) { map[r.date] = (map[r.date]||0)+1; });
-    var result = []; for (var k in map) result.push({ date: k, count: map[k] }); return result;
-  }
-  function getOverview() {
-    // getOverview() 计算页面顶部的 KPI 指标卡片数据：
-    //   - longest_streak：最长连续打卡天数
-    //   - done_checkins：累计打卡次数
-    //   - completion_rate：课程平均完成率
-    //   - study_hours：累计学习时长（小时）
-    var cin = Store.getCheckins ? Store.getCheckins() : [];
-    var cin = Store.getCheckins ? Store.getCheckins() : [];
-    var eng = Store.getEnglish().reduce(function (s, x) { return s + (Number(x.minutes)||0); }, 0);
-    var foc = Store.getFocus().reduce(function (s, x) { return s + (Number(x.minutes)||0); }, 0);
-    var sorted = cin.map(function (c) { return c.date; }).filter(Boolean).sort();
-    var max = 0, cur = 0, prev = null;
-    sorted.forEach(function (d) {
-      if (prev) { var diff = Math.round((new Date(d)-new Date(prev))/86400000); cur = diff === 1 ? cur+1 : 1; }
-      else cur = 1;
-      if (cur > max) max = cur; prev = d;
+  /* ---------- 数据计算（统一走 Analytics 引擎） ---------- */
+  // 依据 Phase 10「Unified Analytics」：统计一律由 js/analytics.js 产出，
+  // 本页不再自行对 Store 原始数据做二次计算；KPI / 图表只做「取数 + 格式化」。
+  // 所有函数接收同一个快照 snap（loadAll 里 Analytics.snapshot() 一次生成），
+  // 纯读不改写：不碰 CGStore、不触发同步、不动 revision。
+
+  // 数据覆盖的起始日期（数据发现，不是统计）：从各集合最早一条记录 + 学期开始日取最小。
+  // 只认 YYYY-MM-DD 且真实存在的日期（复用引擎 isValidDateStr，含 round-trip 存在性校验，
+  // 杜绝 '2026-9-1'/'2026-02-30' 这类记录污染 `normalizeRange` → 整页白屏，Review H1）。
+  var isYmd = isValidDateStr;
+  function dataStartOf(snap) {
+    var min = null;
+    ['checkins', 'english', 'focus', 'sports', 'readings', 'todos'].forEach(function (key) {
+      ((snap && snap[key]) || []).forEach(function (r) {
+        var d = r && r.date ? String(r.date) : '';
+        if (isYmd(d) && (!min || d < min)) min = d;
+      });
     });
+    if (snap && snap.user && isYmd(snap.user.semesterStart) && (!min || snap.user.semesterStart < min)) min = snap.user.semesterStart;
+    if (!min || min > todayStr()) min = todayStr(); // 未来学期/无记录 → 从今天起
+    return min;
+  }
+
+  function getOverview(snap) {
+    // KPI 指标卡片：
+    //   - longest_streak：最长连续打卡（Analytics.getStreaks）
+    //   - done_checkins：累计打卡次数
+    //   - completion_rate：课程平均完成率（Analytics 统一课程口径）
+    //   - study_hours：累计学习时长（小时）
+    var st = Analytics.getStreaks(snap);
+    var course = Analytics.getCompletionRate('course', null, null, snap);
+    var study = Analytics.getStudySummary(dataStartOf(snap), todayStr(), snap) || { minutes: 0 }; // 空/坏数据兜底（Review H1）
     return {
-      longest_streak: max,
-      done_checkins: cin.length,
-      completion_rate: Store.courseAvgProgress ? Store.courseAvgProgress() : 0,
-      study_hours: Math.round((eng+foc)/60 * 10) / 10,
+      longest_streak: st.longestStreak,
+      done_checkins: (snap.checkins || []).length,
+      completion_rate: course.avgProgress,
+      study_hours: Math.round(study.minutes / 60 * 10) / 10,
     };
   }
-  function getCourseCompletion() {
-    var cs = Store.getCourses();
-    var done = cs.filter(function (c) { return (c.progress||0) >= 100 || c.status === 'done'; }).length;
-    return { done: done, pending: cs.length - done };
+  function getWeeklyData(snap) {
+    // 近 7 天（含今天）：每天打卡次数 + 学习时长 —— 来自 Analytics.getTrend
+    var range = Analytics.lastNDays(7);
+    var study = Analytics.getTrend('study', range[0], range[1], 'daily', snap);
+    var cin = Analytics.getTrend('checkin', range[0], range[1], 'daily', snap);
+    return study.map(function (d, i) {
+      return { date: d.date, checkin_count: cin[i] ? cin[i].value : 0, study_minutes: d.value };
+    });
+  }
+  function getMonthlyData(snap) {
+    // 近 30 天学习时长（柱状图）
+    var range = Analytics.lastNDays(30);
+    return Analytics.getTrend('study', range[0], range[1], 'daily', snap)
+      .map(function (d) { return { date: d.date, study_minutes: d.value }; });
+  }
+  function getHeatmapData(snap) {
+    // 全年活跃热力图：Analytics 活动度（0–7，按「活跃类别数」计）
+    return Analytics.getActivityMap(snap); // [{ date, count }]
+  }
+  function getCourseCompletion(snap) {
+    // 课程完成/未完成数量（Analytics 课程口径：progress>=100 或 status=done）
+    var lib = Analytics.getCompletionRate('course', null, null, snap);
+    return { done: lib.done, pending: lib.pending };
+  }
+  // 图表坐标轴小标签：'9月11日' / '9月11日 周五'（复用 date.js，避免 formatDate 死引用）
+  function chartLabel(ds, withWeekday) {
+    var label = formatDateShort(ds);
+    if (withWeekday) label += ' ' + weekdayName(dateWeekday(ds));
+    return label;
   }
 
   /* ---------- 图表实例 ---------- */
@@ -161,7 +162,7 @@ import '../js/sync.js';
     var canvas = document.getElementById('weeklyChart');
     if (charts.weekly) charts.weekly.destroy();
     if (!window.Chart) return;
-    var labels = data.map(function (d) { return formatDate(d.date, true); });
+    var labels = data.map(function (d) { return chartLabel(d.date, true); });
     var ctx = canvas.getContext('2d');
     charts.weekly = new Chart(ctx, {
       type: 'line',
@@ -222,7 +223,7 @@ import '../js/sync.js';
     var g = ctx.createLinearGradient(0,0,0,200); g.addColorStop(0, C.sky); g.addColorStop(1, C.skyAlpha);
     charts.study = new Chart(ctx, {
       type: 'bar',
-      data: { labels: data.map(function(d){return formatDate(d.date);}), datasets: [{ label: '学习时长', data: data.map(function(d){return d.study_minutes;}), backgroundColor: g, borderColor: C.sky, borderWidth: 1, borderRadius: 4, barPercentage: .7, categoryPercentage: .8 }] },
+      data: { labels: data.map(function(d){return chartLabel(d.date);}), datasets: [{ label: '学习时长', data: data.map(function(d){return d.study_minutes;}), backgroundColor: g, borderColor: C.sky, borderWidth: 1, borderRadius: 4, barPercentage: .7, categoryPercentage: .8 }] },
       options: { responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: function (c) { return ' 学习: ' + formatMinutes(c.parsed.y); } } } },
         scales: {
@@ -246,7 +247,9 @@ import '../js/sync.js';
     var today = new Date(), days = [];
     for (var i = 364; i >= 0; i--) {
       var date = new Date(today); date.setDate(date.getDate()-i);
-      var ds = date.toISOString().slice(0,10);
+      // 用本地日期键（Analytics 的 getActivityMap 产出的也是本地日期）：
+      // toISOString() 取 UTC，会与本地键错位一整天（UTC+8 凌晨 0-8 点尤其明显，Review M2）
+      var ds = date.getFullYear() + '-' + ('0' + (date.getMonth() + 1)).slice(-2) + '-' + ('0' + date.getDate()).slice(-2);
       var cnt = map[ds]||0;
       days.push({ date: ds, count: cnt, level: cnt===0?0:cnt===1?1:cnt===2?2:cnt===3?3:4, dow: date.getDay() });
     }
@@ -293,11 +296,13 @@ import '../js/sync.js';
   //   3. 渲染折线图、环形图、柱状图、热力图
   async function loadAll() {
     try { await loadChartJS(); } catch (e) { toast('图表库加载失败，请检查网络', 'error'); return; }
-    renderKPI(getOverview());
-    renderWeekly(getWeeklyData());
-    renderCompletion(getCourseCompletion());
-    renderStudy(getMonthlyData());
-    renderHeatmap(getHeatmapData());
+    // 单次快照 → 所有图表共用同一份数据（引擎设计：一次读取 → 多个结果）
+    var snap = Analytics.snapshot();
+    renderKPI(getOverview(snap));
+    renderWeekly(getWeeklyData(snap));
+    renderCompletion(getCourseCompletion(snap));
+    renderStudy(getMonthlyData(snap));
+    renderHeatmap(getHeatmapData(snap));
   }
 
   /* ---------- 刷新 ---------- */

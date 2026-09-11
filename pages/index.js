@@ -21,6 +21,7 @@ import '../js/ui/modal.js';
 import '../js/apiClient.js';
 import '../js/store.js';
 import '../js/sync.js';
+import Analytics from '../js/analytics.js';
 
 'use strict';
 
@@ -346,17 +347,24 @@ $$('.hero-stats-item .num').forEach(function(el) {
 });
 
 // ==================== 功能卡片数据初始化 ====================
+// Phase 10 Unified Analytics：各卡片数据口径统一走 js/analytics.js，
+// 单次快照 → 多个结果，纯读不改写；避免首页与 Stats/工作台结果互不相同。
 function initFeatureCards() {
   var store = window.CGStore;
   if (!store) return;
   try {
-    var data = store.get();
+    var snap = Analytics.snapshot();
+    var data = snap;
+    var today = todayStr();
+    var daily = Analytics.getDailySummary(today, snap);
+    var week7 = Analytics.lastNDays(7);
+
     var sports = data.sports || [];
     var sportsEl = document.querySelector('[data-feature="sports"]');
     if (sportsEl) {
       sportsEl.querySelector('.feature-count').textContent = sports.length + ' 条';
-      var weeklySports = sports.filter(function(s) { var d = s.date || ''; var diff = Math.floor((Date.now() - new Date(d).getTime()) / 86400000); return diff < 7; }).length;
-      var todayMinutes = sports.reduce(function(sum, s) { var d = s.date || ''; return d === new Date().toISOString().slice(0, 10) ? sum + (s.duration || 0) : sum; }, 0);
+      var weeklySports = Analytics.getExerciseSummary(week7[0], week7[1], snap).count;
+      var todayMinutes = daily ? daily.sports.durationMinutes : 0;
       sportsEl.querySelector('.weekly-count').textContent = weeklySports;
       sportsEl.querySelector('.today-count').textContent = todayMinutes;
     }
@@ -364,10 +372,9 @@ function initFeatureCards() {
     var coursesEl = document.querySelector('[data-feature="courses"]');
     if (coursesEl) {
       coursesEl.querySelector('.feature-count').textContent = courses.length + ' 门';
-      var done = courses.filter(function(c) { return c.progress >= 100; }).length;
-      var avgProg = courses.length > 0 ? Math.round(courses.reduce(function(s, c) { return s + (c.progress || 0); }, 0) / courses.length) : 0;
-      coursesEl.querySelector('.avg-progress').textContent = avgProg;
-      coursesEl.querySelector('.done-count').textContent = done;
+      var lib = Analytics.getCompletionRate('course', null, null, snap);
+      coursesEl.querySelector('.avg-progress').textContent = lib.avgProgress;
+      coursesEl.querySelector('.done-count').textContent = lib.done;
     }
     var readings = data.readings || [];
     var readingsEl = document.querySelector('[data-feature="readings"]');
@@ -382,8 +389,8 @@ function initFeatureCards() {
     var englishEl = document.querySelector('[data-feature="english"]');
     if (englishEl) {
       englishEl.querySelector('.feature-count').textContent = english.length + ' 天';
-      var todayWords = english.filter(function(e) { var d = e.date || ''; return d === new Date().toISOString().slice(0, 10); }).reduce(function(s, e) { return s + (e.words || 0); }, 0);
-      var todayMin = english.filter(function(e) { var d = e.date || ''; return d === new Date().toISOString().slice(0, 10); }).reduce(function(s, e) { return s + (e.minutes || 0); }, 0);
+      var todayWords = daily ? daily.study.words : 0;
+      var todayMin = daily ? daily.study.englishMinutes : 0;
       englishEl.querySelector('.today-words').textContent = todayWords;
       englishEl.querySelector('.today-minutes').textContent = todayMin;
     }
@@ -392,7 +399,7 @@ function initFeatureCards() {
     if (focusEl) {
       focusEl.querySelector('.feature-count').textContent = focus.length + ' 次';
       var totalFocus = focus.reduce(function(s, f) { return s + (f.minutes || 0); }, 0);
-      var todayFocus = focus.filter(function(f) { var d = f.date || ''; return d === new Date().toISOString().slice(0, 10); }).reduce(function(s, f) { return s + (f.minutes || 0); }, 0);
+      var todayFocus = daily ? daily.focus.minutes : 0;
       focusEl.querySelector('.total-focus').textContent = totalFocus;
       focusEl.querySelector('.today-focus').textContent = todayFocus;
     }
@@ -400,17 +407,9 @@ function initFeatureCards() {
     var checkinsEl = document.querySelector('[data-feature="checkins"]');
     if (checkinsEl) {
       checkinsEl.querySelector('.feature-count').textContent = checkins.length + ' 天';
-      var current = 0;
-      checkins.sort(function(a, b) { return (b.date || '').localeCompare(a.date || ''); });
-      if (checkins.length > 0 && checkins[0].status === 'done') {
-        current = 1;
-        for (var i = 1; i < checkins.length; i++) {
-          var d1 = new Date(checkins[i - 1].date);
-          var d2 = new Date(checkins[i].date);
-          if ((d1 - d2) / 86400000 === 1) current++; else break;
-        }
-      }
-      checkinsEl.querySelector('.max-streak').textContent = current;
+      // 连续打卡统一用 Analytics（与 Stats 页口径一致：最长连续）
+      var streaks = Analytics.getStreaks(snap);
+      checkinsEl.querySelector('.max-streak').textContent = streaks.longestStreak;
       checkinsEl.querySelector('.total-checkins').textContent = checkins.filter(function(c) { return c.status === 'done'; }).length;
     }
   } catch (e) { console.warn('[feature] 数据加载失败', e); }
