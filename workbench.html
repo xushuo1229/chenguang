@@ -480,6 +480,60 @@
       box-shadow: 0 6px 16px rgba(0,212,255,.45);
     }
 
+    /* ===== 导入课表：双 Tab + 预览区 ===== */
+    .ic-tabs {
+      display: flex; gap: 6px;
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(0,212,255,.12);
+      border-radius: 12px; padding: 4px;
+      margin-bottom: 14px;
+    }
+    .ic-tab {
+      flex: 1; padding: 8px 10px; border-radius: 9px;
+      border: none; background: transparent;
+      font-size: .85rem; font-weight: 600; color: #a0a0c0;
+      cursor: pointer; transition: .2s;
+    }
+    .ic-tab:hover { color: #e6e9ff; }
+    .ic-tab.active {
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+      color: #fff; box-shadow: 0 3px 10px rgba(0,212,255,.3);
+    }
+    .ic-tag {
+      display: inline-block; vertical-align: middle;
+      margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+      font-size: .62rem; font-weight: 700;
+      background: rgba(6,255,199,.14); color: #06ffc7;
+      border: 1px solid rgba(6,255,199,.25);
+    }
+    .ic-tab:not(.active) .ic-tag { display: none; }
+    .ic-pane { display: none; }
+    .ic-pane.active { display: block; animation: fadeIn .25s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .ic-form-hint {
+      margin-top: 10px; font-size: .78rem; line-height: 1.7; color: #8a8a8a;
+    }
+    .ic-sample-link { color: var(--neon-blue); text-decoration: none; border-bottom: 1px dashed; }
+    .ic-sample-link:hover { color: #8fe9ff; }
+    .ic-preview {
+      margin-top: 12px; padding: 10px 12px;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(0,212,255,.18);
+      border-radius: 10px;
+      max-height: 240px; overflow-y: auto;
+      font-size: .8rem;
+    }
+    .ic-preview-title { font-weight: 700; color: #06ffc7; margin-bottom: 6px; }
+    .ic-preview-item {
+      display: flex; align-items: baseline; gap: 8px;
+      padding: 4px 0; border-bottom: 1px dashed rgba(255,255,255,.06);
+    }
+    .ic-preview-item:last-child { border-bottom: none; }
+    .ic-preview-name { font-weight: 600; color: #e6e9ff; }
+    .ic-preview-meta { color: #8a8a8a; font-size: .75rem; }
+    .ic-preview-warn { margin-top: 6px; color: #a0a0c0; font-size: .75rem; }
+    .ic-preview-empty { color: #fbbf24; padding: 4px 0; }
+
     /* ===== 专注计时器 ===== */
     .focus-presets { display: flex; gap: 8px; }
     .focus-preset {
@@ -806,6 +860,93 @@
     }
     .onboard-close:hover { color: #fff; background: rgba(255,77,106,0.3); }
   </style>
+
+  <style>
+    /* ====== 导入课表：Tab + 预览 ====== */
+    .modal-box-wide { max-width: 640px; }
+
+    .ic-tabs {
+      display: flex; gap: 0;
+      padding: 0 24px; margin: -16px 0 0;
+      border-bottom: 1px solid rgba(0,212,255,0.12);
+    }
+    .ic-tab {
+      flex: 0 0 auto;
+      padding: 10px 16px;
+      background: none; border: none;
+      color: #8a8a8a; font-size: 0.88rem; font-weight: 500;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: 0.2s;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .ic-tab:hover { color: #e0e0ff; }
+    .ic-tab.active {
+      color: var(--neon-blue, #00d4ff);
+      border-bottom-color: var(--neon-blue, #00d4ff);
+    }
+    .ic-tag {
+      font-size: 0.65rem; padding: 1px 6px; border-radius: 8px;
+      background: rgba(0,212,255,0.15); color: var(--neon-blue, #00d4ff);
+      margin-left: 4px;
+    }
+
+    .ic-pane { padding-top: 4px; }
+    .ic-pane[hidden] { display: none; }
+
+    .form-tip {
+      font-weight: 400; font-size: 0.72rem; color: #8888aa;
+      margin-left: 8px;
+    }
+    #importCourseText {
+      width: 100%; min-height: 160px; resize: vertical;
+      padding: 10px 12px; border-radius: 8px;
+      background: rgba(15,15,40,0.6);
+      border: 1px solid rgba(0,212,255,0.18);
+      color: #e0e0ff; font-size: 0.85rem; line-height: 1.55;
+      font-family: ui-monospace, "Cascadia Code", Consolas, "PingFang SC", monospace;
+      transition: border-color 0.2s;
+    }
+    #importCourseText:focus { outline: none; border-color: var(--neon-blue, #00d4ff); }
+
+    .ic-preview {
+      margin-top: 12px; padding: 10px 14px;
+      background: rgba(0,212,255,0.06);
+      border: 1px solid rgba(0,212,255,0.18);
+      border-radius: 8px;
+      font-size: 0.82rem; color: #e0e0ff;
+      max-height: 220px; overflow-y: auto;
+    }
+    .ic-preview-title {
+      font-weight: 600; margin-bottom: 6px;
+      color: var(--neon-blue, #00d4ff);
+    }
+    .ic-preview-empty {
+      color: #f78b8b;
+    }
+    .ic-preview-item {
+      padding: 4px 0;
+      border-bottom: 1px dashed rgba(0,212,255,0.08);
+      display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline;
+    }
+    .ic-preview-item:last-child { border-bottom: none; }
+    .ic-preview-name { font-weight: 600; min-width: 120px; }
+    .ic-preview-meta { color: #8a8a8a; font-size: 0.75rem; }
+    .ic-preview-warn {
+      margin-top: 8px; padding-top: 8px;
+      border-top: 1px dashed rgba(247,139,139,0.2);
+      color: #f78b8b; font-size: 0.75rem;
+    }
+
+    .ic-sample-link {
+      color: var(--neon-blue, #00d4ff);
+      text-decoration: none;
+      margin-left: 6px;
+      border-bottom: 1px dashed rgba(0,212,255,0.4);
+      white-space: nowrap;
+    }
+    .ic-sample-link:hover { border-bottom-style: solid; }
+  </style>
   <link rel="stylesheet" href="css/tech.css">
 </head>
 <body>
@@ -1021,24 +1162,68 @@
 
   <!-- ===== 模态框：导入课表 ===== -->
   <div class="modal-overlay" id="modalImportCourse">
-    <div class="modal-box">
+    <div class="modal-box modal-box-wide">
       <div class="modal-head">
-        <h3>🔗 从课表链接导入</h3>
+        <h3>📥 导入课表</h3>
         <button class="modal-close" data-modal-close>✕</button>
       </div>
+
+      <!-- Tab 切换：链接 / 粘贴文本 -->
+      <div class="ic-tabs">
+        <button type="button" class="ic-tab active" data-ic-tab="text">
+          <i class="fas fa-paste"></i> 粘贴课表文本 <span class="ic-tag">无需后端</span>
+        </button>
+        <button type="button" class="ic-tab" data-ic-tab="url">
+          <i class="fas fa-link"></i> 课表链接
+        </button>
+      </div>
+
       <div class="modal-body">
-        <div class="form-row">
-          <label>课表页面链接</label>
-          <input id="importCourseUrl" type="url" placeholder="例如：https://jw.xxx.edu.cn/schedule" maxlength="2000"/>
+        <!-- ====== Tab 1: 粘贴课表文本 ====== -->
+        <div class="ic-pane active" data-ic-pane="text">
+          <div class="form-row">
+            <label>
+              课表文本
+              <span class="form-tip">从教务系统课表页 Ctrl+A 全选 → Ctrl+C → 粘贴到下面</span>
+            </label>
+            <textarea id="importCourseText" rows="8" placeholder="例如：
+高等数学  周一第1,2节 1-16周 教三A101 张三
+大学英语  周三第3,4节 1-16周 教四302 李四
+体育      周五第5,6节 1-16周 体育馆
+……
+（也支持多行块状、表格复制等格式）"></textarea>
+          </div>
+          <div class="form-hint" style="margin-top:8px;font-size:.78rem;color:#8a8a8a;line-height:1.7;">
+            ✅ 纯前端解析，<b>文本不会上传到任何服务器</b>（隐私安全）。
+            支持常见教务系统导出的纯文本/表格复制内容，自动提取课程名、上课时段、周次、地点。
+            <a href="javascript:void(0)" id="loadSampleSchedule" class="ic-sample-link">没有课表？点此载入示例 →</a>
+          </div>
+          <div id="importCoursePreview" class="ic-preview" hidden></div></div>
         </div>
-        <div class="form-hint" style="margin-top:10px;font-size:.8rem;color:#8a8a8a;line-height:1.7;">
-          粘贴你学校<b>可公开访问、无需登录</b>的课表网页链接，系统会自动抓取并解析其中的课表表格，按课程名合并去重加入你的课程列表。<br>
-          若链接是<b>纯图片课表</b>或<b>需登录</b>的教务页面，将无法解析，请改用「添加课程」手动录入。
+
+        <!-- ====== Tab 2: 课表链接（保留原逻辑） ====== -->
+        <div class="ic-pane" data-ic-pane="url" hidden>
+          <div class="form-row">
+            <label>课表页面链接</label>
+            <input id="importCourseUrl" type="url" placeholder="例如：https://jw.xxx.edu.cn/schedule" maxlength="2000"/>
+          </div>
+          <div class="form-hint" style="margin-top:10px;font-size:.8rem;color:#8a8a8a;line-height:1.7;">
+            粘贴你学校<b>可公开访问、无需登录</b>的课表网页链接，系统会通过后端代理抓取并解析其中的课表表格，按课程名合并去重加入你的课程列表。<br>
+            若链接是<b>纯图片课表</b>或<b>需登录</b>的教务页面，将无法解析，请改用「添加课程」手动录入，或用「粘贴文本」方式。
+          </div>
         </div>
       </div>
+
       <div class="modal-foot">
         <button class="btn-cancel" data-modal-close>取消</button>
-        <button class="btn-confirm" id="importCourseBtn">🔗 抓取并导入</button>
+        <!-- 文本 Tab 的主按钮 -->
+        <button class="btn-confirm" id="parseCourseTextBtn" data-ic-foot="text">
+          📋 解析并导入
+        </button>
+        <!-- URL Tab 的主按钮（向后兼容） -->
+        <button class="btn-confirm" id="importCourseBtn" data-ic-foot="url" hidden>
+          🔗 抓取并导入
+        </button>
       </div>
     </div>
   </div>

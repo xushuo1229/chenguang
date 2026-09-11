@@ -24,6 +24,7 @@
 //   - apiClient → API 客户端，用于和后端服务器通信
 //   - store.js  → CGStore 本地数据存储层（管理所有数据的读写）
 //   - sync.js   → 数据同步模块，实现多设备间数据同步
+//   - scheduleTextParser → 课表文本解析器（粘贴课表页文字，纯前端解析）
 import '../js/utils/dom.js';
 import '../js/utils/date.js';
 import '../js/ui/toast.js';
@@ -31,6 +32,9 @@ import '../js/ui/modal.js';
 import '../js/apiClient.js';
 import '../js/store.js';
 import '../js/sync.js';
+// 具名导入而非依赖 globalThis 副作用：构建期即可确定绑定，
+// 不受模块求值顺序影响，压缩后也不会因 global 名改写而失效
+import { parseScheduleText } from '../js/scheduleTextParser.js';
 
   // ============================================================
   // IIFE（立即执行函数表达式）— 整个工作台的代码都在这里面
@@ -435,7 +439,7 @@ import '../js/sync.js';
     document.addEventListener('click', function (e) {
       // e.target.closest() 从点击位置往上找最近的匹配元素
       // 如果点击的不是这些按钮中的任何一个，就直接退出
-      var trigger = e.target.closest('.card-action, .btn-primary, #newBtn, #bellBtn, [data-edit-course], [data-del-course], [data-edit-book], [data-del-book], [data-del-sport], [data-del-english], [data-del-focus], [data-toggle-todo], [data-del-todo], [data-more-ch]');
+      var trigger = e.target.closest('.card-action, .btn-primary, .btn-wb, #newBtn, #bellBtn, [data-edit-course], [data-del-course], [data-edit-book], [data-del-book], [data-del-sport], [data-del-english], [data-del-focus], [data-toggle-todo], [data-del-todo], [data-more-ch]');
       if (!trigger) return;
       e.preventDefault();
 
@@ -484,9 +488,11 @@ import '../js/sync.js';
         return;
       }
 
-      // 导入课表 → 打开模态框（通过课表链接导入）
+      // 导入课表 → 打开模态框（默认到「粘贴文本」Tab，无需后端）
       if (act === 'import-course') {
-        $('#importCourseUrl').value = '';
+        if ($('#importCourseText')) $('#importCourseText').value = '';
+        if ($('#importCoursePreview')) { $('#importCoursePreview').hidden = true; $('#importCoursePreview').innerHTML = ''; }
+        switchImportCourseTab('text');
         openModal('modalImportCourse');
         return;
       }
@@ -697,6 +703,203 @@ import '../js/sync.js';
           btn.disabled = false;
           btn.textContent = original;
         });
+    });
+
+    // ============================================================
+    // 粘贴课表文本 → 纯前端解析（无需后端、无需网址）
+    // ============================================================
+
+    /**
+     * 示例课表文本 —— 供用户在没有课表时快速体验解析效果。
+     * 故意混入三种写法（连堂区间「1-2节」、中文数字节次「第五、六节」、
+     * 多行块状），一次性展示解析器的主要能力。
+     */
+    var SAMPLE_SCHEDULE = [
+      '课程表 2026-2027学年第一学期',
+      '',
+      '高等数学 周一第1-2节 1-16周 教三A101 张三',
+      '大学英语 周三第3,4节 1-16周 教四302 李四',
+      '线性代数 周二 第3-4节 1-16周 教二205',
+      '数据结构',
+      '周四 第五、六节 1-16周',
+      '实验楼B301',
+      '王老师',
+      '大学物理 周五第7-8节 1-16周 教一108',
+      '体育 周三第9-10节 1-16周 体育馆',
+    ].join('\n');
+
+    (function initImportCourseTabs() {
+      var tabs = $$('.ic-tab');
+      tabs.forEach(function (t) {
+        t.addEventListener('click', function () {
+          switchImportCourseTab(t.getAttribute('data-ic-tab'));
+        });
+      });
+
+      // 实时解析预览：textarea 变化时即时显示识别结果
+      var ta = $('#importCourseText');
+      if (ta) ta.addEventListener('input', renderImportPreview);
+
+      // 载入示例：填入示例文本并立即预览
+      var sample = $('#loadSampleSchedule');
+      if (sample) {
+        sample.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          if (!ta) return;
+          ta.value = SAMPLE_SCHEDULE;
+          renderImportPreview();
+          toast('已载入示例课表，可直接点「解析并导入」', 'info');
+        });
+      }
+    })();
+
+    function switchImportCourseTab(which) {
+      $$('.ic-tab').forEach(function (t) {
+        t.classList.toggle('active', t.getAttribute('data-ic-tab') === which);
+      });
+      $$('.ic-pane').forEach(function (p) {
+        var on = p.getAttribute('data-ic-pane') === which;
+        p.classList.toggle('active', on);
+        p.hidden = !on;
+      });
+      $$('[data-ic-foot]').forEach(function (b) {
+        var on = b.getAttribute('data-ic-foot') === which;
+        b.hidden = !on;
+      });
+      // 切到文本 Tab 时即时刷一次预览
+      if (which === 'text') renderImportPreview();
+    }
+
+    /**
+     * 取得课表解析函数。
+     * 优先用模块具名导入（构建期绑定，最可靠）；
+     * 兜底用 globalThis 上的同名函数（便于在浏览器控制台直接调试，
+     * 也兼容理论上未走打包器的引用方式）。
+     */
+    function getScheduleParser() {
+      if (typeof parseScheduleText === 'function') return parseScheduleText;
+      if (typeof globalThis !== 'undefined' && typeof globalThis.CGParseScheduleText === 'function') {
+        return globalThis.CGParseScheduleText;
+      }
+      return null;
+    }
+
+    /**
+     * 把解析器结果渲染到预览区，并按名去重（与既有 courses 比较）。
+     * 让用户在点「导入」前先看清识别结果，必要时改粘贴内容。
+     */
+    function renderImportPreview() {
+      var ta = $('#importCourseText');
+      var pv = $('#importCoursePreview');
+      if (!ta || !pv) return;
+      var raw = ta.value || '';
+      if (!raw.trim()) { pv.hidden = true; pv.innerHTML = ''; return; }
+
+      var parser = getScheduleParser();
+      if (!parser) {
+        pv.hidden = false;
+        pv.innerHTML = '<div class="ic-preview-empty">⚠️ 解析器未加载，请刷新页面或检查 js/scheduleTextParser.js</div>';
+        return;
+      }
+
+      var list;
+      try { list = parser(raw); }
+      catch (e) {
+        pv.hidden = false;
+        pv.innerHTML = '<div class="ic-preview-empty">⚠️ 解析异常：' + escapeHtml(e.message || String(e)) + '</div>';
+        return;
+      }
+
+      pv.hidden = false;
+      if (!list || !list.length) {
+        pv.innerHTML = '<div class="ic-preview-empty">⚠️ 未识别到任何课程。请确认复制了完整的课表内容（应包含「周一/周二」等星期词，或课程名称）。</div>';
+        return;
+      }
+
+      var existing = {};
+      Store.getCourses().forEach(function (c) { if (c.name) existing[c.name] = true; });
+      var toAdd = 0, dup = 0;
+      var html = '<div class="ic-preview-title">✅ 识别到 ' + list.length + ' 门课程</div>';
+      list.forEach(function (item) {
+        var isDup = existing[item.name];
+        if (isDup) dup++; else toAdd++;
+        var slotsTxt = (item.slots || []).map(function (s) {
+          var wd = ['周一','周二','周三','周四','周五','周六','周日'][s.weekday] || ('星期' + (s.weekday + 1));
+          return wd + ' 第' + (s.periods && s.periods.length ? s.periods.join(',') : '?') + '节';
+        }).join('；');
+        var meta = [
+          slotsTxt,
+          item.weeks ? (item.weeks + '周') : '',
+          item.location ? ('@ ' + item.location) : ''
+        ].filter(Boolean).join(' · ');
+        html += '<div class="ic-preview-item">'
+          + '<span class="ic-preview-name">' + escapeHtml(item.name) + (isDup ? ' ⚠️ 已存在' : '') + '</span>'
+          + (meta ? '<span class="ic-preview-meta">' + escapeHtml(meta) + '</span>' : '')
+          + '</div>';
+      });
+      html += '<div class="ic-preview-warn">'
+        + '将新增 <b>' + toAdd + '</b> 门，跳过重名 <b>' + dup + '</b> 门。'
+        + (toAdd === 0 ? '（你可以关闭此窗口）' : '点击「解析并导入」完成。')
+        + '</div>';
+      pv.innerHTML = html;
+    }
+
+    // 解析并导入按钮
+    $('#parseCourseTextBtn').addEventListener('click', function () {
+      var ta = $('#importCourseText');
+      var raw = (ta && ta.value) || '';
+      if (!raw.trim()) { toast('请先粘贴课表文本', 'warn'); return; }
+      var parser = getScheduleParser();
+      if (!parser) { toast('解析器未加载，请刷新页面', 'error'); return; }
+
+      var list;
+      try { list = parser(raw); }
+      catch (e) { toast('解析异常：' + (e.message || e), 'error'); return; }
+
+      if (!list || !list.length) {
+        toast('未识别到任何课程。请检查粘贴内容是否包含星期词或课程名', 'warn');
+        return;
+      }
+
+      // 按名称去重，跳过已存在的同名课程
+      var existing = {};
+      Store.getCourses().forEach(function (c) { if (c.name) existing[c.name] = true; });
+      var added = 0, skipped = 0, noSlot = 0;
+      list.forEach(function (item) {
+        var name = (item.name || '').trim();
+        if (!name) { skipped++; return; }
+        if (existing[name]) { skipped++; return; }
+        // 收集第一个有节次的 slot 信息（用于显示）；课程详情页可后续编辑总章节数
+        var firstSlot = null;
+        if (item.slots && item.slots.length) {
+          firstSlot = item.slots[0];
+        } else {
+          noSlot++;
+        }
+        Store.addCourse({
+          name: name,
+          progress: 0,
+          status: 'todo',
+          totalChapters: 0,
+          learnedChapters: 0,
+          // 附加解析出来的时段/周次/地点，供后续章节记录/详情页使用
+          schedule: item.slots || [],
+          weeks: item.weeks || '',
+          location: item.location || ''
+        });
+        existing[name] = true;
+        added++;
+      });
+
+      closeModal('modalImportCourse');
+      updateUI();
+      if (added > 0) {
+        var msg = '✅ 已导入 ' + added + ' 门课程' + (skipped ? '，跳过 ' + skipped + ' 门' : '');
+        if (noSlot) msg += '（其中 ' + noSlot + ' 门未识别到时段，请手动补全章节数）';
+        toast(msg, 'success');
+      } else {
+        toast('解析到课程均已在列表中，未新增', 'info');
+      }
     });
 
     // 更新课程
