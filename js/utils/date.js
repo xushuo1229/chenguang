@@ -210,6 +210,174 @@ function calcStreak(dates) {
 }
 
 // ============================================================
+// Phase 9 —— 学期 / 周次 / 星期 / 节次 统一系统
+// ============================================================
+// 这是全项目「第几周 / 星期几 / 周次范围 / 节次时刻」唯一的事实来源。
+// 前端解析器、课表编排、课程详情全部经过这里，避免各文件各自手写一套。
+//
+// 【约定】
+//   - weekday 一律 0=周一 … 6=周日（与 scheduleTextParser、后端课表导入一致）。
+//   - 周次使用 1 起始（第 1 周 … 第 N 周）。
+//   - 空周次字符串表示「每周都上」。
+
+/** WEEKDAY_NAMES —— 星期字面名（0=周一 … 6=周日） */
+var WEEKDAY_NAMES = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+
+/** WEEKDAY_CN —— 中文星期字 → 0 起始序号（与解析器 WD_NUM 同源约定） */
+var WEEKDAY_CN = { '一': 0, '二': 1, '三': 2, '四': 3, '五': 4, '六': 5, '日': 6, '天': 6 };
+
+/** PERIOD_START_TIMES —— 常见上课节次 → 开始时刻（默认映射，可显示用） */
+var PERIOD_START_TIMES = ['', '08:00', '08:50', '10:00', '10:50', '14:00', '14:50', '15:40', '16:30', '19:00', '19:50', '20:40', '21:30'];
+
+/**
+ * weekdayName(wd) —— 星期序号 → 中文名
+ * 传 0-6（0=周一），返回 '周一'…'周日'；越界返回 ''。
+ */
+function weekdayName(wd) {
+  wd = Number(wd);
+  return (wd >= 0 && wd <= 6) ? WEEKDAY_NAMES[wd] : '';
+}
+
+/**
+ * weekdayCN(s) —— 中文星期字 / 数字 → 0 起始序号
+ * '一'→0 … '日'→6，'天'→6；单个数字按「数字-1」解释（'1'→周一=0）。
+ * 解析失败返回 NaN。
+ */
+function weekdayCN(s) {
+  s = String(s || '').trim();
+  if (WEEKDAY_CN[s] !== undefined) return WEEKDAY_CN[s];
+  if (/^\d$/.test(s)) {
+    var n = parseInt(s, 10) - 1;
+    return (n >= 0 && n <= 6) ? n : NaN;
+  }
+  return NaN;
+}
+
+/**
+ * dateWeekday(dateStr) —— 日期 → 星期序号（0=周一 … 6=周日）
+ * 用 YYYY-MM-DD + 'T00:00:00' 解析为本地时间，避免 UTC 解析造成跨日偏差。
+ * 非法日期返回 -1。
+ */
+function dateWeekday(dateStr) {
+  var d = new Date(String(dateStr || '').slice(0, 10) + 'T00:00:00');
+  if (isNaN(d.getTime())) return -1;
+  return (d.getDay() + 6) % 7; // JS getDay(): 0=周日 → 转 6；周一 getDay()=1 → 0
+}
+
+/**
+ * dateOffset(dateStr, days) —— 日期字符串加上偏移天数
+ * '2026-09-11' + 5 → '2026-09-16'；非法输入回退为今天。
+ */
+function dateOffset(dateStr, days) {
+  var d = new Date(String(dateStr || '').slice(0, 10) + 'T00:00:00');
+  if (isNaN(d.getTime())) d = new Date();
+  d.setDate(d.getDate() + (Number(days) || 0));
+  return todayStr(d);
+}
+
+/**
+ * weeksInfo(weeksStr) —— 把任意写法的周次字符串解析为区间 + 奇偶标记
+ * 【支持】'1-16' / '1~16' / '1,3,5,7' / '1-8,10-16' / '1-16周' / '1-16周(单)'
+ *        / '单' / '双' / '1-16(双)' / 全角数字与全角标点
+ * 【返回】{ ranges:[[a,b],...], parity:0=全部|1=单周|2=双周 }
+ */
+function weeksInfo(weeksStr) {
+  var s = String(weeksStr || '')
+    .replace(/[０-９]/g, function (ch) { return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); })
+    .replace(/,/g, ',')
+    .replace(/[－—―–～~至到]/g, '-')
+    .replace(/\s+/g, '')
+    .toLowerCase();
+  if (!s) return { ranges: [], parity: 0 };
+
+  // 奇偶标记：[（(]单[)）] / 单周 / 行尾单/双
+  var parity = 0;
+  var pm = /[（(]([单双])[)）]|([单双])周|(?:周)?([单双])$/.exec(s);
+  if (pm) parity = ((pm[1] || pm[2] || pm[3]) === '双') ? 2 : 1;
+  if (parity) {
+    s = s
+      .replace(/[（(][单双][)）]/g, '')  // 去掉 (单)/(双)
+      .replace(/[单双]周/g, '')           // 去掉 单周/双周
+      .replace(/周$/g, '');
+    if (!s) s = '1-53';                   // 纯「单/双周」→ 全区间
+  } else {
+    s = s.replace(/周/g, '').replace(/[（(][)）]/g, '');
+  }
+
+  var ranges = [];
+  var parts = s.split(',');
+  for (var i = 0; i < parts.length; i++) {
+    var seg = parts[i].trim();
+    if (!seg) continue;
+    var segParts = seg.split('-');
+    var a = parseInt(segParts[0], 10);
+    var b = segParts.length > 1 ? parseInt(segParts[1], 10) : a;
+    if (isNaN(a) || isNaN(b)) continue;
+    ranges.push([a, b < a ? a : b]);
+  }
+  return { ranges: ranges, parity: parity };
+}
+
+/**
+ * weeksContain(weeksStr, week) —— 某课程周次字符串是否覆盖第 week 周
+ * 空字符串 → 每周都上；'1-16' 观察数是否在区间内；'单'/'双' 按奇偶判定。
+ */
+function weeksContain(weeksStr, week) {
+  if (weeksStr === undefined || weeksStr === null || String(weeksStr).trim() === '') return true;
+  week = Number(week);
+  var info = weeksInfo(weeksStr);
+  if (info.parity === 1 && week % 2 !== 1) return false;
+  if (info.parity === 2 && week % 2 !== 0) return false;
+  if (!info.ranges.length) return true; // 只有奇偶标记 → 全区间皆按奇偶
+  for (var i = 0; i < info.ranges.length; i++) {
+    if (week >= info.ranges[i][0] && week <= info.ranges[i][1]) return true;
+  }
+  return false;
+}
+
+/**
+ * semesterWeekOf(dateStr, semesterStart) —— 某个日期在本学期是第几周
+ * 以学期第 1 周为基准：第 1 周周一至周日 = 第 1 周，之后每 7 天 +1 周。
+ * 【返回】正整数（1 起始）；未配置学期开始日 / 日期早于开始日 / 非法输入 → 0。
+ */
+function semesterWeekOf(dateStr, semesterStart) {
+  if (!semesterStart) return 0;
+  var start = new Date(String(semesterStart).slice(0, 10) + 'T00:00:00');
+  var d = new Date(String(dateStr || '').slice(0, 10) + 'T00:00:00');
+  if (isNaN(start.getTime()) || isNaN(d.getTime())) return 0;
+  var diffDays = Math.floor((d.getTime() - start.getTime()) / 86400000);
+  if (diffDays < 0) return 0;
+  return Math.floor(diffDays / 7) + 1;
+}
+
+/**
+ * periodStartTime(period) —— 节次 → 开始时刻（默认映射，用于展示）
+ * 查表失败返回 ''。
+ */
+function periodStartTime(period) {
+  period = Number(period);
+  return PERIOD_START_TIMES[period] || '';
+}
+
+/**
+ * periodTimeRange(first, last) —— 节次区间 → 'HH:MM–HH:MM' 显示串
+ * [3,4] → '10:00–11:35'（末节持续 45 分钟）；单节 [3] → '10:00–10:45'；
+ * 查表失败返回 ''。
+ */
+function periodTimeRange(first, last) {
+  first = Number(first); if (!first) return '';
+  last = Number(last) || first;
+  var a = periodStartTime(first);
+  if (!a) return '';
+  var b = periodStartTime(last) || a;
+  var hm = b.split(':');
+  var mins = Number(hm[0]) * 60 + Number(hm[1]) + 45;
+  var hh = ('0' + Math.floor(mins / 60)).slice(-2);
+  var mm = ('0' + (mins % 60)).slice(-2);
+  return a + '–' + hh + ':' + mm;
+}
+
+// ============================================================
 // 将所有函数注册到全局对象
 // ============================================================
 globalThis.todayStr = todayStr;
@@ -221,13 +389,36 @@ globalThis.formatMinutes = formatMinutes;
 globalThis.formatNumber = formatNumber;
 globalThis.isToday = isToday;
 globalThis.calcStreak = calcStreak;
+globalThis.weekdayName = weekdayName;
+globalThis.weekdayCN = weekdayCN;
+globalThis.dateWeekday = dateWeekday;
+globalThis.dateOffset = dateOffset;
+globalThis.weeksInfo = weeksInfo;
+globalThis.weeksContain = weeksContain;
+globalThis.semesterWeekOf = semesterWeekOf;
+globalThis.periodStartTime = periodStartTime;
+globalThis.periodTimeRange = periodTimeRange;
 
 // 同时挂载到 CGDate 命名空间下，避免全局变量污染
 globalThis.CGDate = {
   todayStr: todayStr, formatDateCN: formatDateCN, fmtDate: fmtDate, formatDateShort: formatDateShort,
-  dateStr: dateStr, formatMinutes: formatMinutes, formatNumber: formatNumber, isToday: isToday, calcStreak: calcStreak
+  dateStr: dateStr, formatMinutes: formatMinutes, formatNumber: formatNumber, isToday: isToday, calcStreak: calcStreak,
+  weekdayName: weekdayName, weekdayCN: weekdayCN, dateWeekday: dateWeekday, dateOffset: dateOffset,
+  weeksInfo: weeksInfo, weeksContain: weeksContain, semesterWeekOf: semesterWeekOf,
+  periodStartTime: periodStartTime, periodTimeRange: periodTimeRange
 };
 
 // ES Module 导出
-export { todayStr, formatDateCN, fmtDate, formatDateShort, dateStr, formatMinutes, formatNumber, isToday, calcStreak };
-export default { todayStr, formatDateCN, fmtDate, formatDateShort, dateStr, formatMinutes, formatNumber, isToday, calcStreak };
+export {
+  todayStr, formatDateCN, fmtDate, formatDateShort, dateStr, formatMinutes, formatNumber, isToday, calcStreak,
+  weekdayName, weekdayCN, dateWeekday, dateOffset, weeksInfo, weeksContain, semesterWeekOf,
+  periodStartTime, periodTimeRange
+};
+
+export default {
+  todayStr: todayStr, formatDateCN: formatDateCN, fmtDate: fmtDate, formatDateShort: formatDateShort,
+  dateStr: dateStr, formatMinutes: formatMinutes, formatNumber: formatNumber, isToday: isToday, calcStreak: calcStreak,
+  weekdayName: weekdayName, weekdayCN: weekdayCN, dateWeekday: dateWeekday, dateOffset: dateOffset,
+  weeksInfo: weeksInfo, weeksContain: weeksContain, semesterWeekOf: semesterWeekOf,
+  periodStartTime: periodStartTime, periodTimeRange: periodTimeRange
+};

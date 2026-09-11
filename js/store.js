@@ -848,6 +848,36 @@ var CGStore = {
     return d.user;
   },
 
+  /**
+   * getSemester() —— 读取「学期/周次」配置
+   * 【为什么放 user 上】后端 PAYLOAD_KEYS 与前端 mergeState 都按 user 做字段级
+   * 合并，配置放这里才能随 Phase 8 同步协议穿越设备，而不必改同步层。
+   * 【返回】{ semesterStart:'', currentWeek:0 } —— currentWeek=0 表示自动从开始日推算。
+   */
+  getSemester: function () {
+    var u = load().user || {};
+    return {
+      semesterStart: typeof u.semesterStart === 'string' ? u.semesterStart : '',
+      currentWeek: Number(u.currentWeek) || 0
+    };
+  },
+
+  /**
+   * setSemester(patch) —— 更新「学期/周次」配置
+   * 仅更新传入的字段（semesterStart / currentWeek），其余保持。
+   * 本机改配置 = 一次业务写，revision 恰好 +1。
+   * 【返回】更新后的配置对象
+   */
+  setSemester: function (patch) {
+    patch = patch && typeof patch === 'object' ? patch : {};
+    var u = load().user || {};
+    var next = {};
+    if (patch.semesterStart !== undefined) next.semesterStart = patch.semesterStart;
+    if (patch.currentWeek !== undefined) next.currentWeek = Number(patch.currentWeek) || 0;
+    this.setUser(next);
+    return this.getSemester();
+  },
+
   /* ===== 通用 CRUD 操作（内部方法） ===== */
 
   /**

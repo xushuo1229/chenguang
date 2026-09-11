@@ -35,6 +35,8 @@ import '../js/sync.js';
 // 具名导入而非依赖 globalThis 副作用：构建期即可确定绑定，
 // 不受模块求值顺序影响，压缩后也不会因 global 名改写而失效
 import { parseScheduleText } from '../js/scheduleTextParser.js';
+// 课程编排层（Phase 9）：归一化 / 今日课程 / 周课表 / 导入去重合并
+import CourseSchedule from '../js/courseSchedule.js';
 
   // ============================================================
   // IIFE（立即执行函数表达式）— 整个工作台的代码都在这里面
@@ -67,6 +69,348 @@ import { parseScheduleText } from '../js/scheduleTextParser.js';
     // today() 返回今天日期的字符串，格式如 "2026-09-08"
     // Store.today() 内部会做时区处理，确保返回的是「本地日期」
     function today() { return Store.today(); }
+
+    /* ============================================================
+       Phase 9 · 课程编排（课表 / 周次 / 详情 / 导入合并）
+       ============================================================ */
+
+    /** 课表视图的内存状态：week 0=跟随学期自动；mobileDay -1=今日 */
+    var schState = { week: 0, mobileDay: -1 };
+
+    /**
+     * initPeriodSelects() —— 给 4 个节次下拉框填充「第 1~12 节」选项
+     */
+    function initPeriodSelects() {
+      ['course', 'editCourse'].forEach(function (prefix) {
+        var start = document.getElementById(prefix + 'StartPeriod');
+        var end = document.getElementById(prefix + 'EndPeriod');
+        if (!start || !end) return;
+        var html = '';
+        for (var p = 1; p <= 12; p++) html += '<option value="' + p + '">第 ' + p + ' 节</option>';
+        start.innerHTML = html;
+        end.innerHTML = html;
+        end.selectedIndex = 0;
+      });
+    }
+
+    /**
+     * normalizeWeeksInput(s) —— 校验并收敛周次输入
+     * 允许 1-16 / 1,3,5 / 1~16 / 单 / 双 / 1-16(单) 等；返回去掉空白与「周」字的写法。
+     */
+    function normalizeWeeksInput(s) {
+      var v = String(s || '').trim();
+      if (!v) return '';
+      return v.replace(/\s+/g, '');
+    }
+
+    /**
+     * collectCourseMeta(prefix) —— 收集课程元数据（教师/教室/学分/类型/学期/备注）
+     * 用于添加/编辑保存。返回对象，字段与 CourseSchedule.normalizeCourse 对齐。
+     */
+    function collectCourseMeta(prefix) {
+      var g = function (id) { var el = document.getElementById(id); return el ? el.value : ''; };
+      return {
+        teacher: g(prefix + 'Teacher').trim(),
+        classroom: g(prefix + 'Classroom').trim(),
+        credits: parseFloat(g(prefix + 'Credits')) || 0,
+        courseType: g(prefix + 'CourseType'),
+        semester: g(prefix + 'Semester').trim(),
+        notes: g(prefix + 'Notes').trim()
+      };
+    }
+
+    /**
+     * collectCourseSchedule(prefix) —— 从表单构建 slots[]（若选了星期）
+     * 未选星期 → 返回 null（表示「不排课」，编辑时保留原排课不动）。
+     */
+    function collectCourseSchedule(prefix) {
+      var wdEl = document.getElementById(prefix + 'Weekday');
+      if (!wdEl) return null;
+      var wd = wdEl.value;
+      if (wd === '') return null;
+      var start = parseInt(document.getElementById(prefix + 'StartPeriod').value, 10) || 1;
+      var end = parseInt(document.getElementById(prefix + 'EndPeriod').value, 10) || start;
+      if (end < start) end = start;
+      var periods = [];
+      for (var p = start; p <= end; p++) periods.push(p);
+      var weeks = normalizeWeeksInput(document.getElementById(prefix + 'Weeks').value);
+      return [{
+        weekday: Number(wd),
+        periods: periods,
+        weeks: weeks
+      }];
+    }
+
+    /**
+     * prefillCourseScheduleForm(prefix, course) —— 打开编辑弹窗时回填排课字段
+     * 课程只有一个上课时段 → 回填；0 个 / 多个时段 → 留空（保存时保留原排课，
+     * 避免多时段课程被编辑表单静默改坏）。
+     */
+    function prefillCourseScheduleForm(prefix, course) {
+      var nc = CourseSchedule.normalizeCourse(course);
+      ['Weekday', 'StartPeriod', 'EndPeriod', 'Weeks'].forEach(function (suf) {
+        var el = document.getElementById(prefix + suf);
+        if (el) el.value = '';
+      });
+      if (nc.slots && nc.slots.length === 1) {
+        var s = nc.slots[0];
+        if (s.weekday >= 0) {
+          var wdEl = document.getElementById(prefix + 'Weekday');
+          if (wdEl) wdEl.value = String(s.weekday);
+          var startEl = document.getElementById(prefix + 'StartPeriod');
+          var endEl = document.getElementById(prefix + 'EndPeriod');
+          if (startEl) startEl.value = String(s.periods[0] || 1);
+          if (endEl) endEl.value = String(s.periods[s.periods.length - 1] || s.periods[0] || 1);
+          var wEl = document.getElementById(prefix + 'Weeks');
+          if (wEl) wEl.value = s.weeks || '';
+        }
+      }
+      ['Teacher', 'Classroom', 'Credits', 'CourseType', 'Semester', 'Notes'].forEach(function (suf) {
+        var el = document.getElementById(prefix + suf);
+        if (el) el.value = (nc[suf.toLowerCase()] !== undefined && nc[suf.toLowerCase()] !== null) ? nc[suf.toLowerCase()] : '';
+      });
+      var creditEl = document.getElementById(prefix + 'Credits');
+      if (creditEl && !creditEl.value) creditEl.value = '0';
+    }
+
+    /**
+     * scheduleWeekInfo() —— 当前课表视图展示的是第几周
+     * 优先级：用户手动步进（schState.week）> 学期配置手动周次 > 按学期开始日自动推算。
+     * weekNum≤0 → 未配置学期（此时不按周次过滤，显示全部课程的星期）。
+     */
+    function scheduleWeekInfo() {
+      var sem = Store.getSemester();
+      var weekNum = 0;
+      if (Number(sem.currentWeek) > 0) weekNum = Number(sem.currentWeek);
+      else if (sem.semesterStart) weekNum = CGDate.semesterWeekOf(CGDate.todayStr(), sem.semesterStart);
+      var manual = Number(sem.currentWeek) > 0;
+      if (Number(schState.week) > 0) { weekNum = Number(schState.week); manual = true; }
+      return { weekNum: weekNum, manual: manual, hasStart: !!sem.semesterStart, start: sem.semesterStart };
+    }
+
+    /**
+     * renderSchedule() —— 渲染课程视图顶部的「课表」卡片
+     * 桌面：7 列周课表网格；移动端：星期 tabs + 单日列表。今日高亮。
+     */
+    function renderSchedule() {
+      var card = $('#scheduleCard');
+      if (!card) return;
+      var info = scheduleWeekInfo();
+      var courses = Store.getCourses();
+      var days = CourseSchedule.getWeeklyCourses(courses, info.weekNum);
+      var todayStrNow = CGDate.todayStr();
+
+      // 本周星期一起始日期：有学期开始日则按第 N 周推算，否则回退到本周一
+      var monday = '';
+      if (info.weekNum > 0 && info.start) monday = CGDate.dateOffset(info.start, (info.weekNum - 1) * 7);
+      else monday = CGDate.dateOffset(todayStrNow, -CGDate.dateWeekday(todayStrNow));
+
+      // ---- 周次标签 + 信息行 ----
+      var weekLabel = '—';
+      if (info.weekNum > 0) {
+        weekLabel = '第 ' + info.weekNum + ' 周' + (info.manual ? '（手动）' : '');
+      } else {
+        weekLabel = info.hasStart ? '—' : '未设置';
+      }
+      var elWeek = $('#schWeekLabel');
+      if (elWeek) elWeek.textContent = weekLabel;
+      var rangeTxt = CGDate.formatDateShort(monday) + ' ~ ' + CGDate.formatDateShort(CGDate.dateOffset(monday, 6));
+      var infoArr = [rangeTxt];
+      if (!info.hasStart) infoArr.unshift('未设置学期开始日，课表按星期显示');
+      if (info.hasStart && !info.manual && info.weekNum <= 0) infoArr.unshift('学期开始后自动计算周次');
+      var infoEl = $('#schInfoText');
+      if (infoEl) infoEl.textContent = infoArr.join(' · ');
+      $('#schHint').style.display = info.hasStart ? 'none' : 'block';
+      if (info.hasStart) {
+        var startInput = $('#semesterStartDate');
+        if (startInput && startInput.value !== info.start) startInput.value = info.start;
+      }
+
+      // ---- 空态 ----
+      var hasAnyScheduled = courses.some(function (c) {
+        var nc = CourseSchedule.normalizeCourse(c);
+        return nc.slots && nc.slots.length > 0;
+      });
+      var emptyEl = $('#schEmpty');
+      if (emptyEl) emptyEl.style.display = hasAnyScheduled ? 'none' : 'block';
+
+      // ---- 桌面网格 ----
+      var grid = $('#schGrid');
+      var gridHtml = '';
+      for (var d = 0; d < 7; d++) {
+        var day = days[d];
+        var dateStr = CGDate.dateOffset(monday, d);
+        var isToday = dateStr === todayStrNow;
+        var count = day.items.length;
+        gridHtml += '<div class="sch-day' + (isToday ? ' today' : '') + '">' +
+          '<div class="sch-day-head"><span>' + scheduleWeekdayCN(d) + ' ' + CGDate.formatDateShort(dateStr) + '</span>' +
+          (count ? '<span class="count">' + count + '</span>' : '') + '</div>';
+        if (count) {
+          day.items.forEach(function (hit) {
+            gridHtml += scheduleItemHtml(hit);
+          });
+        }
+        gridHtml += '</div>';
+      }
+      grid.innerHTML = gridHtml;
+
+      // ---- 移动端 tabs + 单日列表 ----
+      renderScheduleTabs(days, monday);
+      renderScheduleMobile(days, monday, info.weekNum);
+    }
+
+    /** scheduleWeekdayCN(d) —— weekday 序号(0=周一) → '周一'…'周日' */
+    function scheduleWeekdayCN(d) { return CGDate.weekdayName(d) || ''; }
+
+    /**
+     * scheduleItemHtml(hit) —— 单个课程格（课表卡片，带 time 与教室信息）
+     * click 时打开课程详情。
+     */
+    function scheduleItemHtml(hit) {
+      var c = hit.course, s = hit.slot;
+      var periodsTxt = s.periods && s.periods.length ? '第' + s.periods.join(',') + '节' : '';
+      var timeTxt = CGDate.periodTimeRange(s.periods[0], s.periods[s.periods.length - 1]);
+      var meta = [periodsTxt, timeTxt].filter(Boolean).join(' ');
+      if (s.weeks) meta += (meta ? ' · ' : '') + s.weeks + '周';
+      if (c.classroom) meta += (meta ? ' · ' : '') + esc(c.classroom);
+      return '<button type="button" class="sch-item" data-detail-course="' + escAttr(c.id) + '">' +
+        '<span class="it-name">' + esc(c.name) + '</span>' +
+        (meta ? '<span class="it-meta">' + esc(meta) + '</span>' : '') +
+        '</button>';
+    }
+
+    /** escAttr(v) —— HTML 属性转义（id 只做兜底） */
+    function escAttr(v) { return String(v).replace(/"/g, '&quot;'); }
+
+    /**
+     * renderScheduleTabs(days, monday) —— 移动端星期 tabs
+     */
+    function renderScheduleTabs(days, monday) {
+      var tabsEl = $('#schTabs');
+      if (!tabsEl) return;
+      var todayStrNow = CGDate.todayStr();
+      var active = schState.mobileDay >= 0 ? schState.mobileDay : CGDate.dateWeekday(todayStrNow);
+      if (active < 0) active = 0;
+      var html = '';
+      for (var d = 0; d < 7; d++) {
+        var dateStr = CGDate.dateOffset(monday, d);
+        var isToday = dateStr === todayStrNow;
+        var name = scheduleWeekdayCN(d).replace('周', '');
+        html += '<button type="button" class="sch-tab' + (d === active ? ' active' : '') + '" data-sch-day="' + d + '">' +
+          name + (isToday ? '·今' : '') + '</button>';
+      }
+      tabsEl.innerHTML = html;
+    }
+
+    /**
+     * renderScheduleMobile(days, monday) —— 移动端单日课程列表
+     */
+    function renderScheduleMobile(days, monday) {
+      var host = $('#schMobile');
+      if (!host) return;
+      var todayStrNow = CGDate.todayStr();
+      var active = schState.mobileDay >= 0 ? schState.mobileDay : CGDate.dateWeekday(todayStrNow);
+      if (active < 0) active = 0;
+      var day = days[active];
+      var dateStr = CGDate.dateOffset(monday, active);
+      var html = '<div class="sch-mday-title">' + scheduleWeekdayCN(active) + ' ' +
+        CGDate.formatDateShort(dateStr) + (dateStr === todayStrNow ? '（今天）' : '') +
+        (day.items.length ? ' · ' + day.items.length + ' 节' : '') + '</div>';
+      if (!day.items.length) {
+        html += '<div class="sch-empty" style="display:block;">当天没有课，好好休息 🌙</div>';
+      } else {
+        day.items.forEach(function (hit) { html += scheduleItemHtml(hit); });
+      }
+      host.innerHTML = html;
+    }
+
+    /**
+     * openCourseDetail(id) —— 打开课程详情弹窗（Phase 9 能力：名称/教师/时段/周次/教室等）
+     */
+    function openCourseDetail(id) {
+      var course = Store.getCourses().filter(function (c) { return c.id === id; })[0];
+      if (!course) { toast('找不到该课程', 'warn'); return; }
+      var nc = CourseSchedule.normalizeCourse(course);
+      setText('cdTitle', '📘 ' + (nc.name || '课程'));
+
+      var total = Number(nc.totalChapters) || 0;
+      var learned = Number(nc.learnedChapters != null ? nc.learnedChapters : 0) || 0;
+      var pct = total > 0 ? Math.min(100, Math.round((learned / total) * 100)) : (Number(nc.progress) || 0);
+      $('#cdBar').style.width = Math.min(100, pct) + '%';
+      $('#cdPct').textContent = pct + '%';
+
+      var rows = [];
+      // 上课时间
+      var timeLabel = CourseSchedule.courseTimeLabel(nc);
+      rows.push(['上课时间', timeLabel || '未排课', !timeLabel]);
+      rows.push(['章节进度', total > 0 ? ('已学 ' + learned + ' / 共 ' + total + ' 章') : (nc.status === 'doing' ? '学习中' : '未开始'), false]);
+      rows.push(['教师', nc.teacher || '—', !nc.teacher]);
+      rows.push(['教室', nc.classroom || '—', !nc.classroom]);
+      rows.push(['学分', nc.credits ? (nc.credits + ' 学分') : '—', !nc.credits]);
+      rows.push(['课程类型', nc.courseType || '—', !nc.courseType]);
+      rows.push(['学期', nc.semester || '—', !nc.semester]);
+      rows.push(['备注', nc.notes || '—', !nc.notes]);
+
+      var html = '';
+      rows.forEach(function (r) {
+        html += '<div class="cd-row' + (r[1].length > 24 ? ' full' : '') + (r[2] ? ' no-val' : '') + '">' +
+          '<label>' + esc(r[0]) + '</label><div class="cd-val">' + esc(r[1]) + '</div></div>';
+      });
+      $('#cdInfo').innerHTML = html;
+      openModal('modalCourseDetail');
+      // 记住「编辑」要打开的是哪门课
+      window.__cgDetailCourseId = id;
+    }
+
+    /**
+     * applyImportPlan(plan) —— 按（新增/合并/跳过）计划写入 Store
+     * 每个课程恰好一次业务写（addCourse / updateCourse），保证 revision 只 +1。
+     * 【返回】统计 { added, merged, skipped }
+     */
+    function applyImportPlan(plan) {
+      var stats = { added: 0, merged: 0, skipped: 0 };
+      plan.forEach(function (item) {
+        var c = item.candidate;
+        if (item.action === 'new') {
+          Store.addCourse({
+            name: c.name,
+            progress: 0, status: 'todo', totalChapters: 0, learnedChapters: 0,
+            slots: c.slots || [],
+            teacher: c.teacher || '', classroom: c.classroom || c.location || '',
+            credits: c.credits || 0, courseType: c.courseType || '', semester: c.semester || '',
+            notes: c.notes || ''
+          });
+          stats.added++;
+        } else if (item.action === 'attach') {
+          // 旧进度课程（无 slots）首次挂课表：一次 update 写入全部
+          // 只补「目标为空」的元数据，绝不覆写手动录入值（progress 一律不碰）
+          var attach = {
+            slots: c.slots || [],
+            teacher: c.teacher || item.target.teacher || '',
+            classroom: c.classroom || c.location || item.target.classroom || ''
+          };
+          [['credits', 'credits'], ['courseType', 'courseType'],
+           ['semester', 'semester'], ['notes', 'notes']].forEach(function (pair) {
+            var tv = item.target[pair[0]];
+            if (c[pair[1]] && (tv === undefined || tv === '' || tv === 0)) attach[pair[0]] = c[pair[1]];
+          });
+          Store.updateCourse(item.target.id, attach);
+          stats.merged++;
+        } else if (item.action === 'merge' || item.action === 'dup') {
+          var patch = item.action === 'merge' ? CourseSchedule.mergeIntoCourse(c, item.target) : {};
+          if (Object.keys(patch).length) {
+            Store.updateCourse(item.target.id, patch);
+            stats.merged++;
+          } else {
+            // 完全重复（dup）或合并后无任何差异 → 不写 Store、不产生 revision
+            stats.skipped++;
+          }
+        } else {
+          stats.skipped++;
+        }
+      });
+      return stats;
+    }
 
     /* ---------- 确认对话框（使用 showConfirm 函数） ---------- */
     // 当用户执行危险操作（如删除数据）时，弹出确认框让用户二次确认
@@ -439,7 +783,7 @@ import { parseScheduleText } from '../js/scheduleTextParser.js';
     document.addEventListener('click', function (e) {
       // e.target.closest() 从点击位置往上找最近的匹配元素
       // 如果点击的不是这些按钮中的任何一个，就直接退出
-      var trigger = e.target.closest('.card-action, .btn-primary, .btn-wb, #newBtn, #bellBtn, [data-edit-course], [data-del-course], [data-edit-book], [data-del-book], [data-del-sport], [data-del-english], [data-del-focus], [data-toggle-todo], [data-del-todo], [data-more-ch]');
+      var trigger = e.target.closest('.card-action, .btn-primary, .btn-wb, #newBtn, #bellBtn, [data-edit-course], [data-del-course], [data-detail-course], [data-edit-book], [data-del-book], [data-del-sport], [data-del-english], [data-del-focus], [data-toggle-todo], [data-del-todo], [data-more-ch]');
       if (!trigger) return;
       e.preventDefault();
 
@@ -479,12 +823,11 @@ import { parseScheduleText } from '../js/scheduleTextParser.js';
         return;
       }
 
-      // 添加课程 → 打开模态框
+      // 添加课程 → 打开模态框（清空表单 + 展开课程编排区域）
       if (act === 'add-course') {
-        $('#courseName').value = '';
-        $('#courseTotal').value = 20;
-        $('#courseLearned').value = 0;
+        resetCourseForm();
         openModal('modalAddCourse');
+        setTimeout(function () { var n = $('#courseName'); n && n.focus(); }, 120);
         return;
       }
 
@@ -506,7 +849,14 @@ import { parseScheduleText } from '../js/scheduleTextParser.js';
         $('#editCourseName').value = course.name || '';
         $('#editCourseTotal').value = Number(course.totalChapters) || 0;
         $('#editCourseLearned').value = Number(course.learnedChapters) || 0;
+        prefillCourseScheduleForm('editCourse', course);
         openModal('modalEditCourse');
+        return;
+      }
+
+      // 课程详情
+      if (trigger.hasAttribute('data-detail-course')) {
+        openCourseDetail(trigger.getAttribute('data-detail-course'));
         return;
       }
 
@@ -653,10 +1003,21 @@ import { parseScheduleText } from '../js/scheduleTextParser.js';
       if (total < 1) { toast('总章节数必须大于 0', 'warn'); return; }
       if (learned > total) { toast('已学章节不能超过总章节数', 'warn'); return; }
       var prog = Math.round((learned / total) * 100);
-      Store.addCourse({
+      var payload = {
         name: name, totalChapters: total, learnedChapters: learned,
         progress: prog, status: prog >= 100 ? 'done' : (prog > 0 ? 'doing' : 'todo')
-      });
+      };
+      // 排课信息（可选）：选了星期才带 slots
+      var sched = collectCourseSchedule('course');
+      var meta = collectCourseMeta('course');
+      if (sched) { payload.slots = sched; payload.semester = meta.semester; }
+      payload.teacher = meta.teacher;
+      payload.classroom = meta.classroom;
+      payload.credits = meta.credits;
+      payload.courseType = meta.courseType;
+      payload.notes = meta.notes;
+      if (meta.semester) payload.semester = meta.semester;
+      Store.addCourse(payload);
       updateUI();
       closeModal('modalAddCourse');
       toast('✅ 课程已添加：' + name, 'success');
@@ -678,22 +1039,27 @@ import { parseScheduleText } from '../js/scheduleTextParser.js';
         .then(function (res) {
           var list = res && res.data && res.data.courses;
           if (!list || !list.length) throw new Error('未解析到课程');
-          // 按名称去重，跳过已存在的同名课程（保留原进度）
-          var existing = {};
-          Store.getCourses().forEach(function (c) { if (c.name) existing[c.name] = true; });
-          var added = 0;
-          var skipped = 0;
-          list.forEach(function (item) {
-            var name = (item && item.name || '').trim();
-            if (!name || existing[name]) { skipped++; return; }
-            Store.addCourse({ name: name, progress: 0, status: 'todo', totalChapters: 0, learnedChapters: 0 });
-            existing[name] = true;
-            added++;
+          // Phase 9：转成与文本解析一致的形态（后端 slots 的 period 是单节），
+          // 再按「课程名 + 时段」去重计划合并，绝不静默覆盖手动编辑
+          var candidates = (list || []).map(function (item) {
+            return {
+              name: (item && item.name || '').trim(),
+              slots: (item && item.slots || []).map(function (s) {
+                return { weekday: s.weekday, periods: [s.period] };
+              }).filter(function (s) { return s.weekday >= 0; }),
+              weeks: item && item.weeks || '',
+              location: item && item.location || ''
+            };
           });
+          var plan = CourseSchedule.planImport(candidates, Store.getCourses());
+          var stats = applyImportPlan(plan);
           closeModal('modalImportCourse');
           updateUI();
-          if (added > 0) toast('✅ 已导入 ' + added + ' 门课程' + (skipped ? '，跳过重名 ' + skipped + ' 门' : ''), 'success');
-          else toast('解析到课程均已在列表中，未新增', 'info');
+          if (stats.added > 0 || stats.merged > 0) {
+            toast('✅ 已导入 ' + stats.added + ' 门课程' + (stats.merged ? '，合并 ' + stats.merged + ' 门' : '') + (stats.skipped ? '，跳过 ' + stats.skipped + ' 门' : ''), 'success');
+          } else {
+            toast('解析到课程均已在列表中，未新增', 'info');
+          }
         })
         .catch(function (err) {
           var msg = (err && err.message) || '无法解析该课表，请确认是可公开访问的表格页面';
@@ -816,30 +1182,34 @@ import { parseScheduleText } from '../js/scheduleTextParser.js';
         return;
       }
 
-      var existing = {};
-      Store.getCourses().forEach(function (c) { if (c.name) existing[c.name] = true; });
-      var toAdd = 0, dup = 0;
+      // Phase 9：按 数量统计 + 逐门动线（新增/合并/跳过）生成预览
+      var plan = CourseSchedule.planImport(list, Store.getCourses());
+      var cnt = { new: 0, merge: 0, skip: 0 };
+      var ACTION_TEXT = { new: '🆕 新增', attach: '🔗 合并到现有', merge: '🔀 合并', dup: '⏭ 跳过（重复）', skip: '⏭ 跳过' };
       var html = '<div class="ic-preview-title">✅ 识别到 ' + list.length + ' 门课程</div>';
-      list.forEach(function (item) {
-        var isDup = existing[item.name];
-        if (isDup) dup++; else toAdd++;
-        var slotsTxt = (item.slots || []).map(function (s) {
+      plan.forEach(function (item) {
+        var isAdd = item.action === 'new';
+        if (isAdd) cnt.new++;
+        else if (item.action === 'merge' || item.action === 'attach') cnt.merge++;
+        else cnt.skip++;
+        var slotsTxt = (item.candidate.slots || []).map(function (s) {
           var wd = ['周一','周二','周三','周四','周五','周六','周日'][s.weekday] || ('星期' + (s.weekday + 1));
           return wd + ' 第' + (s.periods && s.periods.length ? s.periods.join(',') : '?') + '节';
         }).join('；');
         var meta = [
           slotsTxt,
-          item.weeks ? (item.weeks + '周') : '',
-          item.location ? ('@ ' + item.location) : ''
+          item.candidate.weeks ? (item.candidate.weeks + '周') : '',
+          item.candidate.location ? ('@ ' + item.candidate.location) : ''
         ].filter(Boolean).join(' · ');
         html += '<div class="ic-preview-item">'
-          + '<span class="ic-preview-name">' + escapeHtml(item.name) + (isDup ? ' ⚠️ 已存在' : '') + '</span>'
+          + '<span class="ic-preview-name">' + escapeHtml(item.candidate.name) +
+            ' <span style="font-size:.66rem;color:var(--text-muted);font-weight:400;">' + (ACTION_TEXT[item.action] || item.action) + '</span></span>'
           + (meta ? '<span class="ic-preview-meta">' + escapeHtml(meta) + '</span>' : '')
           + '</div>';
       });
       html += '<div class="ic-preview-warn">'
-        + '将新增 <b>' + toAdd + '</b> 门，跳过重名 <b>' + dup + '</b> 门。'
-        + (toAdd === 0 ? '（你可以关闭此窗口）' : '点击「解析并导入」完成。')
+        + '将新增 <b>' + cnt.new + '</b> 门，合并 <b>' + cnt.merge + '</b> 门，跳过重复 <b>' + cnt.skip + '</b> 门。'
+        + (cnt.new + cnt.merge === 0 ? '（课程都在了，你可以关闭此窗口）' : '点击「解析并导入」完成。')
         + '</div>';
       pv.innerHTML = html;
     }
@@ -861,41 +1231,18 @@ import { parseScheduleText } from '../js/scheduleTextParser.js';
         return;
       }
 
-      // 按名称去重，跳过已存在的同名课程
-      var existing = {};
-      Store.getCourses().forEach(function (c) { if (c.name) existing[c.name] = true; });
-      var added = 0, skipped = 0, noSlot = 0;
-      list.forEach(function (item) {
-        var name = (item.name || '').trim();
-        if (!name) { skipped++; return; }
-        if (existing[name]) { skipped++; return; }
-        // 收集第一个有节次的 slot 信息（用于显示）；课程详情页可后续编辑总章节数
-        var firstSlot = null;
-        if (item.slots && item.slots.length) {
-          firstSlot = item.slots[0];
-        } else {
-          noSlot++;
-        }
-        Store.addCourse({
-          name: name,
-          progress: 0,
-          status: 'todo',
-          totalChapters: 0,
-          learnedChapters: 0,
-          // 附加解析出来的时段/周次/地点，供后续章节记录/详情页使用
-          schedule: item.slots || [],
-          weeks: item.weeks || '',
-          location: item.location || ''
-        });
-        existing[name] = true;
-        added++;
-      });
+      // Phase 9：按「课程名 + 时段」去重计划合并（绝不静默覆盖手动编辑）
+      var plan = CourseSchedule.planImport(list, Store.getCourses());
+      var stats = applyImportPlan(plan);
 
       closeModal('modalImportCourse');
       updateUI();
-      if (added > 0) {
-        var msg = '✅ 已导入 ' + added + ' 门课程' + (skipped ? '，跳过 ' + skipped + ' 门' : '');
-        if (noSlot) msg += '（其中 ' + noSlot + ' 门未识别到时段，请手动补全章节数）';
+      if (stats.added > 0 || stats.merged > 0) {
+        var msg = '✅ 导入完成：新增 ' + stats.added + ' 门'
+          + (stats.merged ? '，合并 ' + stats.merged + ' 门' : '')
+          + (stats.skipped ? '，跳过重复 ' + stats.skipped + ' 门' : '');
+        var noSlot = plan.some(function (p) { return p.candidate && !(p.candidate.slots && p.candidate.slots.length); });
+        if (noSlot) msg += '（部分课程未识别到时段，请手动补全章节数）';
         toast(msg, 'success');
       } else {
         toast('解析到课程均已在列表中，未新增', 'info');
@@ -912,14 +1259,94 @@ import { parseScheduleText } from '../js/scheduleTextParser.js';
       if (total < 1) { toast('总章节数必须大于 0', 'warn'); return; }
       if (learned > total) { toast('已学章节不能超过总章节数', 'warn'); return; }
       var prog = Math.round((learned / total) * 100);
-      Store.updateCourse(editingCourseId, {
+      var ePayload = {
         name: name, totalChapters: total, learnedChapters: learned,
         progress: prog, status: prog >= 100 ? 'done' : (prog > 0 ? 'doing' : 'todo')
-      });
+      };
+      // 元数据始终回写（编辑弹窗已回填当前值）
+      var eMeta = collectCourseMeta('editCourse');
+      ePayload.teacher = eMeta.teacher;
+      ePayload.classroom = eMeta.classroom;
+      ePayload.credits = eMeta.credits;
+      ePayload.courseType = eMeta.courseType;
+      ePayload.semester = eMeta.semester;
+      ePayload.notes = eMeta.notes;
+      // 排课：用户本次选择了星期 → 以新时段替换；未选 → 保留原排课不动
+      var eSched = collectCourseSchedule('editCourse');
+      if (eSched) ePayload.slots = eSched;
+      Store.updateCourse(editingCourseId, ePayload);
       editingCourseId = null;
       updateUI();
       closeModal('modalEditCourse');
       toast('✅ 课程已更新', 'success');
+    });
+
+    /* ---------- 课表控件绑定（Phase 9） ---------- */
+
+    // 节次下拉选项（添加/编辑弹窗共用）
+    initPeriodSelects();
+
+    // 学期开始日变更 → 保存配置并重算周次
+    var semStartInput = $('#semesterStartDate');
+    if (semStartInput) {
+      semStartInput.addEventListener('change', function () {
+        Store.setSemester({ semesterStart: this.value || '' });
+        schState.week = 0; // 改了开始日，回到自动周次
+        renderSchedule();
+      });
+    }
+
+    // 上一周 / 下一周 / 回到本周
+    // 注意：只有 currentWeek 真的变化时才写 Store（避免值未变也 bump revision、标脏 user 待推送）
+    function setWeekIfChanged(desired) {
+      if (Number(Store.getSemester().currentWeek) !== Number(desired)) {
+        Store.setSemester({ currentWeek: desired });
+      }
+    }
+    $('#semWeekPrev')?.addEventListener('click', function () {
+      var info = scheduleWeekInfo();
+      var w = (Number(info.weekNum) > 0 ? Number(info.weekNum) : 1) - 1;
+      schState.week = w > 0 ? w : 1;
+      setWeekIfChanged(schState.week);
+      renderSchedule();
+    });
+    $('#semWeekNext')?.addEventListener('click', function () {
+      var info = scheduleWeekInfo();
+      var w = (Number(info.weekNum) > 0 ? Number(info.weekNum) : 0) + 1;
+      schState.week = w;
+      setWeekIfChanged(w);
+      renderSchedule();
+    });
+    $('#semWeekNow')?.addEventListener('click', function () {
+      schState.week = 0;
+      setWeekIfChanged(0); // 0 = 自动（按学期开始日推算）
+      renderSchedule();
+    });
+
+    // 移动端星期 tabs 切换
+    var schTabsEl = $('#schTabs');
+    if (schTabsEl) {
+      schTabsEl.addEventListener('click', function (e) {
+        var tab = e.target.closest && e.target.closest('.sch-tab');
+        if (!tab) return;
+        schState.mobileDay = Number(tab.getAttribute('data-sch-day')) || 0;
+        renderSchedule();
+      });
+    }
+
+    // 详情弹窗 → 编辑
+    $('#cdEditBtn')?.addEventListener('click', function () {
+      var cid = window.__cgDetailCourseId;
+      if (!cid) return;
+      var course = Store.getCourses().filter(function (c) { return c.id === cid; })[0];
+      if (!course) { closeModal('modalCourseDetail'); return; }
+      closeModal('modalCourseDetail');
+      editingCourseId = cid;
+      $('#editCourseName').value = course.name || '';
+      $('#editCourseTotal').value = Number(course.totalChapters) || 0;
+      $('#editCourseLearned').value = Number(course.learnedChapters) || 0;
+      prefillCourseScheduleForm('editCourse', course);
+      openModal('modalEditCourse');
     });
 
     // 保存书籍
@@ -1152,15 +1579,20 @@ import { parseScheduleText } from '../js/scheduleTextParser.js';
         var total = Number(c.totalChapters) || 0;
         var learned = Number(c.learnedChapters) || 0;
         var pct = total > 0 ? Math.round((learned / total) * 100) : 0;
+        var nc = CourseSchedule.normalizeCourse(c);
+        var timeTxt = CourseSchedule.courseTimeLabel(nc);
         var el = document.createElement('div');
         el.className = 'cv-item';
         el.innerHTML =
           '<div class="cv-main">' +
             '<div class="cv-name">' + esc(c.name) + '</div>' +
-            '<div class="cv-sub">共 ' + total + ' 章 · 已学 ' + learned + ' 章</div>' +
+            '<div class="cv-sub">共 ' + total + ' 章 · 已学 ' + learned + ' 章' +
+              (timeTxt ? '<br><span style="opacity:.85;">🕒 ' + esc(timeTxt) + '</span>' : '') +
+            '</div>' +
             '<div class="cv-bar"><div class="cv-fill" style="width:' + pct + '%;"></div></div>' +
             '<div class="cv-actions">' +
               '<button data-more-ch="' + c.id + '" title="学完一章">＋1 章</button>' +
+              '<button data-detail-course="' + c.id + '">👁 详情</button>' +
               '<button data-edit-course="' + c.id + '">✏️ 编辑</button>' +
               '<button data-del-course="' + c.id + '">🗑 删除</button>' +
             '</div>' +
@@ -1168,6 +1600,8 @@ import { parseScheduleText } from '../js/scheduleTextParser.js';
           '<div class="cv-pct ' + (pct >= 100 ? 'done' : '') + '">' + pct + '%' + (pct >= 100 ? ' 🎉' : '') + '</div>';
         host.appendChild(el);
       });
+      // 课程视图里同步渲染课表卡片（首页登录后首次进入也在这里触发）
+      if (typeof renderSchedule === 'function') renderSchedule();
     }
 
     /* ---------- 我的视图（个人中心） ---------- */
@@ -1359,6 +1793,27 @@ import { parseScheduleText } from '../js/scheduleTextParser.js';
       if (!silent) toast('🎉 新手指引完成，开始记录你的成长吧！', 'success');
     }
 
+    /* ---------- 课程弹窗表单辅助 ---------- */
+
+    /**
+     * resetCourseForm() —— 清空「添加课程」表单（含排课区域）
+     * 声明在 IIFE 顶层：点击委托与 onboarding 引导都会调用。
+     */
+    function resetCourseForm() {
+      var fields = [
+        ['courseName', ''], ['courseTotal', '20'], ['courseLearned', '0'],
+        ['courseWeekday', ''], ['courseStartPeriod', '1'], ['courseEndPeriod', '1'],
+        ['courseWeeks', ''], ['courseSemester', ''], ['courseTeacher', ''],
+        ['courseClassroom', ''], ['courseCredits', '0'], ['courseNotes', '']
+      ];
+      fields.forEach(function (pair) {
+        var el = document.getElementById(pair[0]);
+        if (el) el.value = pair[1];
+      });
+      var typeEl = $('#courseCourseType');
+      if (typeEl) typeEl.value = '';
+    }
+
     function runOnboardAction(action) {
       if (action === 'checkin') {
         if (!Store.isCheckedIn(today())) {
@@ -1369,9 +1824,7 @@ import { parseScheduleText } from '../js/scheduleTextParser.js';
         return;
       }
       if (action === 'course') {
-        $('#courseName').value = '';
-        $('#courseTotal').value = 20;
-        $('#courseLearned').value = 0;
+        resetCourseForm();
         openModal('modalAddCourse');
         return;
       }
