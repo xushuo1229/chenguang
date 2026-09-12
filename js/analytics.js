@@ -690,6 +690,54 @@ var Analytics = {
     if (!range) return null;
     return todoStatsIn(snap.todos, range, today);
   },
+  /**
+   * ---- 历史最佳（Personal Best / Records） ----
+   * 只读、纯计算：跨全量历史取「单日极值」，供 Stats Center「个人最佳」区块。
+   * 不重写 streak / 完成率算法——longestStreak 直接透传 getStreaks，
+   * 单日极值基于 buildDayData 的逐日聚合（复用同一 Truth Source）。
+   * 返回 `null` 表示该维度历史上一直没有数据（UI 据此显示「暂无记录」，绝不伪造 0）。
+   */
+  getPersonalBest: function (data, opts) {
+    var snap = data && typeof data === 'object' ? data : snapshot();
+    var today = _today(opts);
+    var min = null, max = null;
+    ['checkins', 'english', 'focus', 'sports', 'readings', 'todos'].forEach(function (key) {
+      _arr(snap[key]).forEach(function (r) {
+        var d = _str(r.date);
+        if (!isValidDateStr(d) || d > today) return;
+        if (!min || d < min) min = d;
+        if (!max || d > max) max = d;
+      });
+    });
+    var base = {
+      recordsCount: 0, longestStreak: 0,
+      maxFocus: null, maxStudy: null, maxSports: null, maxReadingPages: null, maxEnglish: null,
+      firstRecordDate: min, lastRecordDate: max
+    };
+    if (!min) return base; // 完全无数据
+
+    var map = buildDayData(snap, min, today);
+    var bestFocus = null, bestStudy = null, bestSports = null, bestPages = null, bestEnglish = null;
+    Object.keys(map).forEach(function (d) {
+      var b = map[d];
+      var study = b.english + b.focus;
+      if (study > 0 && (!bestStudy || study > bestStudy.value)) bestStudy = { value: study, date: d };
+      if (b.focus > 0 && (!bestFocus || b.focus > bestFocus.value)) bestFocus = { value: b.focus, date: d };
+      if (b.sports > 0 && (!bestSports || b.sports > bestSports.value)) bestSports = { value: b.sports, date: d };
+      if (b.readingPages > 0 && (!bestPages || b.readingPages > bestPages.value)) bestPages = { value: b.readingPages, date: d };
+      if (b.english > 0 && (!bestEnglish || b.english > bestEnglish.value)) bestEnglish = { value: b.english, date: d };
+    });
+
+    base.recordsCount = Object.keys(map).length;
+    base.longestStreak = Analytics.getStreaks(snap, opts).longestStreak;
+    base.maxFocus = bestFocus;
+    base.maxStudy = bestStudy;
+    base.maxSports = bestSports;
+    base.maxReadingPages = bestPages;
+    base.maxEnglish = bestEnglish;
+    return base;
+  },
+
   getCourseSummary: function (data) {
     var snap = data && typeof data === 'object' ? data : snapshot();
     // 课程库概览（数量 / 完成 / 平均进度 / 学分 / 类型分布）

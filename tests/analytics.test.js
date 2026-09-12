@@ -445,6 +445,43 @@ test('Defensive：旧数据（course 只有 name+time）兼容', () => {
   expect(c.weekly.sessions).toBe(1);
 });
 
+/* ==================== Personal Best ==================== */
+
+test('PersonalBest：跨全量历史取单日极值', () => {
+  const pb = Analytics.getPersonalBest(fixture(), { today: '2026-09-12' });
+  expect(pb.recordsCount).toBeGreaterThan(0);
+  expect(pb.longestStreak).toBe(5);             // 09-08~09-12 五天
+  // focus 单日极值：09-12 的 50 分钟
+  expect(pb.maxFocus).toEqual({ value: 50, date: '2026-09-12' });
+  // study（英语+专注）单日极值：09-10 = 45(英)+25(专)=70
+  expect(pb.maxStudy).toEqual({ value: 70, date: '2026-09-10' });
+  // sports 单日极值：09-10 一次
+  expect(pb.maxSports).toEqual({ value: 1, date: '2026-09-10' });
+  expect(pb.maxReadingPages).toEqual({ value: 50, date: '2026-09-11' });
+  expect(pb.maxEnglish).toEqual({ value: 45, date: '2026-09-10' });
+});
+
+test('PersonalBest：空数据 → recordsCount 0、极值均为 null（不伪造 0）', () => {
+  const pb = Analytics.getPersonalBest({ user: {}, checkins: [], english: [], focus: [], sports: [], readings: [], todos: [], courses: [] }, { today: '2026-09-12' });
+  expect(pb.recordsCount).toBe(0);
+  expect(pb.longestStreak).toBe(0);
+  expect(pb.maxFocus).toBeNull();
+  expect(pb.maxStudy).toBeNull();
+  expect(pb.maxEnglish).toBeNull();
+  expect(pb.firstRecordDate).toBeNull();
+});
+
+test('PersonalBest：淘汰 >今日 与坏日期记录；只计最早至今天', () => {
+  const d = {
+    user: {},
+    checkins: [{ date: '2026-09-11', status: 'done' }, { date: '2026-09-12', status: 'done' }, { date: 'not-a-date', status: 'done' }],
+    english: [{ date: '2026-09-11', minutes: 20, words: 10 }, { date: '2099-01-01', minutes: 999, words: 999 }],
+    focus: [], sports: [], readings: [], todos: [], courses: []
+  };
+  // 未来 english 999 应被淘汰
+  expect(Analytics.getPersonalBest(d, { today: '2026-09-12' }).maxEnglish).toEqual({ value: 20, date: '2026-09-11' });
+});
+
 /* ==================== 不变量 ==================== */
 
 test('不变量：Analytics 不改数据（before === after 深比较）', () => {
