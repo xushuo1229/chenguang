@@ -65,7 +65,7 @@ function serverPayload(business, revision = 1) {
 
 function emptyBusiness(extra = {}) {
   return Object.assign(
-    { user: { name: '' }, checkins: [], sports: [], readings: [], courses: [], english: [], todos: [], focus: [] },
+    { user: { name: '' }, checkins: [], sports: [], readings: [], courses: [], english: [], todos: [], focus: [], goals: [] },
     extra
   );
 }
@@ -324,6 +324,31 @@ describe('mergeState()：墓碑防复活（Test7）', () => {
     expect(c1.room).toBe('A302');
   });
 
+  test('goals 按 id 合并（Phase 12）：本地改的字段赢，服务器独有目标保留', () => {
+    const local = emptyBusiness({
+      goals: [{ id: 'g1', title: '本周专注', type: 'focus', metric: 'minutes', targetValue: 700 }],
+    });
+    const remote = emptyBusiness({
+      goals: [
+        { id: 'g1', title: '本周专注', type: 'focus', metric: 'minutes', targetValue: 600 },
+        { id: 'g2', title: '云端目标', type: 'reading', metric: 'pages', targetValue: 100 },
+      ],
+    });
+    const merged = CGSync.mergeState(local, remote, {});
+    const g1 = merged.goals.find((x) => x.id === 'g1');
+    expect(g1.targetValue).toBe(700);           // 本地覆盖
+    expect(merged.goals.find((x) => x.id === 'g2')).toBeTruthy(); // 服务器独有保留
+  });
+
+  test('goals 墓碑优先：本地归档/删除的 id 不复活', () => {
+    const local = emptyBusiness({ goals: [] });
+    const remote = emptyBusiness({
+      goals: [{ id: 'g-dead', title: '已删', targetValue: 100 }],
+    });
+    const merged = CGSync.mergeState(local, remote, { goals: ['g-dead'] });
+    expect(merged.goals.find((x) => x.id === 'g-dead')).toBeUndefined();
+  });
+
   test('checkins 按 date 合并，同日期本地优先', () => {
     const local = emptyBusiness({ checkins: [{ date: '2026-09-10', status: 'done' }] });
     const remote = emptyBusiness({
@@ -354,7 +379,7 @@ describe('mergeState()：墓碑防复活（Test7）', () => {
   });
 });
 
-const COLLECTIONS_ARR_FOR_UNDEF = ['checkins', 'sports', 'readings', 'courses', 'english', 'todos', 'focus'];
+const COLLECTIONS_ARR_FOR_UNDEF = ['checkins', 'sports', 'readings', 'courses', 'english', 'todos', 'focus', 'goals'];
 
 describe('墓碑全链条：本地删除 → push → 服务器吸收后清理（Test8）', () => {
   test('服务器返回数据不再含墓碑 id → 清空该集合墓碑', async () => {

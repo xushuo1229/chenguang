@@ -51,6 +51,7 @@ export default defineConfig({
         workbench: resolve(__dirname, 'workbench.html'), // 工作台
         stats: resolve(__dirname, 'stats.html'),         // 统计数据页
         ai: resolve(__dirname, 'ai.html'),               // AI 助手
+        goals: resolve(__dirname, 'goals.html'),         // 目标系统
       },
     },
 

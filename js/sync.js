@@ -60,8 +60,8 @@ var PUSH_DEBOUNCE = 400;
 /** TOAST_THROTTLE —— 离线提示节流间隔（毫秒），避免反复打扰 */
 var TOAST_THROTTLE = 30000;
 
-/** 业务集合白名单（与后端同步、用于合并） */
-var COLLECTIONS = ['checkins', 'sports', 'readings', 'courses', 'english', 'todos', 'focus'];
+/** 业务集合白名单（与后端同步、用于合并；Phase 12 加入 goals——by-id 合并/墓碑/payload 通用继承） */
+var COLLECTIONS = ['checkins', 'sports', 'readings', 'courses', 'english', 'todos', 'focus', 'goals'];
 
 /**
  * BACKOFF_BASE —— 指数退避基数（毫秒）
@@ -281,7 +281,7 @@ function _hasPending() {
  */
 function _clearSettledTombstones(srvData) {
   if (!srvData || typeof srvData !== 'object') return;
-  ['checkins', 'sports', 'readings', 'courses', 'english', 'todos', 'focus'].forEach(function (name) {
+  ['checkins', 'sports', 'readings', 'courses', 'english', 'todos', 'focus', 'goals'].forEach(function (name) {
     var ts = CGStore.getTombstones(name);
     if (!ts.length) return;
     var arr = Array.isArray(srvData[name]) ? srvData[name] : [];

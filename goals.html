@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>目标 · 晨光自律台</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="preload" href="css/variables.css" as="style">
+  <link rel="preload" href="css/shared.css" as="style">
+
+  <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/shared.css">
+  <style>
+    /* ============================================================
+       Goals · 目标系统  「晨光 · 静 Calm Dawn」
+       只做结构 + 视觉；进度/剩余/状态由 pages/goals.js 经 Goal Engine + CGAnalytics 产出。
+       token 全部取自 variables.css / shared.css，不在此定义新主色。
+       ============================================================ */
+    body { display: flex; min-height: 100vh; }
+    .main { flex: 1; padding: 20px 28px 48px; max-width: 1080px; overflow-y: auto; width: 100%; }
+
+    /* ------ 顶部栏 ------ */
+    .topbar .greeting h2 { font-size: 1.3rem; font-weight: 600; }
+    .topbar .greeting h2 span { color: var(--primary); }
+    .topbar .greeting .date { font-size: 0.85rem; color: var(--text-muted); }
+    .topbar .actions { display: flex; gap: 10px; align-items: center; }
+    .topbar .actions a {
+      background: var(--bg-card); padding: 8px 18px; border-radius: 40px;
+      text-decoration: none; color: var(--text-dark); font-size: 0.85rem;
+      font-weight: 500; border: 1px solid var(--border-soft); transition: 0.2s;
+    }
+    .topbar .actions a:hover { border-color: var(--primary); background: var(--bg-hover); }
+    .topbar .actions a i { margin-right: 4px; }
+
+    .btn-new {
+      display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px;
+      border: none; border-radius: var(--radius-pill); cursor: pointer;
+      background: var(--brand-amber); color: var(--text-on-accent);
+      font-size: 0.85rem; font-weight: 600; transition: all 0.2s;
+    }
+    .btn-new:hover { filter: brightness(1.05); }
+    .btn-new:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-new:focus-visible { outline: 2px solid var(--brand-amber); outline-offset: 2px; }
+
+    /* ------ 区块头 ------ */
+    .goals-section { margin: 28px 0 0; }
+    .section-head {
+      display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+      margin: 0 0 14px;
+    }
+    .section-head h3 { font-size: 1.05rem; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 8px; }
+    .section-head h3 i { color: var(--brand-amber); }
+    .section-head .count { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
+
+    /* ------ 目标卡片网格 ------ */
+    .goal-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px;
+    }
+
+    .goal-card {
+      background: var(--bg-card); border: 1px solid var(--border-soft);
+      border-radius: var(--radius-md); padding: 16px 16px 12px;
+      display: flex; flex-direction: column; gap: 10px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .goal-card:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
+    .goal-card.is-completed { border-color: var(--success, #2d8c5e); }
+    .goal-card.is-expired { border-color: var(--danger, #c4452e); }
+
+    .goal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .goal-title { margin: 0; font-size: 0.98rem; font-weight: 600; line-height: 1.4; color: var(--text-hi); word-break: break-word; }
+
+    .goal-badge {
+      flex: none; font-size: 0.7rem; font-weight: 600; padding: 3px 9px;
+      border-radius: var(--radius-pill); white-space: nowrap;
+    }
+    .badge-active { background: var(--primary-soft, rgba(238,178,80,0.16)); color: var(--brand-amber); }
+    .badge-completed { background: rgba(45,140,94,0.14); color: var(--success, #2d8c5e); }
+    .badge-expired { background: rgba(196,69,46,0.12); color: var(--danger, #c4452e); }
+    .badge-archived { background: var(--bg-muted, #f0f1f4); color: var(--text-muted); }
+
+    .goal-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .goal-chips .chip {
+      font-size: 0.72rem; color: var(--text-muted); background: var(--bg-muted, #f0f1f4);
+      padding: 2px 8px; border-radius: var(--radius-sm);
+    }
+
+    .goal-progress-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+    .goal-current { font-size: 0.85rem; color: var(--text-dark); }
+    .goal-current b { font-size: 1.1rem; color: var(--text-hi); font-weight: 700; }
+    .goal-pct { font-size: 0.95rem; font-weight: 700; color: var(--brand-amber); }
+
+    /* ------ 进度条（无障碍 aria + 0~100% 可视，超额不撑爆）------ */
+    .progressbar {
+      height: 8px; border-radius: var(--radius-pill); background: var(--bg-muted, #eee);
+      overflow: hidden; position: relative;
+    }
+    .progressbar-fill {
+      height: 100%; border-radius: var(--radius-pill);
+      background: linear-gradient(90deg, var(--brand-amber), var(--primary));
+      width: 0%; transition: width 0.3s ease;
+    }
+    .goal-card.is-completed .progressbar-fill { background: var(--success, #2d8c5e); }
+    .goal-card.is-expired .progressbar-fill { background: var(--danger, #c4452e); }
+    .goal-over { font-size: 0.72rem; color: var(--success, #2d8c5e); font-weight: 600; }
+
+    .goal-foot {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      margin-top: 4px; font-size: 0.76rem; color: var(--text-muted);
+    }
+    .goal-due.due-warn { color: var(--danger, #c4452e); font-weight: 600; }
+
+    .goal-actions { display: flex; gap: 6px; margin-top: 6px; padding-top: 10px; border-top: 1px dashed var(--border-soft); }
+    .goal-actions .ga-btn {
+      border: 1px solid var(--border-soft); background: transparent; color: var(--text-muted);
+      font-size: 0.76rem; padding: 4px 10px; border-radius: var(--radius-sm); cursor: pointer; transition: 0.15s;
+    }
+    .goal-actions .ga-btn:hover { color: var(--primary); border-color: var(--primary); }
+    .goal-actions .ga-btn.danger:hover { color: var(--danger, #c4452e); border-color: var(--danger, #c4452e); }
+    .goal-actions .ga-btn:focus-visible { outline: 2px solid var(--brand-amber); outline-offset: 1px; }
+
+    .goals-sub { font-size: 0.78rem; color: var(--text-muted); margin: 0 0 14px; line-height: 1.6; }
+
+    /* ------ 表单 ------ */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .form-row { display: flex; flex-direction: column; gap: 6px; }
+    .form-row.full { grid-column: 1 / -1; }
+    .form-row label { font-size: 0.8rem; font-weight: 600; color: var(--text-dark); }
+    .form-row input, .form-row select {
+      background: var(--bg-input); color: var(--text-hi); border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm); padding: 8px 10px; font-size: 0.85rem; font-family: inherit;
+    }
+    .form-row input:focus, .form-row select:focus { border-color: var(--brand-amber); outline: none; }
+    .form-error { color: var(--danger, #c4452e); font-size: 0.78rem; min-height: 1em; margin-top: 2px; }
+    .form-hint { font-size: 0.75rem; color: var(--text-muted); line-height: 1.6; }
+    .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+
+    .goals-state { text-align: center; padding: 48px 20px; }
+
+    /* ============================================================
+       响应式
+       ============================================================ */
+    @media (max-width: 680px) {
+      .main { padding: 16px 16px 80px; }
+      .goal-grid { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .topbar .actions a.nav-link { display: none; }
+    }
+    @media (max-width: 400px) {
+      .goal-grid { grid-template-columns: 1fr; }
+      .goal-foot { flex-direction: column; align-items: flex-start; gap: 4px; }
+    }
+  </style>
+  </head>
+<body>
+
+<!-- ===== 左侧导航 ===== -->
+<aside class="sidebar">
+  <a href="#" class="logo">☀</a>
+  <a href="workbench.html" class="nav-item" data-nav="home"><i class="fas fa-home"></i>首页</a>
+  <a href="goals.html" class="nav-item active" data-nav="goals"><i class="fas fa-bullseye"></i>目标</a>
+  <a href="stats.html" class="nav-item" data-nav="stats"><i class="fas fa-chart-line"></i>数据</a>
+  <a href="ai.html" class="nav-item" data-nav="ai"><i class="fas fa-robot"></i>AI</a>
+  <a href="workbench.html?view=course" class="nav-item" data-nav="course"><i class="fas fa-book"></i>课程</a>
+  <div class="nav-bottom">
+    <a href="workbench.html?view=manage" class="nav-item" data-nav="manage"><i class="fas fa-cog"></i>管理</a>
+    <a href="workbench.html?view=profile" class="nav-item" data-nav="profile"><i class="fas fa-user"></i>我的</a>
+  </div>
+</aside>
+
+<!-- ===== 主内容 ===== -->
+<main class="main">
+
+  <!-- 顶部栏 -->
+  <div class="topbar">
+    <div class="greeting">
+      <h2>目标 <span id="welcomeName"></span></h2>
+      <div class="date">把「想做到」变成「真做到」</div>
+    </div>
+    <div class="actions">
+      <button class="btn-new" id="newGoalBtn" aria-label="新建目标"><i class="fas fa-plus"></i> 新建目标</button>
+      <a href="workbench.html" class="nav-link" data-nav="back"><i class="fas fa-arrow-left"></i> 工作台</a>
+    </div>
+  </div>
+
+  <p class="goals-sub" id="goalsSub">目标进度根据你的实际记录自动计算 · 课程目标反映整门课掌握程度，不受下方周期影响</p>
+
+  <!-- 状态：加载中 -->
+  <div class="goals-state" id="goalsLoading" hidden>⏳ 正在加载目标…</div>
+
+  <!-- 状态：错误 -->
+  <div class="goals-state" id="goalsError" hidden>
+    <div class="empty-state card">
+      <div class="empty-state-icon">⚠️</div>
+      <h3>目标加载失败</h3>
+      <p>请稍后重试</p>
+      <button type="button" class="btn btn-primary" id="goalsRetry">重新加载</button>
+    </div>
+  </div>
+
+  <!-- 状态：无目标 / 空 -->
+  <div class="goals-state" id="goalsEmpty" hidden>
+    <div class="empty-state card">
+      <div class="empty-state-icon">🎯</div>
+      <h3>还没有目标</h3>
+      <p>给自己设定一个小目标，从今天开始积累。</p>
+      <button type="button" class="btn btn-primary" id="emptyNewGoalBtn">＋ 新建第一个目标</button>
+    </div>
+  </div>
+
+  <!-- 目标驾驶舱 -->
+  <div id="goalsDashboard" hidden>
+
+    <!-- 进行中 -->
+    <section class="goals-section" id="secActive" aria-labelledby="activeTitle">
+      <div class="section-head">
+        <h3 id="activeTitle"><i class="fas fa-fire"></i> 进行中</h3>
+        <span class="count" id="activeCount"></span>
+      </div>
+      <div class="goal-grid" id="activeGrid"></div>
+    </section>
+
+    <!-- 已完成 -->
+    <section class="goals-section" id="secCompleted" aria-labelledby="completedTitle">
+      <div class="section-head">
+        <h3 id="completedTitle"><i class="fas fa-check-circle"></i> 已完成</h3>
+        <span class="count" id="completedCount"></span>
+      </div>
+      <div class="goal-grid" id="completedGrid"></div>
+    </section>
+
+    <!-- 已过期 -->
+    <section class="goals-section" id="secExpired" aria-labelledby="expiredTitle">
+      <div class="section-head">
+        <h3 id="expiredTitle"><i class="fas fa-clock"></i> 已过期</h3>
+        <span class="count" id="expiredCount"></span>
+      </div>
+      <div class="goal-grid" id="expiredGrid"></div>
+    </section>
+
+    <!-- 已归档 -->
+    <section class="goals-section" id="secArchived" aria-labelledby="archivedTitle">
+      <div class="section-head">
+        <h3 id="archivedTitle"><i class="fas fa-archive"></i> 已归档</h3>
+        <span class="count" id="archivedCount"></span>
+      </div>
+      <div class="goal-grid" id="archivedGrid"></div>
+    </section>
+
+  </div>
+
+</main>
+
+<!-- ===== 移动端底部 Tab 栏 ===== -->
+<nav class="mobile-tabbar">
+  <a href="workbench.html" data-nav="home"><i class="fas fa-home"></i>首页</a>
+  <a href="goals.html" class="active" data-nav="goals"><i class="fas fa-bullseye"></i>目标</a>
+  <a href="stats.html" data-nav="stats"><i class="fas fa-chart-line"></i>数据</a>
+  <a href="ai.html" data-nav="ai"><i class="fas fa-robot"></i>AI</a>
+  <a href="workbench.html?view=course" data-nav="course"><i class="fas fa-book"></i>课程</a>
+  <a href="workbench.html?view=manage" data-nav="manage"><i class="fas fa-cog"></i>管理</a>
+</nav>
+
+<!-- ===== 模态框：新建 / 编辑目标 ===== -->
+<div class="modal-overlay" id="modalGoal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="modalGoalTitle">新建目标</h3>
+      <button class="modal-close" data-modal-close aria-label="关闭">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-row full">
+          <label for="gTitle">目标名称</label>
+          <input id="gTitle" type="text" maxlength="80" placeholder="例如：本周专注 10 小时" />
+        </div>
+        <div class="form-row">
+          <label for="gType">目标类型</label>
+          <select id="gType"></select>
+        </div>
+        <div class="form-row">
+          <label for="gMetric">指标</label>
+          <select id="gMetric"></select>
+        </div>
+        <div class="form-row">
+          <label for="gTarget">目标值</label>
+          <input id="gTarget" type="number" min="1" step="1" placeholder="600" />
+        </div>
+        <div class="form-row">
+          <label for="gPeriod">周期</label>
+          <select id="gPeriod">
+            <option value="daily">每日</option>
+            <option value="weekly" selected>每周</option>
+            <option value="monthly">每月</option>
+            <option value="custom">自定义</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="gStart">开始日期</label>
+          <input id="gStart" type="date" />
+        </div>
+        <div class="form-row">
+          <label for="gEnd">结束日期</label>
+          <input id="gEnd" type="date" />
+        </div>
+      </div>
+      <div class="form-hint" id="goalFormHint">每周目标按周一至周日计算 · 自定义周期最长两年</div>
+      <div class="form-error" id="goalFormError" aria-live="polite"></div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" data-modal-close>取消</button>
+        <button type="button" class="btn btn-primary" id="goalSubmit">保存目标</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast 容器 -->
+<div id="toastContainer"></div>
+
+<!-- 数据入口：复用 store/sync 的全局副作用，再挂页面逻辑 -->
+<script type="module" src="pages/goals.js"></script>
+
+</body>
+</html>

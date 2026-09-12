@@ -16,7 +16,7 @@ beforeEach(() => {
 });
 
 describe('空数据与结构', () => {
-  test('get() 返回含 user 与 7 个空集合的默认结构', () => {
+  test('get() 返回含 user 与 8 个空集合的默认结构', () => {
     const d = CGStore.get();
     expect(d.user).toEqual({
       name: '',
@@ -24,7 +24,7 @@ describe('空数据与结构', () => {
       totalDays: 0,
       continuousDays: 0,
     });
-    ['checkins', 'sports', 'readings', 'courses', 'english', 'todos', 'focus'].forEach((k) => {
+    ['checkins', 'sports', 'readings', 'courses', 'english', 'todos', 'focus', 'goals'].forEach((k) => {
       expect(Array.isArray(d[k])).toBe(true);
       expect(d[k]).toHaveLength(0);
     });
@@ -66,6 +66,34 @@ describe('各集合 CRUD', () => {
   test('阅读：读完标记计入 totalBooksFinished', () => {
     CGStore.addReading({ bookName: '小书', pages: 100, totalPages: 100 });
     expect(CGStore.totalBooksFinished()).toBe(1);
+  });
+});
+
+describe('目标（Phase 12）', () => {
+  test('addGoal 创建定义并自动写时间戳；编辑/归档应用更新', () => {
+    const g = CGStore.addGoal({ title: '本周专注', type: 'focus', metric: 'minutes', targetValue: 600, period: 'weekly', startDate: '2026-09-07', endDate: '2026-09-13' });
+    expect(g.id).toBeTruthy();
+    expect(g.status).toBe('active');
+    expect(g.createdAt).toBeTruthy();
+    expect(g.updatedAt).toBeTruthy();
+
+    const upd = CGStore.updateGoal(g.id, { targetValue: 700 });
+    expect(upd.targetValue).toBe(700);
+    expect(upd.updatedAt).toBeTruthy();
+
+    expect(CGStore.getGoal(g.id).status).toBe('active');
+    CGStore.archiveGoal(g.id);
+    expect(CGStore.getGoal(g.id).status).toBe('archived');
+    CGStore.unarchiveGoal(g.id);
+    expect(CGStore.getGoal(g.id).status).toBe('active');
+  });
+
+  test('addGoal targetValue<=0 拒绝；removeGoal 删除', () => {
+    expect(CGStore.addGoal({ title: 'x', targetValue: 0 })).toBeNull();
+    const g = CGStore.addGoal({ title: 'x', type: 'todo', metric: 'count', targetValue: 5, period: 'daily', startDate: '2026-09-12', endDate: '2026-09-12' });
+    expect(CGStore.getGoals()).toHaveLength(1);
+    expect(CGStore.removeGoal(g.id)).toBe(true);
+    expect(CGStore.getGoals()).toHaveLength(0);
   });
 });
 

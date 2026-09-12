@@ -90,7 +90,10 @@ function emptyData() {
     courses: [],
     english: [],
     todos: [],
-    focus: []
+    focus: [],
+    // Phase 12：目标定义（业务数据，随 Phase 8 同步体系穿越设备；
+    // 目标进度由 Goal Engine 实时计算，绝不写回这里）
+    goals: []
   };
 }
 
@@ -1167,6 +1170,72 @@ var CGStore = {
   totalFocusMinutes: function () {
     return this._list('focus').reduce(function (s, x) { return s + (Number(x.minutes) || 0); }, 0);
   },
+
+  /* ===== 目标相关（Phase 12） =====
+   目标定义属于业务数据：进 revision + 同步 / 合并 / 墓碑 / 导出导入。
+   目标「当前进度」是 Goal Engine 的实时计算结果，绝不持久化到 goals 记录里。 */
+
+  /** getGoals() —— 获取所有目标定义 */
+  getGoals: function () { return this._list('goals'); },
+  /** getGoal(id) —— 按 ID 取一条目标，未找到返回 null */
+  getGoal: function (id) {
+    return this._list('goals').filter(function (g) { return g && g.id === id; })[0] || null;
+  },
+  /**
+   * addGoal(g) —— 新增一条目标定义
+   * 【参数】g —— { title, type, metric, targetValue, period, startDate, endDate, status }
+   * status 默认 'active'；createdAt/updatedAt 自动写入。
+   * 返回插入后的记录（含自动 id）；targetValue <= 0 的非法目标拒绝返回 null。
+   */
+  addGoal: function (g) {
+    g = g && typeof g === 'object' ? g : {};
+    var tv = Number(g.targetValue);
+    if (!g.title || !(tv > 0)) return null; // 沿用 UI 校验，Store 层做最后防线
+    var now = nowIso();
+    return this._add('goals', {
+      title: String(g.title),
+      type: String(g.type || ''),
+      metric: String(g.metric || ''),
+      targetValue: tv,
+      period: String(g.period || 'custom'),
+      startDate: String(g.startDate || ''),
+      endDate: String(g.endDate || ''),
+      status: g.status === 'archived' ? 'archived' : 'active',
+      createdAt: now,
+      updatedAt: now
+    });
+  },
+  /**
+   * updateGoal(id, patch) —— 编辑一条目标定义
+   * 自动刷新 updatedAt；编辑是一次业务写 → revision +1。
+   * 不会触碰任何进度字段（进度由 Goal Engine 实时计算）。
+   */
+  updateGoal: function (id, patch) {
+    patch = patch && typeof patch === 'object' ? patch : {};
+    // 与 addGoal 同口径的最后防线：编辑也不得把 targetValue 改成 <=0
+    if ('targetValue' in patch) {
+      var tv = Number(patch.targetValue);
+      if (!(tv > 0) || !isFinite(tv)) return null;
+    }
+    var next = Object.assign({}, patch);
+    next.updatedAt = nowIso();
+    return this._update('goals', id, next);
+  },
+  /**
+   * archiveGoal(id) —— 归档目标（优先归档而非删除；revision +1）
+   * 返回更新后的记录；未找到返回 null。
+   */
+  archiveGoal: function (id) {
+    return this._update('goals', id, { status: 'archived', updatedAt: nowIso() });
+  },
+  /**
+   * unarchiveGoal(id) —— 取消归档，恢复为 active（revision +1）
+   */
+  unarchiveGoal: function (id) {
+    return this._update('goals', id, { status: 'active', updatedAt: nowIso() });
+  },
+  /** removeGoal(id) —— 永久删除一条目标（沿用既有删除 + 墓碑语义；revision +1） */
+  removeGoal: function (id) { return this._remove('goals', id); },
 
   /* ===== Token 管理（鉴权相关） ===== */
 
