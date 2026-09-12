@@ -23,12 +23,15 @@ function emptyPayload() {
     english: [],
     todos: [],
     focus: [],
+    goals: [],
   };
 }
 
 // 允许的字段白名单（防止脏写注入未知字段）
+// 注意：必须包含 goals（Phase 12）——漏掉会导致前端推送的目标被静默丢弃，
+// 用户换设备/重装浏览器后目标全部丢失（V2 冒烟发现的 P0，与前端 sync.js 白名单保持一致）
 const PAYLOAD_KEYS = [
-  'user', 'checkins', 'sports', 'readings', 'courses', 'english', 'todos', 'focus',
+  'user', 'checkins', 'sports', 'readings', 'courses', 'english', 'todos', 'focus', 'goals',
 ];
 
 module.exports = {

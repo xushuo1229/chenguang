@@ -94,3 +94,35 @@ describe('syncService.saveData（非法输入）', () => {
     );
   });
 });
+describe('V2 冒烟 P0 回归：goals 必须在同步白名单内', () => {
+  test('全量模式：goals 推送后可拉回（不得静默丢弃）', async () => {
+    const goal = {
+      id: 'g1', title: '每天背 50 词', type: 'english', metric: 'words', targetValue: 50,
+      period: 'daily', startDate: '2026-09-11', endDate: '2027-06-30', status: 'active',
+      createdAt: 'x', updatedAt: 'x',
+    };
+    const saved = await syncService.saveData(userId, { goals: [goal] });
+    assert.equal(saved.data.goals.length, 1);
+    const got = await syncService.getData(userId);
+    assert.equal(got.data.goals.length, 1);
+    assert.equal(got.data.goals[0].title, '每天背 50 词');
+    assert.equal(got.data.goals[0].period, 'daily');
+  });
+
+  test('增量模式：goals 集合同样可增量合并，未提及集合不受影响', async () => {
+    // 先建立基线：全量写入 checkins（清掉上一测试残留）
+    await syncService.saveData(userId, { checkins: [{ date: '2026-09-09', status: 'done' }] });
+    await syncService.saveData(userId, {
+      _syncMode: 'partial',
+      goals: [{
+        id: 'g2', title: '本周专注 8 小时', type: 'focus', metric: 'minutes', targetValue: 480,
+        period: 'weekly', startDate: '2026-09-07', endDate: '2026-09-13', status: 'active',
+        createdAt: 'x', updatedAt: 'x',
+      }],
+    });
+    const got = await syncService.getData(userId);
+    assert.equal(got.data.goals.length, 1);          // 增量覆盖 goals 集合
+    assert.equal(got.data.goals[0].id, 'g2');
+    assert.equal(got.data.checkins.length, 1);       // 未提及集合保持不变
+  });
+});
