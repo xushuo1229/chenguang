@@ -2,11 +2,13 @@
 
 > 更新：2026-09-12 · Autonomous CTO 维护
 
-## 当前状态：Release Candidate（AI 真实验证待外部依赖）
+## 当前状态：Release Candidate（Phase 15 移动端修复 + AI Key 待落地）
 
-- 稳定基线：`7fdd6c6`（Hardening）+ Phase 14（目标语义修复）
-- 测试：前端 **263/263** · 后端 **49/49** · Build **PASS**
-- 用户验收：**CONDITIONAL GO → GO**（详见 [FINAL_ACCEPTANCE_REPORT.md](FINAL_ACCEPTANCE_REPORT.md)，≈81.5/100，P0=0）
+- 基线链：`7fdd6c6`（Hardening）→ `47eed64`（Phase 14 每日目标语义）→ `89364ee`（P0 同步白名单修复）
+- 测试：前端 **263/263** · 后端 **51/51** · Build **PASS**
+- 用户验收：**CONDITIONAL GO**（详见 [FINAL_ACCEPTANCE_REPORT.md](FINAL_ACCEPTANCE_REPORT.md)，≈83/100）
+- P0 = 0（同步丢目标 P0 已于 89364ee 修复并端到端复验）
+- 进行中（Phase 15，协作会话认领）：移动端 P1×3（iOS 输入放大 / index 375px CTA 裁切 / ai 键盘遮挡）+ growthStreak 恒 0
 
 ## 已交付能力
 | 模块 | 状态 |
