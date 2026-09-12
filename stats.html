@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>统计中心 · 晨光自律台</title>
+  <title>成长分析中心 · 晨光自律台</title>
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
   <link rel="preload" href="css/variables.css" as="style">
   <link rel="preload" href="css/shared.css" as="style">
@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/shared.css">
+  <link rel="stylesheet" href="css/components.css">
   <style>
     /* ============================================================
        Stats Center · 统计中心  「晨光 · 静 Calm Dawn」
@@ -42,7 +43,7 @@
 
     .btn-refresh {
       display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
-      border-radius: 40px; border: 1px solid var(--border-soft);
+      border-radius: var(--r-btn); border: 1px solid var(--border-soft);
       background: var(--bg-card); color: var(--text-dark); font-size: 0.85rem;
       font-weight: 500; cursor: pointer; transition: all 0.2s;
     }
@@ -84,6 +85,7 @@
     /* ------ 分区 ------ */
     .stats-dashboard { display: flex; flex-direction: column; gap: 20px; }
     .stats-section { background: var(--bg-card); border-radius: var(--radius-lg); padding: 20px 22px; border: 1px solid var(--border-soft); }
+    .stats-insight { margin-bottom: 0; }
     .section-head {
       display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px;
     }
@@ -210,7 +212,7 @@
   <a href="#" class="logo">☀</a>
   <a href="workbench.html" class="nav-item" data-nav="home"><i class="fas fa-home"></i>首页</a>
   <a href="stats.html" class="nav-item active" data-nav="stats"><i class="fas fa-chart-line"></i>数据</a>
-  <a href="ai.html" class="nav-item" data-nav="ai"><i class="fas fa-robot"></i>AI</a>
+  <a href="ai.html" class="nav-item" data-nav="ai"><i class="fas fa-compass"></i>AI</a>
   <a href="workbench.html?view=course" class="nav-item" data-nav="course"><i class="fas fa-book"></i>课程</a>
   <div class="nav-bottom">
     <a href="workbench.html?view=manage" class="nav-item" data-nav="manage"><i class="fas fa-cog"></i>管理</a>
@@ -224,7 +226,7 @@
   <!-- 顶部栏 -->
   <div class="topbar">
     <div class="greeting">
-      <h2>统计中心 <span id="welcomeName"></span></h2>
+      <h2>成长分析中心 <span id="welcomeName"></span></h2>
       <div class="date" id="rangeLabel">…</div>
     </div>
     <div class="actions">
@@ -275,10 +277,23 @@
     <!-- 概览 -->
     <section class="stats-section" id="secOverview" aria-labelledby="ovTitle">
       <div class="section-head">
-        <h3 id="ovTitle"><i class="fas fa-chart-simple"></i> 概览</h3>
+        <h3 id="ovTitle"><i class="fas fa-chart-simple"></i> 成长概览</h3>
         <span class="range-hint" id="ovHint"></span>
       </div>
       <div class="stat-grid" id="overviewGrid"></div>
+    </section>
+
+    <!-- 趋势解读（UI-2：本周 vs 上周的真实对比，无趋势时诚实显示「暂无趋势」） -->
+    <section class="cg-insight stats-insight" id="secInsight" aria-labelledby="insightTitle">
+      <div class="cg-insight-head">
+        <span class="cg-insight-ico"><i class="fas fa-wand-magic-sparkles"></i></span>
+        <div class="cg-insight-title">
+          <h3 id="insightTitle">趋势解读</h3>
+          <p id="insightHint">最近 7 天与再往前 7 天的对比</p>
+        </div>
+      </div>
+      <ul class="cg-insight-list" id="insightList"></ul>
+      <p class="cg-insight-empty" id="insightEmpty" hidden>暂无趋势 · 数据积累一周后，这里会显示你的变化。</p>
     </section>
 
     <!-- 趋势 -->
@@ -369,7 +384,7 @@
 <nav class="mobile-tabbar">
   <a href="workbench.html" data-nav="home"><i class="fas fa-home"></i>首页</a>
   <a href="stats.html" class="active" data-nav="stats"><i class="fas fa-chart-line"></i>数据</a>
-  <a href="ai.html" data-nav="ai"><i class="fas fa-robot"></i>AI</a>
+  <a href="ai.html" data-nav="ai"><i class="fas fa-compass"></i>AI</a>
   <a href="workbench.html?view=course" data-nav="course"><i class="fas fa-book"></i>课程</a>
   <a href="workbench.html?view=manage" data-nav="manage"><i class="fas fa-cog"></i>管理</a>
   <a href="workbench.html?view=profile" data-nav="profile"><i class="fas fa-user"></i>我的</a>

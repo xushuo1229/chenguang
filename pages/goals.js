@@ -77,6 +77,27 @@ function badgeLabel(p) {
   }
 }
 
+/* 阶段感（UI-2）：进度条之上给「开始 → 坚持 → 完成」的旅程提示。
+ * 纯展示、静态标签（无用户内容），对读屏隐藏（进度条 aria 已表达数值）。 */
+function stageHtml(p, pct) {
+  if (p.status === 'archived' || p.status === 'expired') return '';
+  var idx = pct >= 100 ? 2 : (pct >= 34 ? 1 : 0);
+  var labels = ['开始', '坚持', '完成'];
+  function labelCls(i) {
+    if (i === idx) return ' is-current';
+    if (i < idx) return ' is-done';
+    return '';
+  }
+  return '' +
+    '<div class="cg-stage" aria-hidden="true">' +
+      '<span class="cg-stage-label' + labelCls(0) + '"><i class="cg-stage-dot"></i>' + labels[0] + '</span>' +
+      '<div class="cg-stage-track"><i class="cg-stage-mark" style="left:50%;"></i></div>' +
+      '<span class="cg-stage-label' + labelCls(1) + '"><i class="cg-stage-dot"></i>' + labels[1] + '</span>' +
+      '<div class="cg-stage-track"><i class="cg-stage-mark" style="left:100%;"></i></div>' +
+      '<span class="cg-stage-label' + labelCls(2) + '"><i class="cg-stage-dot"></i>' + labels[2] + '</span>' +
+    '</div>';
+}
+
 function renderCard(p) {
   var g = p.goal || {};
   var unit = unitOf(g);
@@ -112,6 +133,7 @@ function renderCard(p) {
       '<div class="progressbar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '" aria-label="' + esc(g.title || '目标') + ' 完成度">' +
         '<div class="progressbar-fill" style="width:' + Math.min(100, pct) + '%;"></div>' +
       '</div>' +
+      stageHtml(p, pct) +
       (over ? '<div class="goal-over">' + over + '</div>' : '') +
       '<div class="goal-foot">' +
         '<span>' + esc(remainingText) + '</span>' +

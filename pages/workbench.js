@@ -544,6 +544,8 @@ import Analytics from '../js/analytics.js';
 
       setText('welcomeName', s.nick);
       setText('welcomeDay', s.day);
+      setText('greetWord', greetWord());
+      setText('welcomeStreak', s.growthStreak);
 
       setText('planDone', s.planDone);
       setText('planTotal', s.planTotal);
@@ -622,7 +624,63 @@ import Analytics from '../js/analytics.js';
       if ($('#bookPanel') && $('#bookPanel').classList.contains('show')) renderBookList();
       if ($('#sportPanel') && $('#sportPanel').classList.contains('show')) renderSportList();
       if ($('#englishPanel') && $('#englishPanel').classList.contains('show')) renderEnglishList();
+
+      renderWbInsights(s);
       if (typeof updateOnboardUI === 'function') updateOnboardUI();
+    }
+
+    /* ========== 今日发现（UI-2）==========
+     * 基于真实记录的本地规则洞察（非 AI、非虚构）：
+     * 只读 CGStore/Analytics 展示层数据，无任何写入。 */
+    function greetWord() {
+      var h = new Date().getHours();
+      if (h < 5) return '夜深了';
+      if (h < 11) return '早上好';
+      if (h < 14) return '中午好';
+      if (h < 18) return '下午好';
+      return '晚上好';
+    }
+
+    function renderWbInsights(s) {
+      var list = $('#wbInsightList');
+      var empty = $('#wbInsightEmpty');
+      if (!list) return;
+
+      var items = [];
+      // 连续记录：有积累时给正反馈
+      if (s.growthStreak >= 2) {
+        items.push({ dot: 'teal', text: '你已经连续打卡 ' + s.growthStreak + ' 天，节奏保持得很好。' });
+      }
+      // 今日待办：指向下一步行动
+      if (s.planTotal > 0) {
+        var left = s.planTotal - s.planDone;
+        items.push(left <= 0
+          ? { dot: 'teal', text: '今日 ' + s.planTotal + ' 件待办已全部完成，可以安心收尾了。' }
+          : { dot: 'amber', text: '今日还有 ' + left + ' 件待办，从第一件开始就好。' });
+      }
+      // 专注：给出今日现状与温和建议
+      if (s.focusTodayMin > 0) {
+        items.push({ dot: 'sky', text: '今天已专注 ' + s.focusTodayMin + ' 分钟（' + s.focusTodayCount + ' 次），积累看得见。' });
+      } else if (s.growthStreak >= 1) {
+        items.push({ dot: 'sky', text: '今天还没有专注记录，试试一次 25 分钟的深度专注。' });
+      }
+      // 阅读：有在读时提醒进度
+      if (s.readBooks > 0 && s.readPages > 0) {
+        items.push({ dot: 'teal', text: '书架上正在读 ' + s.readBooks + ' 本，今日已读 ' + s.readPages + ' 页。' });
+      }
+
+      // 全部无记录：诚实空态，不编造发现
+      if (!items.length) {
+        list.innerHTML = '';
+        list.style.display = 'none';
+        if (empty) empty.hidden = false;
+        return;
+      }
+      list.style.display = '';
+      if (empty) empty.hidden = true;
+      list.innerHTML = items.map(function (it) {
+        return '<li class="dot-' + it.dot + '">' + esc(it.text) + '</li>';
+      }).join('');
     }
 
     /* ========== 列表渲染：课程 ========== */

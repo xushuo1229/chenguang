@@ -256,6 +256,63 @@ function renderOverview(grid, vm) {
   grid.appendChild(statCard('学习量', formatMinutes(o.studyMinutes), '', '英语 + 专注'));
 }
 
+/* ====================================================================
+   趋势解读（UI-2）—— 最近 7 天 vs 再往前 7 天的真实对比
+   只读 Analytics，只做展示层比较；无趋势时显示「暂无趋势」。
+   ==================================================================== */
+function renderInsight(snap) {
+  var list = document.getElementById('insightList');
+  var empty = document.getElementById('insightEmpty');
+  if (!list) return;
+
+  var today = Analytics.today();
+  var curStart = dateOffset(today, -6);
+  var prevEnd = dateOffset(today, -7);
+  var prevStart = dateOffset(today, -13);
+
+  var cur = Analytics.getDateRangeSummary(curStart, today, snap) || null;
+  var prev = Analytics.getDateRangeSummary(prevStart, prevEnd, snap) || null;
+  var curFocus = cur ? cur.focus.minutes : 0;
+  var prevFocus = prev ? prev.focus.minutes : 0;
+  var curActive = cur ? cur.activity.activeDays : 0;
+  var prevActive = prev ? prev.activity.activeDays : 0;
+  var curTodo = cur && cur.todos ? cur.todos.completionRate : 0;
+  var prevTodo = prev && prev.todos ? prev.todos.completionRate : 0;
+
+  var items = [];
+  // 专注时长：与上个 7 天对比
+  if (prevFocus > 0 && curFocus !== prevFocus) {
+    var pct = Math.round(Math.abs(curFocus - prevFocus) / prevFocus * 100);
+    items.push({ dot: curFocus > prevFocus ? 'teal' : 'sky',
+      text: '专注时长较上个 7 天' + (curFocus > prevFocus ? '增加' : '减少') + ' ' + pct + '%。' });
+  } else if (prevFocus === 0 && curFocus > 0) {
+    items.push({ dot: 'teal', text: '专注重新开始积累：最近 7 天共 ' + formatMinutes(curFocus) + '。' });
+  }
+  // 活跃天数：与上个 7 天对比
+  if (prevActive > 0 && curActive !== prevActive) {
+    items.push({ dot: curActive > prevActive ? 'teal' : 'sky',
+      text: '活跃天数 ' + curActive + ' 天，' + (curActive > prevActive ? '多于' : '少于') + '上个 7 天的 ' + prevActive + ' 天。' });
+  }
+  // 待办完成率：与上个 7 天对比
+  if (prevTodo > 0 && curTodo !== prevTodo) {
+    var diff = Math.round(curTodo - prevTodo);
+    items.push({ dot: diff > 0 ? 'teal' : 'sky',
+      text: '待办完成率' + (diff > 0 ? '提升' : '回落') + ' ' + Math.abs(diff) + ' 个百分点。' });
+  }
+
+  if (!items.length) {
+    list.innerHTML = '';
+    list.hidden = true;
+    if (empty) empty.hidden = false;
+    return;
+  }
+  list.hidden = false;
+  if (empty) empty.hidden = true;
+  list.innerHTML = items.map(function (it) {
+    return '<li class="dot-' + it.dot + '">' + esc(it.text) + '</li>';
+  }).join('');
+}
+
 function renderTrend(grid, vm) {
   grid.innerHTML = '';
   var t = vm.trend;
@@ -511,6 +568,7 @@ function render(vm, snap) {
   setHint('trendHint', labelText + (vm.trend.kind === 'weekly' ? ' · 按周聚合' : ''));
 
   renderOverview($('#overviewGrid'), vm);
+  renderInsight(snap);
   renderTrend($('#trendGrid'), vm);
   renderHeatmap($('#heatmapContainer'), $('#heatmapTooltip'), snap);
   renderLearning($('#learningBody'), vm);

@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/shared.css">
+  <link rel="stylesheet" href="css/components.css">
   <style>
     /* ============================================================
        Goals · 目标系统  「晨光 · 静 Calm Dawn」
@@ -26,7 +27,7 @@
     .topbar .greeting .date { font-size: 0.85rem; color: var(--text-muted); }
     .topbar .actions { display: flex; gap: 10px; align-items: center; }
     .topbar .actions a {
-      background: var(--bg-card); padding: 8px 18px; border-radius: 40px;
+      background: var(--bg-card); padding: 8px 18px; border-radius: var(--r-btn);
       text-decoration: none; color: var(--text-dark); font-size: 0.85rem;
       font-weight: 500; border: 1px solid var(--border-soft); transition: 0.2s;
     }
@@ -35,7 +36,7 @@
 
     .btn-new {
       display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px;
-      border: none; border-radius: var(--radius-pill); cursor: pointer;
+      border: none; border-radius: var(--r-btn); cursor: pointer;
       background: var(--brand-amber); color: var(--text-on-accent);
       font-size: 0.85rem; font-weight: 600; transition: all 0.2s;
     }
@@ -98,7 +99,7 @@
     }
     .progressbar-fill {
       height: 100%; border-radius: var(--radius-pill);
-      background: linear-gradient(90deg, var(--brand-amber), var(--primary));
+      background: var(--brand-amber);
       width: 0%; transition: width 0.3s ease;
     }
     .goal-card.is-completed .progressbar-fill { background: var(--success, #2d8c5e); }
@@ -169,7 +170,7 @@
   <a href="workbench.html" class="nav-item" data-nav="home"><i class="fas fa-home"></i>首页</a>
   <a href="goals.html" class="nav-item active" data-nav="goals"><i class="fas fa-bullseye"></i>目标</a>
   <a href="stats.html" class="nav-item" data-nav="stats"><i class="fas fa-chart-line"></i>数据</a>
-  <a href="ai.html" class="nav-item" data-nav="ai"><i class="fas fa-robot"></i>AI</a>
+  <a href="ai.html" class="nav-item" data-nav="ai"><i class="fas fa-compass"></i>AI</a>
   <a href="workbench.html?view=course" class="nav-item" data-nav="course"><i class="fas fa-book"></i>课程</a>
   <div class="nav-bottom">
     <a href="workbench.html?view=manage" class="nav-item" data-nav="manage"><i class="fas fa-cog"></i>管理</a>
@@ -183,7 +184,7 @@
   <!-- 顶部栏 -->
   <div class="topbar">
     <div class="greeting">
-      <h2>目标 <span id="welcomeName"></span></h2>
+      <h2>我的成长目标 <span id="welcomeName"></span></h2>
       <div class="date">把「想做到」变成「真做到」</div>
     </div>
     <div class="actions">
@@ -265,7 +266,7 @@
   <a href="workbench.html" data-nav="home"><i class="fas fa-home"></i>首页</a>
   <a href="goals.html" class="active" data-nav="goals"><i class="fas fa-bullseye"></i>目标</a>
   <a href="stats.html" data-nav="stats"><i class="fas fa-chart-line"></i>数据</a>
-  <a href="ai.html" data-nav="ai"><i class="fas fa-robot"></i>AI</a>
+  <a href="ai.html" data-nav="ai"><i class="fas fa-compass"></i>AI</a>
   <a href="workbench.html?view=course" data-nav="course"><i class="fas fa-book"></i>课程</a>
   <a href="workbench.html?view=manage" data-nav="manage"><i class="fas fa-cog"></i>管理</a>
 </nav>

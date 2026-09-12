@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/shared.css">
+  <link rel="stylesheet" href="css/components.css">
   <style>
     body { display: flex; min-height: 100vh; min-height: 100dvh; overflow: hidden; }
 
@@ -63,11 +64,11 @@
       width: 36px;
       height: 36px;
       border-radius: 50%;
-      background: var(--brand-teal);
+      background: rgba(167, 141, 201, 0.14); /* AI 专属 iris 点缀（UI-2） */
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--text-on-accent);
+      color: var(--brand-iris);
       font-size: 16px;
     }
     .topbar-info h2 { font-size: 15px; font-weight: 700; color: var(--text-dark); }
@@ -295,8 +296,8 @@
       font-size: 12px;
       flex-shrink: 0;
     }
-    .msg-ai .msg-avatar { background: var(--brand-teal); color: var(--text-on-accent); }
-    .msg-user .msg-avatar { background: var(--brand-iris); color: var(--text-on-accent); }
+    .msg-ai .msg-avatar { background: rgba(167, 141, 201, 0.14); color: var(--brand-iris); } /* AI = iris（设计系统 C 规则） */
+    .msg-user .msg-avatar { background: var(--bg-elev); color: var(--text-mid); }
     .msg-content { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
     .msg-bubble {
       padding: 10px 14px;
@@ -481,7 +482,7 @@
   <a href="#" class="logo">☀</a>
   <a href="workbench.html" class="nav-item" data-nav="home"><i class="fas fa-home"></i>首页</a>
   <a href="stats.html" class="nav-item" data-nav="stats"><i class="fas fa-chart-line"></i>数据</a>
-  <a href="ai.html" class="nav-item active" data-nav="ai"><i class="fas fa-robot"></i>AI</a>
+  <a href="ai.html" class="nav-item active" data-nav="ai"><i class="fas fa-compass"></i>AI</a>
   <a href="goals.html" class="nav-item" data-nav="goals"><i class="fas fa-bullseye"></i>目标</a>
   <a href="workbench.html?view=course" class="nav-item" data-nav="course"><i class="fas fa-book"></i>课程</a>
   <div class="nav-bottom">
@@ -496,10 +497,10 @@
   <div class="topbar">
     <div class="topbar-left">
       <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="打开菜单"><i class="fas fa-bars"></i></button>
-      <div class="topbar-avatar"><i class="fas fa-robot"></i></div>
+      <div class="topbar-avatar"><i class="fas fa-compass"></i></div>
       <div class="topbar-info">
         <h2 id="topbarTitle">晨光 AI 教练</h2>
-        <p>基于你的真实数据，给出只读分析与建议</p>
+        <p>理解你的成长数据，帮助你找到下一步</p>
       </div>
     </div>
     <div class="topbar-actions">
@@ -586,7 +587,7 @@
 <nav class="mobile-tabbar">
   <a href="workbench.html" data-nav="home"><i class="fas fa-home"></i>首页</a>
   <a href="stats.html" data-nav="stats"><i class="fas fa-chart-line"></i>数据</a>
-  <a href="ai.html" class="active" data-nav="ai"><i class="fas fa-robot"></i>AI</a>
+  <a href="ai.html" class="active" data-nav="ai"><i class="fas fa-compass"></i>AI</a>
   <a href="goals.html" data-nav="goals"><i class="fas fa-bullseye"></i>目标</a>
   <a href="workbench.html?view=course" data-nav="course"><i class="fas fa-book"></i>课程</a>
   <a href="workbench.html?view=profile" data-nav="profile"><i class="fas fa-user"></i>我的</a>

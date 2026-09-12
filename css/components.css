@@ -1,0 +1,164 @@
+/**
+ * 晨光自律台 · 共享组件层 「晨光 · 静 Calm Dawn」
+ * ============================================================
+ * 【Phase UI-2 新增】四个内部页面（workbench / stats / goals / ai）
+ * 共用的组件样式，取代各页重复复制 CSS 的做法。
+ *
+ * 依赖：variables.css（全部取值来自设计 token，禁止写死色值）。
+ * 命名：cg- 前缀，避免与各页历史类名冲突。
+ *
+ * 当前包含：
+ *   1. cg-insight   —— 洞察卡（工作台「今日发现」/ 统计「趋势解读」）
+ *   2. cg-stage     —— 目标进度阶段条（开始 → 坚持 → 完成）
+ * ============================================================
+ */
+
+/* ========== 1. 洞察卡 cg-insight ========== */
+/* 定位：像教练的一句话发现，不是报表。AI 专属 iris 点缀。 */
+.cg-insight {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-lg);
+  padding: 18px 20px;
+  margin-bottom: 28px;
+}
+
+.cg-insight-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cg-insight-ico {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-sm);
+  background: rgba(167, 141, 201, 0.12);
+  color: var(--brand-iris);
+  display: grid;
+  place-items: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.cg-insight-title { flex: 1; min-width: 0; }
+.cg-insight-title h3 {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--text-hi);
+  margin: 0;
+}
+.cg-insight-title p {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin: 2px 0 0;
+}
+
+.cg-insight-link {
+  font-size: 0.78rem;
+  color: var(--brand-iris);
+  text-decoration: none;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: var(--transition-fast);
+}
+.cg-insight-link:hover { color: var(--text-hi); }
+.cg-insight-link i { font-size: 0.65rem; }
+
+.cg-insight-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cg-insight-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.84rem;
+  line-height: 1.6;
+  color: var(--text-mid);
+  padding: 8px 12px;
+  background: var(--bg-soft);
+  border-radius: var(--r-sm);
+}
+
+.cg-insight-list li::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-top: 7px;
+  flex-shrink: 0;
+  background: var(--insight-dot, var(--brand-amber));
+}
+.cg-insight-list li.dot-amber::before { background: var(--brand-amber); }
+.cg-insight-list li.dot-teal::before  { background: var(--brand-teal); }
+.cg-insight-list li.dot-sky::before   { background: var(--brand-sky); }
+.cg-insight-list li.dot-iris::before  { background: var(--brand-iris); }
+
+.cg-insight-empty {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  margin: 0;
+  padding: 4px 2px;
+}
+
+/* ========== 2. 目标阶段条 cg-stage ========== */
+/* 定位：进度条之上的「阶段感」——开始 / 坚持 / 完成。 */
+.cg-stage {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.cg-stage-track {
+  flex: 1;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--bg-soft);
+  position: relative;
+  overflow: hidden;
+}
+
+.cg-stage-track .cg-stage-mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-strong);
+}
+
+.cg-stage-label {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.cg-stage-label .cg-stage-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+.cg-stage-label.is-current {
+  color: var(--text-hi);
+  font-weight: 600;
+}
+.cg-stage-label.is-current .cg-stage-dot { background: var(--brand-amber); }
+.cg-stage-label.is-done .cg-stage-dot    { background: var(--brand-teal); }
+
+/* ========== 移动端 ========== */
+@media (max-width: 480px) {
+  .cg-insight { padding: 16px; }
+  .cg-insight-link span { display: none; } /* 保留图标与箭头，省空间 */
+}

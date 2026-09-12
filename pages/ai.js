@@ -215,7 +215,7 @@ function appendMsg(role, text) {
   clearGreeting();
   var wrap = el('div', 'msg msg-' + (role === 'user' ? 'user' : 'ai'));
   var av = el('div', 'msg-avatar');
-  av.appendChild(el('i', role === 'user' ? 'fas fa-user' : 'fas fa-robot'));
+  av.appendChild(el('i', role === 'user' ? 'fas fa-user' : 'fas fa-compass'));
   var content = el('div', 'msg-content');
   var bubble = el('div', 'msg-bubble', String(text == null ? '' : text));   // textContent 渲染
   content.appendChild(bubble);
@@ -241,7 +241,7 @@ function appendTyping() {
   clearGreeting();
   var wrap = el('div', 'msg msg-ai');
   var av = el('div', 'msg-avatar');
-  av.appendChild(el('i', 'fas fa-robot'));
+  av.appendChild(el('i', 'fas fa-compass'));
   var content = el('div', 'msg-content');
   var bubble = el('div', 'msg-bubble');
   var dots = el('span', 'typing-dots');
