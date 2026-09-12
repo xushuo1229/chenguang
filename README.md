@@ -23,7 +23,7 @@
 | 数据层 | `js/store.js`（CGStore） | 所有页面共享**单一 key** `chenguangData`，八类数据：user/checkins/sports/readings/courses/english/todos/focus；写入即派发 `chenguang:update` 事件跨页实时刷新 |
 | 同步层 | `js/sync.js`（CGSync） | 登录后「先推后拉」同步云端；本地变更防抖 400ms 回写；离线/无 token 静默走本地 |
 | 后端 | Node.js + Express + SQLite（better-sqlite3）+ JWT | `backend/` 目录，注册/登录/鉴权、按用户隔离、多设备数据一致；提供 **AI 代理**（`/api/ai/chat`）与 **课表导入代理**（`/api/course/import`）；数据以**单张 `user_data` 快照表**为唯一真源（早期 7 张明细表已精简移除） |
-| 智能层 | OpenAI 兼容代理（默认 DeepSeek） | AI 助手对话 `POST /api/ai/chat`，由后端代理转发大模型，`API Key` 只存后端 `.env`，浏览器不接触；未配置/离线自动回退本地模板 |
+| 智能层 | AI 2.0「晨光 AI 教练」 | 前端 `js/aiContext.js` 从 CGAnalytics/Goal Engine 构建只读结构化 Context（含预算裁剪与确定性洞察），后端持有 System Prompt 并经 Provider Adapter（OpenAI 兼容，默认 DeepSeek）转发 `POST /api/ai/chat`；`API Key` 只存后端 `.env`，浏览器不接触；未配置/离线时展示友好提示（应用离线优先） |
 
 ## 快速开始
 

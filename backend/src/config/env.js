@@ -146,14 +146,16 @@ const config = {
   // --- 静态文件托管 ---
   staticDir: process.env.STATIC_DIR || '', // 前端打包产物目录（空则不托管）
 
-  // --- AI 助手（OpenAI 兼容代理） ---
+  // --- AI 助手（Phase 13 AI 2.0 · Coach 架构） ---
   // Key 只存放在服务端，绝不下发到浏览器
+  aiProvider: process.env.AI_PROVIDER || 'openaiCompatible', // Provider Adapter 名称
   aiBaseUrl: process.env.AI_BASE_URL || 'https://api.deepseek.com/v1', // OpenAI 兼容基址
   aiApiKey: process.env.AI_API_KEY || '', // AI 服务密钥（为空则 AI 不可用，前端走离线兜底）
   aiModel: process.env.AI_MODEL || 'deepseek-chat', // 模型名
   aiTimeoutMs: parseInt(process.env.AI_TIMEOUT_MS, 10) || 30000, // 请求超时（毫秒）
   aiMaxMessages: parseInt(process.env.AI_MAX_MESSAGES, 10) || 20, // 对话消息条数上限
   aiMaxMsgLength: parseInt(process.env.AI_MAX_MSG_LENGTH, 10) || 8000, // 单条消息长度上限
+  aiMaxContextChars: parseInt(process.env.AI_MAX_CONTEXT_CHARS, 10) || 24000, // Context JSON 字符上限（防超大请求）
 
   // --- 课表导入（代理抓取外部课表 HTML） ---
   // 通过后端代理抓取学校课表页并解析课程，天然规避浏览器 CORS

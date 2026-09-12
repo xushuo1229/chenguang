@@ -31,7 +31,7 @@
 // ==================== 缓存版本号 ====================
 // 每次发布新版本时，递增这个值（如 cgl-v10 → cgl-v11）
 // 这会强制清除用户的旧缓存，确保他们获取最新资源
-const CACHE_VERSION = 'cgl-v12';
+const CACHE_VERSION = 'cgl-v13';
 
 // 两个缓存空间：
 //   - CACHE_STATIC：存放预缓存的核心静态资源（构建时确定）
@@ -49,7 +49,8 @@ const PRECACHE_URLS = [
   '/index.html',          // 落地页
   '/workbench.html',      // 工作台
   '/stats.html',          // 统计页
-  '/ai.html',             // AI 助手
+  '/goals.html',          // 目标页
+  '/ai.html',             // AI 教练页
   '/css/variables.css',   // CSS 变量（主题色等）
   '/css/shared.css',      // 公共组件样式
   '/css/app.css',         // 落地页样式
@@ -60,10 +61,14 @@ const PRECACHE_URLS = [
   '/js/apiClient.js',     // API 客户端
   '/js/store.js',         // 数据存储层
   '/js/sync.js',          // 数据同步模块
+  '/js/analytics.js',     // Phase 10 统计引擎
+  '/js/goals.js',         // Phase 12 目标引擎
+  '/js/aiContext.js',     // Phase 13 AI Context Builder
   '/pages/index.js',      // 首页脚本
   '/pages/workbench.js',  // 工作台脚本
   '/pages/stats.js',      // 统计页脚本
-  '/pages/ai.js',         // AI 助手脚本
+  '/pages/goals.js',      // 目标页脚本
+  '/pages/ai.js',         // AI 教练脚本
   '/assets/vendor/fontawesome/css/all.min.css',       // FontAwesome 图标库样式
   '/assets/vendor/fontawesome/webfonts/fa-solid-900.woff2',    // FontAwesome 字体文件
   '/assets/vendor/fontawesome/webfonts/fa-regular-400.woff2',

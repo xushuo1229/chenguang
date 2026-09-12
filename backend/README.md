@@ -123,10 +123,10 @@ npm run dev        # 端口 5173
 | GET  | `/data` | 拉取整份 `chenguangData`（新设备/刷新时覆盖本地） |
 | PUT  | `/data` | 覆盖整份 `chenguangData`（任一端变更后回写，`writeLimiter` 限流） |
 
-### AI 助手
+### AI 教练（Phase 13 AI 2.0）
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| POST | `/ai/chat` | 对话 `{messages: [{role, content}, ...]}` → `{reply, model}`；需登录 + `aiLimiter`（15 次/分） |
+| POST | `/ai/chat` | 教练对话 `{message, history, context, contextVersion}` → `{reply, mode:'coach', suggestions, actions, model}`；System Prompt 由后端 `promptBuilder` 生成，Context 由前端 `js/aiContext.js` 构建；`actions` 第一版只允许 `{type:'navigate'}`；需登录 + `aiLimiter`（15 次/分） |
 
 ### 课表导入（公开课表链接）
 | 方法 | 路径 | 说明 |

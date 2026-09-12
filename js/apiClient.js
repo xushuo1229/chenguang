@@ -179,7 +179,8 @@ function isAuthenticated() {
  * 【返回值】Promise，resolve 时返回解析后的 JSON 数据
  * 【错误】reject 时抛出 Error 对象（包含 message 和 status）
  */
-function request(method, path, data) {
+function request(method, path, data, opts) {
+  opts = opts || {};
   var url = API_BASE + path;
   var headers = {
     'Content-Type': 'application/json',
@@ -202,12 +203,13 @@ function request(method, path, data) {
     options.body = JSON.stringify(data);
   }
 
-  // 8秒超时，防止请求挂起
+  // 8秒超时（可用 opts.timeoutMs 覆盖，如 AI 对话允许更长），防止请求挂起
+  var timeoutMs = opts.timeoutMs || 8000;
   var controller = null;
   var timeoutId = null;
   if (typeof AbortController !== 'undefined') {
     controller = new AbortController();
-    timeoutId = setTimeout(function () { controller.abort(); }, 8000);
+    timeoutId = setTimeout(function () { controller.abort(); }, timeoutMs);
   }
   if (controller) options.signal = controller.signal;
 
@@ -429,28 +431,36 @@ var CGAPI = {
   /* ===== AI 助手接口 ===== */
 
     /**
-     * ai —— AI 助手相关接口（OpenAI 兼容代理）
+     * ai —— AI 教练接口（Phase 13 AI 2.0，后端 OpenAI 兼容代理）
      *
      * 【什么是 ai.chat？】
-     * 把对话消息发送到后端的 POST /api/ai/chat，由后端代理转发给大模型。
-     * API Key 只存在后端，前端只需携带登录 Token。
+     * 把「用户问题 + 最近历史 + AIContext 构建的结构化上下文」发送到
+     * 后端的 POST /api/ai/chat，由后端组装 System Prompt 后转发给大模型。
+     * API Key 只存在后端，前端绝不接触 Key，也绝不发角色设定。
      *
-     * 【参数】messages —— 对话消息数组，形如：
-     *   [{ role: 'system', content: '...' },
-     *    { role: 'user',   content: '你好' }]
-     *   role 只能是 system / user / assistant。
+     * 【参数】payload —— { message, history, context, contextVersion }
+     *   - message:  本轮用户问题（字符串）
+     *   - history:  最近的 user/assistant 消息数组（不含 system）
+     *   - context:  CGAIContext.buildContext() 的产物（可选）
+     *   - contextVersion: Context 版本号
      *
-     * 【返回值】Promise，resolve 时返回 { data: { reply, model } }
+     * 【返回值】Promise，resolve 时返回
+     *   { data: { reply, mode:'coach', suggestions, actions, model } }
      * 【错误】未配置 AI key / 上游不可用 / 超时 → reject 并携带中文 message，调用方可做离线兜底
      */
     ai: {
       /**
-       * chat(messages) —— 发起一轮 AI 对话
-       * 【参数】messages —— 对话消息数组（含可选的 system 上下文）
-       * 【返回值】Promise，resolve 时返回 { data: { reply, model } }
+       * chat(payload) —— 发起一轮 AI 教练对话
+       * 【返回值】Promise，resolve 时返回 { data: { reply, mode, suggestions, actions, model } }
        */
-      chat: function (messages) {
-        return request('POST', '/ai/chat', { messages: messages || [] });
+      chat: function (payload) {
+        var p = payload || {};
+        return request('POST', '/ai/chat', {
+          message: p.message || '',
+          history: Array.isArray(p.history) ? p.history : [],
+          context: p.context || null,
+          contextVersion: p.contextVersion || '1.0'
+        }, { timeoutMs: p.timeoutMs || 35000 });
       }
     },
 
