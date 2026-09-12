@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 300" fill="none">
+  <!-- 晨光 · 地平线日出：登录页主视觉（统一插画语言：2px 圆头线条 + 晨光四色 + 留白） -->
+  <circle cx="180" cy="196" r="64" stroke="#e8a85c" stroke-width="2.5"/>
+  <path d="M96 196h168" stroke="#e8a85c" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M180 108v-24" stroke="#e8a85c" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M118 134l-17-17M242 134l17-17" stroke="#e8a85c" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M70 226c36 14 76 21 110 21s74-7 110-21" stroke="#4fc3b4" stroke-width="2" stroke-linecap="round" opacity="0.85"/>
+  <path d="M92 252c28 9 58 13 88 13s60-4 88-13" stroke="#7ba7d9" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+  <path d="M120 274c19 5 39 8 60 8s41-3 60-8" stroke="#a78dc9" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+  <circle cx="62" cy="76" r="2.5" fill="#f2efe8" opacity="0.35"/>
+  <circle cx="292" cy="58" r="2" fill="#f2efe8" opacity="0.28"/>
+  <circle cx="252" cy="96" r="1.8" fill="#e8a85c" opacity="0.5"/>
+  <circle cx="112" cy="52" r="1.8" fill="#e8a85c" opacity="0.4"/>
+</svg>

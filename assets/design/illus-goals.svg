@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 260" fill="none">
+  <!-- 目标：阶梯登高 + 旗帜（统一插画语言） -->
+  <path d="M60 212h64v-44h64v-44h64v-44h48" stroke="#b8b3a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/>
+  <path d="M60 212h56" stroke="#e8a85c" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M132 168h56" stroke="#e8a85c" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M204 124h56" stroke="#e8a85c" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M276 80h44" stroke="#e8a85c" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="88" cy="204" r="5" fill="#4fc3b4"/>
+  <circle cx="160" cy="160" r="5" fill="#4fc3b4"/>
+  <circle cx="232" cy="116" r="5" fill="#4fc3b4"/>
+  <path d="M282 80V36" stroke="#e8a85c" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M282 38h34l-9 12 9 12h-34z" fill="#e8a85c" opacity="0.9"/>
+  <circle cx="300" cy="196" r="2.5" fill="#a78dc9" opacity="0.55"/>
+  <circle cx="52" cy="120" r="2" fill="#7ba7d9" opacity="0.6"/>
+</svg>

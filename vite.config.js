@@ -48,6 +48,7 @@ export default defineConfig({
       // 每个入口对应一个 HTML 文件，Vite 会为每个页面单独打包
       input: {
         main: resolve(__dirname, 'index.html'),         // 首页（落地页）
+        login: resolve(__dirname, 'login.html'),        // 登录页（独立左右分栏）
         workbench: resolve(__dirname, 'workbench.html'), // 工作台
         stats: resolve(__dirname, 'stats.html'),         // 统计数据页
         ai: resolve(__dirname, 'ai.html'),               // AI 助手

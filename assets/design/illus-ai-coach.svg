@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 260" fill="none">
+  <!-- AI 教练：轨道与罗盘星（无机器人 · 统一插画语言 · iris 专属色） -->
+  <ellipse cx="180" cy="140" rx="118" ry="44" stroke="#a78dc9" stroke-width="2" opacity="0.5"/>
+  <ellipse cx="180" cy="140" rx="118" ry="44" stroke="#a78dc9" stroke-width="2" transform="rotate(28 180 140)" opacity="0.3"/>
+  <circle cx="180" cy="140" r="34" stroke="#a78dc9" stroke-width="2.5"/>
+  <path d="M180 118l6.5 14.5L201 140l-14.5 7.5L180 162l-6.5-14.5L159 140l14.5-7.5z" fill="#a78dc9" opacity="0.9"/>
+  <circle cx="180" cy="140" r="52" stroke="#a78dc9" stroke-width="1.5" opacity="0.25"/>
+  <circle cx="292" cy="118" r="5" fill="#e8a85c"/>
+  <circle cx="292" cy="118" r="10" stroke="#e8a85c" stroke-width="2" opacity="0.35"/>
+  <circle cx="66" cy="168" r="4" fill="#4fc3b4"/>
+  <circle cx="84" cy="64" r="2.5" fill="#7ba7d9" opacity="0.7"/>
+  <circle cx="286" cy="204" r="2" fill="#f2efe8" opacity="0.35"/>
+  <path d="M136 46l10 10m0-10l-10 10" stroke="#e8a85c" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+</svg>

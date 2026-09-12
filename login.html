@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 · 晨光自律台</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/shared.css">
+  <!-- Font Awesome 6 (free) -->
+  <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+  <meta name="api-base" content="http://localhost:3000/api">
+  <style>
+    /* ============================================================
+       登录页 ·「静晨光 Calm Dawn」（docs/UI_DESIGN_SYSTEM.md）
+       桌面：左品牌面板 + 右登录卡；≤900px 上下堆叠
+       ============================================================ */
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body { min-height: 100dvh; font-family: var(--font); background: var(--bg-page); color: var(--text-hi); -webkit-font-smoothing: antialiased; }
+
+    .login-wrap { display: grid; grid-template-columns: minmax(0, 10fr) minmax(0, 11fr); min-height: 100dvh; }
+
+    /* ---------- 左：品牌面板 ---------- */
+    .brand-pane { background: var(--bg-soft); border-right: 1px solid var(--border-soft); padding: 48px 56px; display: flex; flex-direction: column; }
+    .brand-logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; color: var(--text-hi); text-decoration: none; letter-spacing: -0.01em; }
+    .brand-logo i { color: var(--brand-amber); }
+    .brand-main { flex: 1; display: flex; flex-direction: column; justify-content: center; max-width: 460px; }
+    .brand-main h1 { font-size: clamp(1.9rem, 2.8vw, 2.6rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.25; margin: 0 0 14px; }
+    .brand-main h1 .accent { color: var(--brand-amber); }
+    .brand-sub { color: var(--text-mid); font-size: 1.05rem; line-height: 1.8; margin: 0 0 40px; }
+    .cap-list { display: flex; flex-direction: column; gap: 18px; }
+    .cap-item { display: flex; align-items: flex-start; gap: 14px; }
+    .cap-item .cap-icon { width: 40px; height: 40px; border-radius: var(--r-md); display: grid; place-items: center; font-size: 0.95rem; flex-shrink: 0; }
+    .cap-item strong { display: block; font-size: 0.98rem; font-weight: 600; color: var(--text-hi); margin-bottom: 2px; }
+    .cap-item p { margin: 0; color: var(--text-muted); font-size: 0.88rem; line-height: 1.6; }
+    .ci-amber { background: rgba(232,168,92,0.12); color: var(--brand-amber); }
+    .ci-teal  { background: rgba(79,195,180,0.12); color: var(--brand-teal); }
+    .ci-sky   { background: rgba(123,167,217,0.12); color: var(--brand-sky); }
+    .ci-iris  { background: rgba(167,141,201,0.12); color: var(--brand-iris); }
+    .brand-illus { margin-top: 40px; max-width: 300px; }
+    .brand-illus img { display: block; width: 100%; height: auto; }
+
+    /* ---------- 右：表单区 ---------- */
+    .form-pane { display: flex; flex-direction: column; padding: 32px 40px; }
+    .back-home { color: var(--text-mid); text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; width: fit-content; transition: color var(--transition-fast); }
+    .back-home:hover { color: var(--brand-amber); }
+    .form-center { flex: 1; display: flex; align-items: center; justify-content: center; }
+    .auth-card { width: 100%; max-width: 400px; }
+
+    .auth-card h2 { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 6px; }
+    .auth-card .auth-desc { color: var(--text-muted); font-size: 0.92rem; margin: 0 0 28px; }
+
+    .form-row { margin-bottom: 16px; }
+    .form-row label { display: block; font-size: 13px; font-weight: 600; color: var(--text-mid); margin-bottom: 7px; }
+    .form-row label .req { color: var(--brand-rose); margin-left: 2px; }
+    .form-row input { width: 100%; padding: 13px 14px; border-radius: var(--r-sm); border: 1px solid var(--border-strong); background: var(--bg-input); color: var(--text-hi); font-size: 16px; outline: none; transition: border-color var(--transition-fast), box-shadow var(--transition-fast); font-family: inherit; }
+    .form-row input:focus { border-color: var(--brand-amber); box-shadow: 0 0 0 3px var(--brand-amber-weak); }
+    .form-row input.err { border-color: var(--brand-rose); box-shadow: 0 0 0 3px var(--danger-light); }
+    .hint { font-size: 12px; color: var(--text-muted); margin-top: 5px; min-height: 15px; line-height: 1.5; }
+    .hint.err { color: var(--brand-rose); font-weight: 500; }
+
+    .tip-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--text-muted); margin: 4px 0 20px; gap: 10px; flex-wrap: wrap; }
+    .tip-row label { display: flex; align-items: center; gap: 7px; cursor: pointer; }
+    .tip-row label input[type="checkbox"] { accent-color: var(--brand-amber); width: 16px; height: 16px; }
+    .tip-row a, .auth-switch a { color: var(--brand-amber); font-weight: 600; cursor: pointer; text-decoration: none; }
+    .tip-row a:hover, .auth-switch a:hover { text-decoration: underline; }
+    .tip-row .policy-link { text-decoration: underline; text-underline-offset: 2px; }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--r-btn); font-family: inherit; font-size: 1rem; font-weight: 600; cursor: pointer; text-decoration: none; border: none; transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast); }
+    .btn-block { width: 100%; padding: 14px 24px; }
+    .btn-primary { background: var(--brand-amber); color: var(--text-on-accent); }
+    .btn-primary:hover { background: var(--brand-amber-strong); box-shadow: 0 2px 6px rgba(0,0,0,.16), 0 12px 28px rgba(0,0,0,.18); }
+    .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
+
+    .auth-switch { text-align: center; font-size: 0.92rem; color: var(--text-muted); margin-top: 24px; }
+
+    /* ---------- 响应式 ---------- */
+    @media (max-width: 900px) {
+      .login-wrap { grid-template-columns: 1fr; }
+      .brand-pane { border-right: none; border-bottom: 1px solid var(--border-soft); padding: 24px 20px 28px; }
+      .brand-main { max-width: none; margin: 0; }
+      .brand-main h1 { font-size: 1.45rem; margin-bottom: 6px; }
+      .brand-main h1 br { display: none; }
+      .brand-sub { font-size: 0.92rem; margin-bottom: 0; }
+      .cap-list { display: none; }
+      .brand-illus { display: none; }
+      .form-pane { padding: 28px 20px 40px; }
+      .form-center { align-items: flex-start; padding-top: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-wrap">
+    <!-- 左：品牌面板 -->
+    <aside class="brand-pane">
+      <a class="brand-logo" href="index.html"><i class="fas fa-sun"></i>晨光自律台</a>
+      <div class="brand-main">
+        <h1>记录今天，<br><span class="accent">成为更好的自己。</span></h1>
+        <p class="brand-sub">一个安静的地方，记下你的每一次坚持。数据归你，进步可见。</p>
+        <div class="cap-list">
+          <div class="cap-item">
+            <span class="cap-icon ci-amber"><i class="fas fa-pen-to-square"></i></span>
+            <div><strong>学习记录</strong><p>课程、阅读、英语、运动与专注，一处记录。</p></div>
+          </div>
+          <div class="cap-item">
+            <span class="cap-icon ci-teal"><i class="fas fa-bullseye"></i></span>
+            <div><strong>目标管理</strong><p>把大目标拆成每天可完成的一小步。</p></div>
+          </div>
+          <div class="cap-item">
+            <span class="cap-icon ci-sky"><i class="fas fa-chart-line"></i></span>
+            <div><strong>数据分析</strong><p>连续、累计与趋势自动成图，进步看得见。</p></div>
+          </div>
+          <div class="cap-item">
+            <span class="cap-icon ci-iris"><i class="fas fa-wand-magic-sparkles"></i></span>
+            <div><strong>AI 成长建议</strong><p>基于你的真实数据给建议，不灌鸡汤。</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="brand-illus"><img src="assets/design/login-dawn.svg" alt="晨光插画：地平线上的日出"></div>
+    </aside>
+
+    <!-- 右：表单区 -->
+    <main class="form-pane">
+      <a class="back-home" href="index.html"><i class="fas fa-arrow-left"></i>返回首页</a>
+      <div class="form-center">
+        <div class="auth-card">
+          <!-- 登录表单 -->
+          <div id="loginView">
+            <h2>欢迎回来</h2>
+            <p class="auth-desc">登录后继续你的成长记录。</p>
+            <div class="form-row">
+              <label for="loginAccount">邮箱<span class="req">*</span></label>
+              <input id="loginAccount" type="email" placeholder="例如：you@example.com" autocomplete="username"/>
+              <div class="hint" id="hintLoginAccount" aria-live="polite"></div>
+            </div>
+            <div class="form-row">
+              <label for="loginPwd">密码<span class="req">*</span></label>
+              <input id="loginPwd" type="password" placeholder="请输入密码" autocomplete="current-password"/>
+              <div class="hint" id="hintLoginPwd" aria-live="polite"></div>
+            </div>
+            <div class="tip-row">
+              <label><input type="checkbox" id="rememberMe"/> 记住我（7天内免重新登录）</label>
+              <a href="index.html">还没有账号？去注册</a>
+            </div>
+            <button class="btn btn-primary btn-block" type="button" data-action="doLogin" id="btnDoLogin">登录</button>
+            <div class="auth-switch">没有账号？<a data-action="goRegister">免费注册</a></div>
+          </div>
+
+          <!-- 注册表单 -->
+          <div id="registerView" style="display:none;">
+            <h2>创建你的账号</h2>
+            <p class="auth-desc">10 秒完成，核心功能立即全部可用。</p>
+            <div class="form-row">
+              <label for="regUsername">用户名<span class="req">*</span></label>
+              <input id="regUsername" type="text" placeholder="2-16位，中文英文数字下划线" autocomplete="username" maxlength="16"/>
+              <div class="hint" id="hintRegUsername" aria-live="polite">登录与展示昵称，例如：自律王同学</div>
+            </div>
+            <div class="form-row">
+              <label for="regEmail">邮箱<span class="req">*</span></label>
+              <input id="regEmail" type="email" placeholder="you@example.com" autocomplete="email"/>
+              <div class="hint" id="hintRegEmail" aria-live="polite">用于找回密码</div>
+            </div>
+            <div class="form-row">
+              <label for="regPwd">密码<span class="req">*</span></label>
+              <input id="regPwd" type="password" placeholder="至少8位，含大小写字母和数字" autocomplete="new-password" maxlength="32"/>
+              <div class="hint" id="hintRegPwd" aria-live="polite"></div>
+            </div>
+            <div class="form-row">
+              <label for="regPwd2">确认密码<span class="req">*</span></label>
+              <input id="regPwd2" type="password" placeholder="再次输入相同密码" autocomplete="new-password" maxlength="32"/>
+              <div class="hint" id="hintRegPwd2" aria-live="polite"></div>
+            </div>
+            <div class="tip-row">
+              <label><input type="checkbox" id="regTerms"/> 我已阅读并同意 <a id="openTerms" class="policy-link">《服务条款》</a> 与 <a id="openPrivacy" class="policy-link">《隐私政策》</a></label>
+            </div>
+            <div class="hint" id="hintRegTerms" aria-live="polite"></div>
+            <button class="btn btn-primary btn-block" type="button" data-action="doRegister" id="btnDoRegister">注册并登录</button>
+            <div class="auth-switch">已有账号？<a data-action="goLogin">直接登录</a></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="pages/login.js"></script>
+</body>
+</html>

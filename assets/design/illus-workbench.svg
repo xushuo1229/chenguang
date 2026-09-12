@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 260" fill="none">
+  <!-- 工作台：层叠卡片 + 今日清单（统一插画语言） -->
+  <rect x="64" y="38" width="232" height="176" rx="20" stroke="#b8b3a8" stroke-width="2" opacity="0.4"/>
+  <rect x="48" y="54" width="232" height="176" rx="20" fill="#191c22" stroke="#e8a85c" stroke-width="2.5"/>
+  <circle cx="76" cy="82" r="8" stroke="#e8a85c" stroke-width="2"/>
+  <path d="M73 82l2.4 2.4L80 79.6" stroke="#e8a85c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="94" y="76" width="96" height="4" rx="2" fill="#f2efe8" opacity="0.55"/>
+  <rect x="94" y="88" width="60" height="4" rx="2" fill="#8d887d" opacity="0.5"/>
+  <circle cx="76" cy="122" r="8" stroke="#4fc3b4" stroke-width="2"/>
+  <path d="M73 122l2.4 2.4L80 119.6" stroke="#4fc3b4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="94" y="116" width="110" height="4" rx="2" fill="#f2efe8" opacity="0.55"/>
+  <rect x="94" y="128" width="48" height="4" rx="2" fill="#8d887d" opacity="0.5"/>
+  <circle cx="76" cy="162" r="8" stroke="#7ba7d9" stroke-width="2"/>
+  <rect x="94" y="156" width="88" height="4" rx="2" fill="#f2efe8" opacity="0.55"/>
+  <rect x="94" y="168" width="72" height="4" rx="2" fill="#8d887d" opacity="0.5"/>
+  <rect x="200" y="146" width="56" height="56" rx="14" fill="#e8a85c" opacity="0.14" stroke="#e8a85c" stroke-width="2"/>
+  <path d="M228 158v14m0 0l-8-8m8 8l8-8" stroke="#e8a85c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="304" cy="44" r="3" fill="#e8a85c" opacity="0.6"/>
+  <circle cx="36" cy="210" r="2.5" fill="#a78dc9" opacity="0.5"/>
+</svg>

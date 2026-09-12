@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 260" fill="none">
+  <!-- 成长轨迹：蜿蜒上行的小路 + 里程碑（成长理念区 · 统一插画语言） -->
+  <path d="M56 224c58 0 58-40 116-40s58-40 116-40" stroke="#e8a85c" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M288 144c14 0 22-8 22-8" stroke="#e8a85c" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+  <circle cx="56" cy="224" r="6" fill="#191c22" stroke="#e8a85c" stroke-width="2.5"/>
+  <circle cx="172" cy="184" r="6" fill="#191c22" stroke="#4fc3b4" stroke-width="2.5"/>
+  <circle cx="288" cy="144" r="6" fill="#191c22" stroke="#a78dc9" stroke-width="2.5"/>
+  <circle cx="288" cy="144" r="14" stroke="#a78dc9" stroke-width="1.5" opacity="0.3"/>
+  <path d="M108 196v-30" stroke="#7ba7d9" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+  <path d="M108 168l9 4-9 4z" fill="#7ba7d9" opacity="0.8"/>
+  <path d="M232 164v-30" stroke="#7ba7d9" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+  <path d="M232 136l9 4-9 4z" fill="#7ba7d9" opacity="0.8"/>
+  <circle cx="60" cy="84" r="2.5" fill="#f2efe8" opacity="0.3"/>
+  <circle cx="140" cy="60" r="2" fill="#e8a85c" opacity="0.5"/>
+  <circle cx="316" cy="76" r="2.5" fill="#4fc3b4" opacity="0.6"/>
+</svg>
