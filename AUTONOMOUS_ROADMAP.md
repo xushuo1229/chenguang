@@ -68,11 +68,26 @@
 
 ---
 
-## Phase 16 —— 候选（重新评估后取舍，不为数量堆功能）
+## Phase 16 —— 移动端交互加固（✅ 已完成，commit 2d1c5b6）
+
+**范围与结果**（0b 实施触控目标，本会话实施交互层，统一回归后合并提交）：
+1. 触控目标 ≥40px：图标键伪元素扩热区（视觉不变），文本键仅 pointer:coarse 加大（桌面零变化）
+2. modal 滚动锁（嵌套计数）+ 焦点策略（焦点进弹窗但不落输入框，移动端不弹软键盘）
+3. 落地页遮罩/ESC 关闭统一走 closeModal（修复滚动锁漏解锁隐患）
+4. AI 页移动端抽屉点击外部/ESC 关闭
+5. **产品级 bug（新发现并修复）**：renderHeatmap 的 container.innerHTML 会把容器内
+   #heatmapTooltip 一并清掉——热力图悬停/点击详情自上线起静默失效。改为渲染到内层
+   #heatmapGrid 保留 tooltip。该 bug 由新增回归测试 H1 揪出，验证了「先写测试」的价值。
+6. TECH_DEBT 记录 tabbar 各页条目不一致（统一方案待产品决策）
+
+回归：前端 **276/276**（13 文件）· 后端 **51/51** · Build PASS。
+
+---
+
+## Phase 17 —— 候选（重新评估后取舍，不为数量堆功能）
 
 - **A. AI Provider 真实验证**（依赖用户提供 AI_API_KEY，仍为唯一外部依赖 P1）
-- **B. 触控目标 ≥40px + modal 滚动锁/热力图触屏兜底**（0b 审计 P2 项 4/5，纯 CSS/交互层）
-- **C. 移动端真机走查**（静态审计已完成，真机仍 UNVERIFIED）
+- **B. 移动端真机走查**（静态审计已完成，真机仍 UNVERIFIED）
 
 若上述全部收口且无新 P0/P1，进入 **Release Candidate 最终验收**，宣布 PRODUCTION READY 或按发现重开一轮。
 
@@ -80,7 +95,7 @@
 
 ## 遗留技术债（TECH_DEBT.md 同步维护）
 - visualViewport 方案在 iOS <16.4 无 dvh 时已由 --vvh JS 兜底覆盖；极老浏览器回退 100vh（键盘仍可能遮挡，可接受）。
-- 触控目标 <40px、modal 打开缺滚动锁、热力图 tooltip 仅 hover：Phase 16 候选 B。
+- tabbar 各页条目不一致：TECH_DEBT 第 6 条，待产品决策。
 - workbench 旧字段 totalDays/continuousDays 为 Phase 8 前遗留，后端保持兼容不写入，真实值一律走 Analytics。
 
 ---
