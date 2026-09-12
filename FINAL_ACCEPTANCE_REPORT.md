@@ -177,6 +177,69 @@ Verdict: CONDITIONAL GO
 核心原因：两大 P0（目标跨设备丢失、仪表盘数据冻结）均已修复并独立复验，
 数据闭环真实、产品诚实、移动端结构完整；AI 是加分项且降级体面，缺 Key 不影响核心体验。
 
+---
+
+## 17. Phase 16 交叉验收（2026-09-12，commit 2d1c5b6）→ 自主开发周期收口
+
+协作会话实施，本会话独立复核，全部证实：
+
+| 发现 | 级别 | 独立验证 | 结论 |
+|------|------|----------|------|
+| 热力图详情静默失效：`renderHeatmap` 的 `container.innerHTML` 把容器内 `#heatmapTooltip` 一并清掉（tooltip 是容器的子元素，首次渲染即销毁） | **P0** | `git show 22a12d3:stats.html` 确认 tooltip 在容器内；旧调用点 `renderHeatmap($('#heatmapContainer'),…)` + `container.innerHTML = h` | 主张属实；修复（渲染进内层 `#heatmapGrid`）正确 |
+| 修复后 tooltip 存活 + hover/触屏点击均出详情 | — | 独立 jsdom 抽查：渲染后 tooltip 元素存在、mouseover 出详情、click 兜底出详情 | ✅ |
+| modal 滚动锁（嵌套计数 + 滚动条补偿）+ 焦点不落输入框 | P2→✅ | diff 复核 + 5 条新交互回归 + 全量 276/276 | ✅ |
+| 落地页遮罩/ESC 统一走 closeModal（防滚动锁漏解锁） | P2→✅ | diff 复核 | ✅ |
+| AI 抽屉点外关闭 + 触控目标 ≥40px（桌面零变化） | P2→✅ | diff 复核 + 回归 | ✅ |
+
+回归：前端 **276/276**（13 文件）· 后端 **51/51** · Build **PASS** · 评分 **≈ 86/100**
+
+## 18. 自主开发周期收口（Autonomous CTO Final）
+
+按 Roadmap 判定：候选项 A（AI Key）为外部依赖、B 已完成、C（真机）受环境限制 ——
+**无更多可在本环境内创造用户价值的开发项，停止制造新 Phase。**
+
+```
+========================================
+晨光自律台 · AUTONOMOUS DEVELOPMENT · FINAL REPORT
+========================================
+Starting Baseline: 7fdd6c6 (fix: harden product experience before Phase 14)
+
+Commits（全部不 push）:
+  47eed64  feat: Phase 14 每日目标循环语义修复（P1）
+  89364ee  fix:   同步白名单补 goals，目标跨设备不再丢失（P0）
+  45ef576  docs:  RC 冒烟结果
+  22a12d3  docs:  Phase 15 交叉验收
+  14443c0  docs:  roadmap（协作会话）
+  f55cbcd  fix:   Phase 15 移动端 + P0 仪表盘数据绑定（协作会话，本会话复验）
+  2d1c5b6  fix:   Phase 16 移动端交互加固 + P0 热力图 tooltip（协作会话，本会话复验）
+  9cc2c4c  docs:  Phase 16 收尾（协作会话）
+
+修复的 P0（3 个，均独立复验）:
+  ① 同步白名单漏 goals → 目标跨设备静默丢失
+  ② setText 裸 id 静默失效 → 工作台仪表盘/成长面板/我的页数据冻结
+  ③ renderHeatmap innerHTML 清掉 tooltip → 热力图详情自上线起失效
+修复的 P1: 每日目标次日即过期；iOS 输入放大 / index CTA 裁切 / AI 键盘遮挡
+
+Tests:        Frontend 276/276 · Backend 51/51 · Build PASS
+Security:     PASS（错误零泄露、无 Key 前置、XSS 转义、CSRF/限流在位）
+Data Integrity: PASS（跨设备全类目往返 + 冲突/幂等/墓碑回归）
+Mobile:       PASS*（静态审计 + jsdom 交互回归；真机 UNVERIFIED——环境限制）
+AI:           UNVERIFIED（无 AI_API_KEY——唯一需用户提供项；降级链路完备）
+User Experience: 86/100
+P0: 0   P1: 1（仅 AI Key 外部依赖）   P2: 0   P3: 1（回访钩子，观察）
+
+Product Status: PRODUCTION READY（核心产品，附 2 个代码外条件）
+Verdict: CONDITIONAL GO → 用户配置 AI Key + 真机走查后升 GO
+
+Current HEAD: 9cc2c4c · Working Tree: CLEAN · 全部未 push
+========================================
+```
+
+**敢不敢给 5–10 个真实大学生用？—— 敢，现在就敢。**
+核心原因：三个会真实伤害用户的 P0（丢目标、仪表盘冻结、热力图失效）全部修复并经独立
+复验；核心闭环（记录→分析→目标→同步）在真实后端端到端验证通过；产品全程诚实无虚构。
+仅剩的 AI 卖点需要一把 Key，但那是锦上添花，不是拦路石。
+
 ```
 ========================================
 FINAL USER ACCEPTANCE V2
