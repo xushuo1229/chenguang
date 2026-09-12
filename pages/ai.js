@@ -442,6 +442,15 @@ function setupEvents() {
   Array.prototype.forEach.call(document.querySelectorAll('.sidebar .nav-item'), function (a) {
     a.addEventListener('click', function () { document.body.classList.remove('sidebar-open'); });
   });
+  // 移动端抽屉：点击侧边栏以外的区域关闭（此前抽屉打开后点外部不收起）
+  document.addEventListener('click', function (e) {
+    if (!document.body.classList.contains('sidebar-open')) return;
+    if (e.target.closest && (e.target.closest('.sidebar') || e.target.closest('#mobileMenuBtn'))) return;
+    document.body.classList.remove('sidebar-open');
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') document.body.classList.remove('sidebar-open');
+  });
 
   window.addEventListener('chenguang:update', function () {
     // 数据同步后刷新画像（保持只读，不影响 revision）

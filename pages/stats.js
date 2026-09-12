@@ -476,7 +476,15 @@ function renderHeatmap(container, tooltip, snap) {
   h += '</div></div><div class="hm-legend"><span>少</span>';
   for (var lv = 0; lv < 5; lv++) h += '<div class="hm-cell hm-level-' + lv + '"></div>';
   h += '<span>多</span></div></div>';
-  container.innerHTML = h;
+  // 渲染到内层 #heatmapGrid，保留容器里的 tooltip 元素——
+  // 此前 container.innerHTML 会把 #heatmapTooltip 一并清掉，悬停/点击详情从此静默失效
+  var grid = document.getElementById('heatmapGrid');
+  if (!grid) {
+    grid = document.createElement('div');
+    grid.id = 'heatmapGrid';
+    container.appendChild(grid);
+  }
+  grid.innerHTML = h;
   container._detail = detail;
   hideTooltip(tooltip);
 }
@@ -621,7 +629,15 @@ function setupEvents() {
   var retry = $('#statsRetry');
   if (retry) retry.addEventListener('click', function () { loadAll(); });
   var hm = $('#heatmapContainer');
-  if (hm) { hm.addEventListener('mouseover', heatHover); hm.addEventListener('mouseout', heatOut); hm.addEventListener('focusin', heatHover); hm.addEventListener('focusout', heatOut); }
+  if (hm) {
+    hm.addEventListener('mouseover', heatHover); hm.addEventListener('mouseout', heatOut);
+    hm.addEventListener('focusin', heatHover); hm.addEventListener('focusout', heatOut);
+    // 触屏兜底：没有 hover，点格子显示详情、点空白处收起（Phase 15 移动端走查 P2）
+    hm.addEventListener('click', function (e) {
+      if (e.target && e.target.classList && e.target.classList.contains('hoverable')) heatHover(e);
+      else heatOut(e);
+    });
+  }
   window.addEventListener('chenguang:update', function () { loadAll(); });
 }
 

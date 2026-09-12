@@ -33,8 +33,8 @@ function init() {
   document.addEventListener('click', function (e) {
     // 如果点击的是 data-close-modal 属性的元素（如关闭按钮），关闭对应弹窗
     if (e.target.matches('[data-close-modal]')) closeModal(e.target.getAttribute('data-close-modal'));
-    // 如果点击的是弹窗遮罩层（modal-overlay），隐藏该弹窗
-    else if (e.target.classList && e.target.classList.contains('modal-overlay')) e.target.classList.add('hidden');
+    // 如果点击的是弹窗遮罩层（modal-overlay），关闭该弹窗（走统一 closeModal：移除 open 类 + 解除滚动锁）
+    else if (e.target.classList && e.target.classList.contains('modal-overlay')) closeModal(e.target.id);
     // 点击「服务条款」或「隐私政策」链接时，显示提示信息
     else if (e.target.id === 'openTerms' || e.target.id === 'openPrivacy') {
       e.preventDefault();
@@ -44,7 +44,7 @@ function init() {
     }
   });
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') $$('.modal-overlay').forEach(function (m) { m.classList.add('hidden'); });
+    if (e.key === 'Escape') $$('.modal-overlay').forEach(function (m) { closeModal(m.id); });
   });
 
   function setFieldHint(id, msg, isErr) {

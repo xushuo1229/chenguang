@@ -18,6 +18,26 @@
 'use strict';
 
 // ============================================================
+// 弹窗打开时的背景滚动锁
+// ============================================================
+// 移动端弹窗背后页面仍可滚动（触摸拖动会穿透），打开时锁定 body 滚动，
+// 关闭/全部关闭后恢复。以「当前打开中的弹窗数量」为准，支持嵌套打开。
+function syncScrollLock() {
+  var openCount = document.querySelectorAll('.modal-overlay.open:not(.hidden)').length;
+  if (openCount > 0) {
+    if (document.body.style.overflow !== 'hidden') {
+      document.body.style.overflow = 'hidden';
+      // 桌面端补偿滚动条宽度，防止锁定瞬间页面横向抖动（移动端无滚动条，不受影响）
+      var sw = window.innerWidth - document.documentElement.clientWidth;
+      if (sw > 0) document.body.style.paddingRight = sw + 'px';
+    }
+  } else {
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+  }
+}
+
+// ============================================================
 // openModal 函数 - 打开模态框
 // ============================================================
 // 用法: openModal('delete-confirm')
@@ -26,7 +46,8 @@
 //   1. 根据 ID 找到模态框的 DOM 元素
 //   2. 移除 'hidden' 类（hidden 类通常设置 display:none，隐藏元素）
 //   3. 添加 'show' 类（show 类通常有淡入动画）
-//   4. 自动聚焦到模态框内的第一个可聚焦元素（提升无障碍体验）
+//   4. 焦点移入弹窗（无障碍），但避免聚焦输入框——移动端会立即弹出软键盘
+//   5. 锁定背景滚动
 //
 // 参数：
 //   id - 模态框元素的 HTML id 属性值
@@ -35,8 +56,14 @@ function openModal(id) {
   if (modal) {
     modal.classList.remove('hidden');
     modal.classList.add('open');
-    var focusable = modal.querySelector('input, button, [tabindex]');
-    if (focusable) focusable.focus();
+    // 焦点移入弹窗：优先按钮等非输入元素（Phase 15：输入框自动聚焦会在移动端立即弹出键盘）
+    var focusable = modal.querySelector('button, [href], [tabindex]:not([tabindex="-1"])');
+    if (!focusable) {
+      if (!modal.hasAttribute('tabindex')) modal.setAttribute('tabindex', '-1');
+      focusable = modal;
+    }
+    try { focusable.focus({ preventScroll: true }); } catch (_) { focusable.focus(); }
+    syncScrollLock();
   }
 }
 
@@ -54,6 +81,11 @@ function closeModal(id) {
   if (modal) {
     modal.classList.add('hidden');
     modal.classList.remove('open');
+    // 焦点若还留在已关闭的弹窗里则归还给 body（隐藏元素无法持有焦点）
+    if (modal.contains(document.activeElement)) {
+      try { document.activeElement.blur(); } catch (_) {}
+    }
+    syncScrollLock();
   }
 }
 

@@ -118,7 +118,9 @@
     .modal-head, .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
     .modal-head h3, .modal-header h3 { font-size: 19px; font-weight: 800; color: var(--text-hi); }
     .modal-head h3 small, .modal-header h3 small { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-top: 3px; }
-    .modal-close { width: 32px; height: 32px; border-radius: var(--r-sm); background: var(--bg-hover); color: var(--text-mid); display: grid; place-items: center; font-size: 16px; font-weight: 700; transition: all .2s ease; border: none; cursor: pointer; }
+    .modal-close { width: 32px; height: 32px; border-radius: var(--r-sm); background: var(--bg-hover); color: var(--text-mid); display: grid; place-items: center; font-size: 16px; font-weight: 700; transition: all .2s ease; border: none; cursor: pointer; position: relative; }
+    /* 触控目标 ≥40px：伪元素扩大热区到 42px，视觉 32px 不变（Phase 15 移动端走查排序 4） */
+    .modal-close::after { content: ''; position: absolute; inset: -5px; }
     .modal-close:hover { background: var(--bg-active); transform: rotate(90deg); }
 
     .form-row { margin-bottom: 14px; }

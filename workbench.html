@@ -440,7 +440,10 @@
       font-size: 1rem; color: var(--text-muted);
       display: flex; align-items: center; justify-content: center;
       transition: .2s;
+      position: relative; /* 触控热区扩展锚点 */
     }
+    /* 触控目标 ≥40px：伪元素扩大热区，视觉尺寸不变（Phase 15 移动端走查排序 4） */
+    .modal-close::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; }
     .modal-close:hover { background: rgba(232,168,92,0.15); color: var(--text-hi); }
     .modal-body { padding: 16px 20px 20px; }
     .modal-body .form-row { margin-bottom: 14px; }
@@ -607,6 +610,10 @@
       font-size: .75rem; padding: 4px 8px; border-radius: 6px;
       transition: .2s;
     }
+    /* 触控目标 ≥40px：触屏设备加大 padding（桌面不变；Phase 15 移动端走查排序 4） */
+    @media (pointer: coarse) {
+      .item-row .item-btn { padding: 10px 12px; }
+    }
     .item-row .item-btn.edit { color: var(--primary); }
     .item-row .item-btn.edit:hover { background: rgba(232,168,92,0.1); }
     .item-row .item-btn.del { color: var(--text-mid); }
@@ -771,6 +778,12 @@
     .sch-tabs { display:none; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
     .sch-tab { flex:0 0 auto; padding:6px 12px; border-radius:30px; border:1px solid rgba(232,168,92,.2); background:transparent; color:var(--text-mid); font-size:.75rem; cursor:pointer; transition:.15s; }
     .sch-tab.active { background:var(--brand-amber); color:var(--text-on-accent); border-color:var(--brand-amber); font-weight:600; }
+    /* 触控目标 ≥40px：触屏设备加大 padding（桌面不变；Phase 15 移动端走查排序 4） */
+    @media (pointer: coarse) {
+      .sch-btn { padding: 9px 14px; }
+      .sch-tab { padding: 10px 14px; }
+      .sch-item { padding: 10px; }
+    }
     .sch-mobile { display:none; }
     .sch-mday-title { font-size:.78rem; font-weight:600; color:var(--text-hi); margin-bottom:10px; }
     @media (max-width: 860px) {
@@ -828,7 +841,10 @@
       border: 1.5px solid var(--border-strong); cursor: pointer;
       display: grid; place-items: center;
       font-size: .75rem; color: #fff; transition: .2s;
+      position: relative; /* 触控热区扩展锚点 */
     }
+    /* 触控目标 ≥40px：伪元素扩大热区，视觉 22px 不变（Phase 15 移动端走查排序 4） */
+    .task-row .t-check::after { content: ''; position: absolute; inset: -9px; border-radius: 10px; }
     .task-row .t-check:hover { border-color: var(--primary); }
     .task-row .t-check.checked { background: var(--primary); border-color: var(--primary); color: var(--text-on-accent); }
     .task-row .t-text { flex: 1; font-size: .88rem; color: var(--text-hi); word-break: break-all; }
@@ -908,6 +924,8 @@
       font-size: .8rem;
       transition: .2s;
     }
+    /* 触控目标 ≥40px：伪元素扩大热区，视觉不变（Phase 15 移动端走查排序 4） */
+    .onboard-close::after { content: ''; position: absolute; inset: -8px; border-radius: 50%; }
     .onboard-close:hover { color: #fff; background: rgba(232,121,111,0.3); }
   </style>
 
