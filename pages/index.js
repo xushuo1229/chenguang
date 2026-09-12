@@ -99,8 +99,8 @@ function init() {
   // ==================== 登录功能 ====================
   // doLogin() 处理用户登录：
   //   1. 先验证输入（邮箱格式、密码长度等）
-  //   2. 尝试调用后端 API 登录
-  //   3. 如果后端未启动，降级为「演示登录」（用本地模拟数据）
+  //   2. 调用后端 API 登录（后端只支持邮箱登录）
+  //   3. 后端不可达时明确报错，绝不伪造本地登录态
   //   4. 登录成功后跳转到工作台页面
   async function doLogin() {
     var accountEl = $('#loginAccount');
@@ -112,7 +112,8 @@ function init() {
     markErr('loginAccount', false, 'hintLoginAccount');
     markErr('loginPwd', false, 'hintLoginPwd');
 
-    if (!account) { markErr('loginAccount', true, 'hintLoginAccount', '请输入邮箱或用户名'); ok = false; }
+    if (!account) { markErr('loginAccount', true, 'hintLoginAccount', '请输入邮箱'); ok = false; }
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(account)) { markErr('loginAccount', true, 'hintLoginAccount', '请输入注册时使用的邮箱'); ok = false; }
     else if (account.length > 64) { markErr('loginAccount', true, 'hintLoginAccount', '账号太长了，最多 64 个字符'); ok = false; }
 
     if (!pwd) { markErr('loginPwd', true, 'hintLoginPwd', '请输入密码'); ok = false; }
@@ -120,29 +121,8 @@ function init() {
 
     if (!ok) return;
 
-    var isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(account);
-
-    function fallbackDemoLogin(reason) {
-      if (reason) toast(reason, 'warn');
-      try {
-        localStorage.setItem('cg_token', 'demo_token_' + Date.now());
-        localStorage.setItem('cg_user', JSON.stringify({
-          nickname: account,
-          email: isEmail ? account : (account + '@demo.chenguang.com'),
-          username: isEmail ? '' : account,
-          mode: 'demo'
-        }));
-        if ($('#rememberMe').checked) localStorage.setItem('cg_remember', '1'); else localStorage.removeItem('cg_remember');
-        syncUserToStore(account, isEmail ? account : (account + '@demo.chenguang.com'), isEmail);
-      } catch (_) {}
-      closeModal('modalLogin');
-      setTimeout(function () { toast('演示登录成功：欢迎，' + account, 'success'); }, 120);
-      setTimeout(function () { window.location.href = window.REDIRECT_AFTER_LOGIN; }, 600);
-    }
-
     try {
-      var loginEmail = isEmail ? account : (account + '@demo.chenguang.com');
-      var res = await CGAPI.auth.login(loginEmail, pwd);
+      var res = await CGAPI.auth.login(account, pwd);
       if ($('#rememberMe').checked) localStorage.setItem('cg_remember', '1'); else localStorage.removeItem('cg_remember');
       try { if (window.CGSync) await window.CGSync.afterLogin(); } catch (_) {}
       var displayName = (res.user && (res.user.nickname || res.user.email)) || account;
@@ -162,7 +142,8 @@ function init() {
         toast('登录失败：' + err.message, 'error');
         return;
       }
-      fallbackDemoLogin('后端未启动，已切换为演示登录');
+      // 后端不可达/网络异常：如实告知，不产生任何本地身份
+      toast('当前无法连接服务器，请检查网络或稍后再试。', 'error');
     }
   }
   window.doLogin = doLogin;
@@ -186,9 +167,9 @@ function init() {
   // doRegister() 处理新用户注册：
   //   1. 验证用户名（2-16 位，中文/英文/数字/下划线）
   //   2. 验证邮箱格式
-  //   3. 验证密码（6-32 位，两次输入一致）
+  //   3. 验证密码（与后端规则一致：8-32 位，含大小写字母和数字）
   //   4. 勾选服务条款
-  //   5. 调用后端 API 注册，失败则降级为本地演示注册
+  //   5. 调用后端 API 注册；后端不可达时明确报错，绝不伪造本地账号
   async function doRegister() {
     var username = ($('#regUsername').value || '').trim();
     var email = ($('#regEmail').value || '').trim();
@@ -212,8 +193,11 @@ function init() {
     else if (!emailOk) { markErr('regEmail', true, 'hintRegEmail', '邮箱格式不正确'); ok = false; }
 
     if (!pwd) { markErr('regPwd', true, 'hintRegPwd', '请输入密码'); ok = false; }
-    else if (pwd.length < 6) { markErr('regPwd', true, 'hintRegPwd', '密码至少 6 位'); ok = false; }
+    else if (pwd.length < 8) { markErr('regPwd', true, 'hintRegPwd', '密码至少 8 位'); ok = false; }
     else if (pwd.length > 32) { markErr('regPwd', true, 'hintRegPwd', '密码最多 32 位'); ok = false; }
+    else if (!(/[a-z]/.test(pwd) && /[A-Z]/.test(pwd) && /\d/.test(pwd))) {
+      markErr('regPwd', true, 'hintRegPwd', '密码需包含大写字母、小写字母和数字'); ok = false;
+    }
 
     if (!pwd2) { markErr('regPwd2', true, 'hintRegPwd2', '请再次输入密码'); ok = false; }
     else if (pwd !== pwd2) { markErr('regPwd2', true, 'hintRegPwd2', '两次输入的密码不一致，请检查'); ok = false; }
@@ -225,33 +209,6 @@ function init() {
     var btn = $('#btnDoRegister');
     var oldText = btn ? btn.textContent : '';
     if (btn) { btn.disabled = true; btn.textContent = '注册中…'; }
-
-    function fallbackDemoRegister() {
-      try {
-        var users = JSON.parse(localStorage.getItem('cg_demo_users') || '[]');
-        if (users.some(function (u) { return u.username === username; })) {
-          markErr('regUsername', true, 'hintRegUsername', '该用户名已被占用，请换一个');
-          return false;
-        }
-        if (users.some(function (u) { return u.email === email; })) {
-          markErr('regEmail', true, 'hintRegEmail', '该邮箱已注册过了，去登录吧');
-          return false;
-        }
-        users.push({ username: username, email: email, password: pwd, createdAt: new Date().toISOString() });
-        localStorage.setItem('cg_demo_users', JSON.stringify(users));
-        localStorage.setItem('cg_token', 'demo_token_' + Date.now());
-        localStorage.setItem('cg_user', JSON.stringify({
-          nickname: username, username: username, email: email,
-          mode: 'demo', createdAt: new Date().toISOString()
-        }));
-        if (window.CGStore) CGStore.clearNewUserData();
-        syncUserToStore(username, email, false);
-      } catch (_) {}
-      closeModal('modalRegister');
-      toast('🎉 注册成功，欢迎加入晨光自律台！正在进入工作台…', 'success');
-      setTimeout(function () { window.location.href = window.REDIRECT_AFTER_LOGIN; }, 650);
-      return true;
-    }
 
     try {
       var res = await CGAPI.auth.register(username, email, pwd);
@@ -268,9 +225,8 @@ function init() {
         toast('注册失败：' + err.message, 'error');
         return;
       }
-      toast('后端未启动，已切换为本地演示注册', 'warn');
-      var okFb = fallbackDemoRegister();
-      if (!okFb) return;
+      // 后端不可达/网络异常：如实告知，不产生任何本地身份
+      toast('当前无法连接服务器，请检查网络或稍后再试。', 'error');
     } finally {
       if (btn) { btn.disabled = false; btn.textContent = oldText; }
     }

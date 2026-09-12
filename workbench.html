@@ -1047,7 +1047,7 @@
       <button class="onboard-step" data-ob="todo">③ 新建待办</button>
     </div>
     <span class="onboard-progress" id="onboardProgress">0 / 3</span>
-    <button class="onboard-close" id="onboardClose" title="关闭引导">✕</button>
+    <button class="onboard-close" id="onboardClose" title="关闭引导" aria-label="关闭引导">✕</button>
   </div>
 
   <!-- ===== 功能网格 ===== -->
@@ -1185,7 +1185,7 @@
     <div class="modal-box">
       <div class="modal-head">
         <h3>🎓 添加课程</h3>
-        <button class="modal-close" data-modal-close>✕</button>
+        <button class="modal-close" data-modal-close aria-label="关闭">✕</button>
       </div>
       <div class="modal-body">
         <div class="form-row">
@@ -1272,7 +1272,7 @@
     <div class="modal-box modal-box-wide">
       <div class="modal-head">
         <h3>📥 导入课表</h3>
-        <button class="modal-close" data-modal-close>✕</button>
+        <button class="modal-close" data-modal-close aria-label="关闭">✕</button>
       </div>
 
       <!-- Tab 切换：链接 / 粘贴文本 -->
@@ -1340,7 +1340,7 @@
     <div class="modal-box">
       <div class="modal-head">
         <h3>✏️ 编辑课程</h3>
-        <button class="modal-close" data-modal-close>✕</button>
+        <button class="modal-close" data-modal-close aria-label="关闭">✕</button>
       </div>
       <div class="modal-body">
         <div class="form-row">
@@ -1427,7 +1427,7 @@
     <div class="modal-box">
       <div class="modal-head">
         <h3 id="cdTitle">📘 课程详情</h3>
-        <button class="modal-close" data-modal-close>✕</button>
+        <button class="modal-close" data-modal-close aria-label="关闭">✕</button>
       </div>
       <div class="modal-body">
         <div class="cd-progress">
@@ -1448,7 +1448,7 @@
     <div class="modal-box">
       <div class="modal-head">
         <h3>📖 添加书籍</h3>
-        <button class="modal-close" data-modal-close>✕</button>
+        <button class="modal-close" data-modal-close aria-label="关闭">✕</button>
       </div>
       <div class="modal-body">
         <div class="form-row">
@@ -1478,7 +1478,7 @@
     <div class="modal-box">
       <div class="modal-head">
         <h3>✏️ 编辑书籍</h3>
-        <button class="modal-close" data-modal-close>✕</button>
+        <button class="modal-close" data-modal-close aria-label="关闭">✕</button>
       </div>
       <div class="modal-body">
         <div class="form-row">
@@ -1508,7 +1508,7 @@
     <div class="modal-box">
       <div class="modal-head">
         <h3>🏃 记录运动</h3>
-        <button class="modal-close" data-modal-close>✕</button>
+        <button class="modal-close" data-modal-close aria-label="关闭">✕</button>
       </div>
       <div class="modal-body">
         <div class="form-row">
@@ -1547,7 +1547,7 @@
     <div class="modal-box">
       <div class="modal-head">
         <h3>🗣️ 英语学习</h3>
-        <button class="modal-close" data-modal-close>✕</button>
+        <button class="modal-close" data-modal-close aria-label="关闭">✕</button>
       </div>
       <div class="modal-body">
         <div class="form-row-inline">
@@ -1573,7 +1573,7 @@
     <div class="modal-box">
       <div class="modal-head">
         <h3>✏️ 新建任务</h3>
-        <button class="modal-close" data-modal-close>✕</button>
+        <button class="modal-close" data-modal-close aria-label="关闭">✕</button>
       </div>
       <div class="modal-body">
         <div class="form-row">
@@ -1601,7 +1601,7 @@
     <div class="modal-box">
       <div class="modal-head">
         <h3>⏳ 深度专注</h3>
-        <button class="modal-close" data-modal-close>✕</button>
+        <button class="modal-close" data-modal-close aria-label="关闭">✕</button>
       </div>
       <div class="modal-body">
         <div class="form-row">
@@ -1710,9 +1710,9 @@
           <span class="sch-sub" id="schInfoText"></span>
         </h3>
         <div class="sch-nav">
-          <button type="button" class="btn-wb ghost sch-btn" id="semWeekPrev" title="上一周"><i class="fas fa-chevron-left"></i></button>
+          <button type="button" class="btn-wb ghost sch-btn" id="semWeekPrev" title="上一周" aria-label="上一周"><i class="fas fa-chevron-left"></i></button>
           <input type="date" id="semesterStartDate" class="sch-date" title="本学期第 1 周（周一开始），用于自动推算当前周次"/>
-          <button type="button" class="btn-wb ghost sch-btn" id="semWeekNext" title="下一周"><i class="fas fa-chevron-right"></i></button>
+          <button type="button" class="btn-wb ghost sch-btn" id="semWeekNext" title="下一周" aria-label="下一周"><i class="fas fa-chevron-right"></i></button>
           <button type="button" class="btn-wb ghost sch-btn" id="semWeekNow" title="回到本周/自动周次">本周</button>
         </div>
       </div>

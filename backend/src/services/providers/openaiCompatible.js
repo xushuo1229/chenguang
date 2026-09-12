@@ -39,7 +39,7 @@ async function chatCompletion(p) {
   const model = (p && p.model) || '';
   const timeoutMs = (p && p.timeoutMs) || 30000;
 
-  if (!apiKey) throw ApiError.internal('AI_NOT_CONFIGURED', 'AI 服务未配置，请在后端环境变量设置 AI_API_KEY');
+  if (!apiKey) throw ApiError.internal('AI_NOT_CONFIGURED', 'AI 服务未配置，请稍后再试');
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);

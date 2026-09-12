@@ -292,21 +292,32 @@ function renderSuggestionsInto(contentEl, suggestions) {
   scrollChat();
 }
 
-/* AI 不可用/失败 → 统一友好文案（不透出原始错误/密钥/堆栈） */
+/* AI 不可用/失败 → 统一友好文案（不透出原始错误/密钥/堆栈/内部配置） */
 function friendlyAIError(err) {
   var msg = err && typeof err.message === 'string' ? err.message : '';
-  if (err && (err.name === 'AbortError' || /abort/i.test(msg))) {
-    return 'AI 响应超时了，请稍后再试。';
+  var code = err && err.data && err.data.error && err.data.error.code;
+  // 未配置 Provider：明确告知 AI 暂未启用，同时指出页面数据分析仍然可用
+  if (code === 'AI_NOT_CONFIGURED') {
+    return 'AI 教练暂未启用，当前仍可以查看你的数据分析。';
   }
-  if (/Failed to fetch|NetworkError|网络/i.test(msg)) {
-    return '网络不太顺畅，暂时连不上 AI 教练。请检查网络后再试。';
+  if (err && (err.name === 'AbortError' || /abort/i.test(msg))) {
+    return 'AI 响应超时，请稍后再试。';
+  }
+  if (/Failed to fetch|NetworkError|网络/i.test(msg) || (err && Number(err.status) === 0)) {
+    return '暂时无法连接 AI 服务，请检查网络后重试。';
+  }
+  if (err && Number(err.status) === 429) {
+    return 'AI 当前请求较多，请稍后再试。';
   }
   // 4xx 的 message 来自后端，本身就是面向用户的中文文案，可安全展示；
   // 5xx / 未知错误一律给通用文案，避免透出内部信息（纵深防御）
   if (err && Number(err.status) >= 500) {
-    return 'AI 教练暂时不可用，请稍后再试。';
+    return 'AI 服务暂时不可用，请稍后再试。';
   }
-  return msg ? ('AI 教练暂时不可用：' + msg) : 'AI 教练暂时不可用，请稍后再试。';
+  if (err && Number(err.status) >= 400 && msg) {
+    return 'AI 教练暂时不可用：' + msg;
+  }
+  return 'AI 教练暂时不可用，请稍后再试。';
 }
 
 function setBusy(on) {
@@ -348,7 +359,8 @@ function sendMessage(text) {
   } catch (e) {
     // apiClient 加载/执行异常：清掉 typing 气泡、解锁，不卡死界面
     typing.remove();
-    appendSystem(friendlyAIError(e));
+    var m0 = friendlyAIError(e);
+    appendSystem(m0 + (m0.indexOf('仍可以查看') > -1 ? '' : '页面下方的数据分析仍然有效。'));
     setBusy(false);
     return;
   }
@@ -375,7 +387,9 @@ function sendMessage(text) {
     setBusy(false);
   }).catch(function (err) {
     typing.remove();
-    appendSystem(friendlyAIError(err));
+    var m = friendlyAIError(err);
+    // 降级引导：失败时指出页面数据分析仍然有效，而不是让整页看起来「坏了」
+    appendSystem(m + (m.indexOf('仍可以查看') > -1 ? '' : '页面下方的数据分析仍然有效。'));
     recordUser();   // 失败也入历史，保持 UI 与历史一致
     setBusy(false);
   });

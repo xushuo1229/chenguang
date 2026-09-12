@@ -646,8 +646,8 @@ import CourseSchedule from '../js/courseSchedule.js';
           '</div>' +
           '<div class="item-bar"><div class="item-bar-fill" style="width:' + pct + '%;"></div></div>' +
           '<div class="item-pct" style="color:' + (pct >= 100 ? '#22c55e' : '#f5b042') + ';">' + pct + '%</div>' +
-          '<button class="item-btn edit" data-edit-course="' + c.id + '">✏️</button>' +
-          '<button class="item-btn del" data-del-course="' + c.id + '">🗑</button>';
+          '<button class="item-btn edit" data-edit-course="' + c.id + '" aria-label="编辑课程">✏️</button>' +
+          '<button class="item-btn del" data-del-course="' + c.id + '" aria-label="删除课程">🗑</button>';
         host.appendChild(row);
       });
     }
@@ -675,8 +675,8 @@ import CourseSchedule from '../js/courseSchedule.js';
           '</div>' +
           '<div class="item-bar"><div class="item-bar-fill" style="width:' + pct + '%;"></div></div>' +
           '<div class="item-pct" style="color:' + (pct >= 100 ? '#22c55e' : '#f5b042') + ';">' + pct + '%</div>' +
-          '<button class="item-btn edit" data-edit-book="' + b.id + '">✏️</button>' +
-          '<button class="item-btn del" data-del-book="' + b.id + '">🗑</button>';
+          '<button class="item-btn edit" data-edit-book="' + b.id + '" aria-label="编辑书籍">✏️</button>' +
+          '<button class="item-btn del" data-del-book="' + b.id + '" aria-label="删除书籍">🗑</button>';
         host.appendChild(row);
       });
     }
@@ -699,7 +699,7 @@ import CourseSchedule from '../js/courseSchedule.js';
             '<div class="item-title">🏃 ' + esc(s.name) + '</div>' +
             '<div class="item-sub">' + (s.date || '') + ' · ' + (s.calories || 0) + ' 千卡 · ' + (s.duration || 0) + ' 分钟</div>' +
           '</div>' +
-          '<button class="item-btn del" data-del-sport="' + s.id + '">🗑</button>';
+          '<button class="item-btn del" data-del-sport="' + s.id + '" aria-label="删除运动记录">🗑</button>';
         host.appendChild(row);
       });
     }
@@ -722,7 +722,7 @@ import CourseSchedule from '../js/courseSchedule.js';
             '<div class="item-title">🗣️ ' + (r.words || 0) + ' 词 · ' + (r.minutes || 0) + ' 分钟</div>' +
             '<div class="item-sub">' + (r.date || '') + '</div>' +
           '</div>' +
-          '<button class="item-btn del" data-del-english="' + r.id + '">🗑</button>';
+          '<button class="item-btn del" data-del-english="' + r.id + '" aria-label="删除英语记录">🗑</button>';
         host.appendChild(row);
       });
     }
@@ -745,7 +745,7 @@ import CourseSchedule from '../js/courseSchedule.js';
             '<div class="item-title">⏳ ' + (f.minutes || 0) + ' 分钟' + (f.task ? ' · ' + esc(f.task) : '') + '</div>' +
             '<div class="item-sub">' + (f.date || '') + '</div>' +
           '</div>' +
-          '<button class="item-btn del" data-del-focus="' + f.id + '">🗑</button>';
+          '<button class="item-btn del" data-del-focus="' + f.id + '" aria-label="删除专注记录">🗑</button>';
         host.appendChild(row);
       });
     }
@@ -766,7 +766,7 @@ import CourseSchedule from '../js/courseSchedule.js';
         row.innerHTML =
           '<div class="t-check' + (t.done ? ' checked' : '') + '" data-toggle-todo="' + t.id + '" title="点击切换完成">' + (t.done ? '✓' : '') + '</div>' +
           '<div class="t-text">' + esc(t.text) + '</div>' +
-          '<button class="item-btn del" data-del-todo="' + t.id + '" title="删除">🗑</button>';
+          '<button class="item-btn del" data-del-todo="' + t.id + '" title="删除" aria-label="删除待办">🗑</button>';
         host.appendChild(row);
       });
     }
@@ -1017,10 +1017,12 @@ import CourseSchedule from '../js/courseSchedule.js';
       payload.courseType = meta.courseType;
       payload.notes = meta.notes;
       if (meta.semester) payload.semester = meta.semester;
+      // 同名课程允许存在（可能是不同班次/老师），但要让用户知道不是误操作
+      var isDupName = Store.get().courses.some(function (c) { return c.name === name; });
       Store.addCourse(payload);
       updateUI();
       closeModal('modalAddCourse');
-      toast('✅ 课程已添加：' + name, 'success');
+      toast(isDupName ? '已存在同名课程，本次已作为新的班次添加。' : '✅ 课程已添加：' + name, 'success');
     });
 
     // 导入课表：通过链接抓取并解析课程，按名称去重合并进 Store
