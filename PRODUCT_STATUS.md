@@ -2,12 +2,14 @@
 
 > 更新：2026-09-12 · Autonomous CTO 维护
 
-## 当前状态：Release Candidate · CONDITIONAL GO（≈85/100）
+## 当前状态：PRODUCTION READY（核心产品）· 两个代码外条件待满足
 
-- 基线链：`7fdd6c6` → `47eed64`（Phase 14 每日目标语义）→ `89364ee`（P0 同步白名单）→ `f55cbcd`（Phase 15 移动端 + P0 仪表盘绑定）→ `2d1c5b6`（Phase 16 移动端交互加固）
+- 裁决（2026-09-12，三方交叉验收 14/15/16 零漏网）：核心产品 PRODUCTION READY；
+  条件项 = AI_API_KEY（用户提供）+ 真机走查（环境），均为代码外依赖
+- 基线链：`7fdd6c6` → `47eed64`（Phase 14 每日目标语义）→ `89364ee`（P0 同步白名单）→ `f55cbcd`（Phase 15 移动端 + P0 仪表盘绑定）→ `2d1c5b6`（Phase 16 移动端交互加固）→ `39695ef`（最终裁决）
 - 测试：前端 **276/276** · 后端 **51/51** · Build **PASS**
 - P0 = 0（均修复并独立复验）· P1 = 1（仅外部依赖 AI Key）· P2 = 0（Phase 16 清零）
-- 详见 [FINAL_ACCEPTANCE_REPORT.md](FINAL_ACCEPTANCE_REPORT.md) §16
+- 详见 [FINAL_ACCEPTANCE_REPORT.md](FINAL_ACCEPTANCE_REPORT.md)
 
 ## 已交付能力
 | 模块 | 状态 |
@@ -26,4 +28,5 @@
 - **AI_API_KEY**：配置到 backend 环境变量即可启用真实模型；前端/后端适配与降级已全部就绪。
 
 ## 不再做的事
-- 不为 Phase 数量堆功能；下一阶段仅当 P0/P1 出现或用户反馈驱动。
+- 停止制造 Phase：候选项已全部收口或依赖外部输入。
+- 后续触发条件：① 用户配置 AI_API_KEY → 做 AI 真实验证；② 真机/用户反馈出现 P0/P1 → 重开修复轮。
