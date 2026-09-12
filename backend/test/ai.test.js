@@ -213,6 +213,26 @@ describe('coachChat', () => {
     await assert.rejects(() => aiService.coachChat({ message: 'hi', context: CONTEXT }), /超时/);
   });
 
+  test('模型/鉴权配置错误 → 统一不可用文案，零运维语言（.env/backend/Key 不出后端）', async () => {
+    const cases = [
+      { status: 404, body: JSON.stringify({ error: { code: 'ModelNotFound' } }) },
+      { status: 403, body: JSON.stringify({ error: { code: 'Unauthorized' } }) },
+      { status: 400, body: JSON.stringify({ error: { code: 'ModelNotOpen' } }) },
+    ];
+    for (const c of cases) {
+      globalThis.fetch = async () => ({ ok: false, status: c.status, text: async () => c.body });
+      await assert.rejects(
+        () => aiService.coachChat({ message: 'hi', context: CONTEXT }),
+        (err) => {
+          assert.ok(err instanceof ApiError);
+          assert.match(err.message, /AI 教练暂时不可用/);
+          assert.ok(!/\.env|后端|API ?Key|控制台|base[_ ]?url/i.test(err.message), '用户文案不得含运维语言: ' + err.message);
+          return true;
+        }
+      );
+    }
+  });
+
   test('未配置 Key → AI_NOT_CONFIGURED 且不触发 fetch', async () => {
     const saved = process.env.AI_API_KEY;
     const config = require('../src/config/env');
