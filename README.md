@@ -143,7 +143,7 @@ npm test
 
 - 后端：设置强随机 `JWT_SECRET` 环境变量；SQLite 适合个人/小团队，高并发可换 PostgreSQL。
 - 前端：可部署到任意静态托管（GitHub Pages / CloudStudio / Nginx）。
-- AI：在 `backend/.env` 设置 `AI_API_KEY`（如 DeepSeek），可选 `AI_BASE_URL` / `AI_MODEL` / `AI_TIMEOUT_MS`；Key 只存后端，绝不下发浏览器。
+- AI：在 `backend/.env` 设置 `AI_API_KEY`，可选 `AI_BASE_URL` / `AI_MODEL` / `AI_TIMEOUT_MS`；Key 只存后端，绝不下发浏览器。支持任意 OpenAI 兼容服务：普通按量付费（如 DeepSeek，基址 `https://api.deepseek.com/v1`）或火山方舟 Coding Plan（基址 `https://ark.cn-beijing.volces.com/api/coding/v3`，模型名如 `glm-5.3-flash`）。
 - 课表导入（链接方式）：仅接受 `http/https` URL，默认 15s 超时、2MB 响应体上限、10 次/分钟限流（防被当 SSRF 代理刷外网），相关参数见 `IMPORT_*` 环境变量。
 - `chenguang.db` 是用户数据，请在 `.gitignore` 排除并定期备份。
 

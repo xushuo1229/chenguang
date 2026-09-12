@@ -56,9 +56,30 @@ async function chatCompletion(p) {
     });
 
     if (!res.ok) {
-      // 只透出状态码，不透出上游响应体（其中可能包含密钥/内部信息）
-      await res.text().catch(() => '');
-      throw ApiError.badRequest('AI_UPSTREAM_ERROR', `AI 服务暂时不可用（HTTP ${res.status}）`);
+      // 只透出状态码与可信的错误分类，绝不透出上游响应体（其中可能包含密钥/内部信息）
+      let upstreamCode = '';
+      try {
+        const body = await res.text();
+        const parsed = JSON.parse(body);
+        if (parsed && typeof parsed.error === 'object' && typeof parsed.error.code === 'string') {
+          upstreamCode = parsed.error.code;
+        }
+      } catch (_) { /* 非 JSON 或空 → 按状态码兜底 */ }
+
+      const http = Number(res.status) || 0;
+      // 模型相关配置错误：给用户可直接行动的中文文案（不暴露响应体）
+      if (/ModelNotOpen|not.*activated|model.*not.*open/i.test(upstreamCode)) {
+        throw ApiError.internal('AI_MODEL_NOT_OPEN', '当前模型未在模型服务商开通，请到控制台开通后重试');
+      }
+      if (/InvalidEndpoint|NotFound|ModelNotFound|UnsupportedModel/i.test(upstreamCode)) {
+        throw ApiError.internal('AI_MODEL_NOT_FOUND', 'AI 模型配置不正确，请检查后端 .env 的 AI_MODEL / AI_BASE_URL');
+      }
+      // 认证失败：绝不知晓密钥内容，只引导检查配置
+      if (http === 401 || http === 403 || /Unauthorized|InvalidApiKey|AuthError/i.test(upstreamCode)) {
+        throw ApiError.internal('AI_UNAUTHORIZED', 'AI 服务鉴权失败，请检查后端的 API Key 与套餐权限');
+      }
+      // 其余上游错误：统一兜底，不透出任何细节
+      throw ApiError.internal('AI_UPSTREAM_ERROR', `AI 服务暂时不可用（HTTP ${http}）`);
     }
 
     const data = await res.json();
