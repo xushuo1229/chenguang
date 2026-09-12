@@ -54,13 +54,34 @@
 
 ---
 
-## Phase 15 —— 候选（Phase 14 完成后重新评估，按当时状态取舍）
+## Phase 15 —— 移动端体验修复 + 工作台数据绑定 P0（✅ 已完成，commit f55cbcd）
 
-- **A. AI Provider 真实验证**（依赖用户提供 Key）：真实模型下验证 prompt 质量、超时、限流、成本可控。
-- **B. 次日回访体验**：首次打开第二天的空状态/引导是否给出「回来理由」（数据已在 Analytics 中，纯 UI 层）。
-- **C. 移动端真机走查**：375/390 宽度下 5 条核心路径实机确认（V2 仅静态+jsdom 验证）。
+**范围与结果**（三方会话协作：0b 移动端审计 → 本会话实施 → d2 后端线 + RC）：
+1. P1 输入框字号 ≥16px 全站 8 处（iOS 聚焦强制放大）
+2. P1 index 375px 顶栏 CTA 裁切 + viewport maximum-scale 移除
+3. P1 AI 页 iOS 键盘遮挡（100dvh + visualViewport --vvh）
+4. **P0 工作台数据绑定失效**：dom.js setText 只支持选择器而 workbench 36 处用裸 id →
+   今日仪表盘/成长面板/我的页从未被 JS 更新。setText 兼容裸 id（先 getElementById 再 querySelector）。
+5. P2 成长面板连续打卡复用 Analytics.getStreaks（旧 continuousDays 字段无写入口）
 
-若 Phase 14 后全量验收 ≥80 且无 P0/P1，则进入 Release Candidate 最终验收，不再制造新 Phase。
+回归：前端 271/271 · 后端 51/51 · Build PASS。
+
+---
+
+## Phase 16 —— 候选（重新评估后取舍，不为数量堆功能）
+
+- **A. AI Provider 真实验证**（依赖用户提供 AI_API_KEY，仍为唯一外部依赖 P1）
+- **B. 触控目标 ≥40px + modal 滚动锁/热力图触屏兜底**（0b 审计 P2 项 4/5，纯 CSS/交互层）
+- **C. 移动端真机走查**（静态审计已完成，真机仍 UNVERIFIED）
+
+若上述全部收口且无新 P0/P1，进入 **Release Candidate 最终验收**，宣布 PRODUCTION READY 或按发现重开一轮。
+
+---
+
+## 遗留技术债（TECH_DEBT.md 同步维护）
+- visualViewport 方案在 iOS <16.4 无 dvh 时已由 --vvh JS 兜底覆盖；极老浏览器回退 100vh（键盘仍可能遮挡，可接受）。
+- 触控目标 <40px、modal 打开缺滚动锁、热力图 tooltip 仅 hover：Phase 16 候选 B。
+- workbench 旧字段 totalDays/continuousDays 为 Phase 8 前遗留，后端保持兼容不写入，真实值一律走 Analytics。
 
 ---
 
