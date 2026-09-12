@@ -102,7 +102,16 @@ describe('validateGoal', () => {
 
 /* ==================== 2. 周期范围 ==================== */
 describe('goalRange', () => {
-  test('daily → 单日', () => {
+  test('daily → 循环评估「今天」：start 已过 → [today,today]', () => {
+    // V2 修复：每日目标不再只评估 startDate（否则第二天即误判过期）
+    const r = GoalEngine.goalRange({ period: 'daily', startDate: '2026-09-01', endDate: '2026-12-31' }, { today: TODAY });
+    expect(r).toEqual([TODAY, TODAY]);
+  });
+  test('daily → 未到开始日 → 评估开始日当天', () => {
+    const r = GoalEngine.goalRange({ period: 'daily', startDate: '2026-09-20', endDate: '2026-12-31' }, { today: TODAY });
+    expect(r).toEqual(['2026-09-20', '2026-09-20']);
+  });
+  test('daily → 无 opts.today 时回退 startDate（兼容旧调用方）', () => {
     const r = GoalEngine.goalRange({ period: 'daily', startDate: TODAY, endDate: TODAY });
     expect(r).toEqual([TODAY, TODAY]);
   });
@@ -206,16 +215,16 @@ describe('computeGoalsProgress 各指标', () => {
   });
 });
 
-/* ==================== 6. 每日目标语义 ==================== */
-describe('daily 目标是单日，不从创建日累计', () => {
-  test('只计 startDate 当天，前一天数据不计入', () => {
+/* ==================== 6. 每日目标语义（循环评估） ==================== */
+describe('daily 目标循环评估：每天独立计算，不从创建日累计', () => {
+  test('只计「今天」，前一天数据不计入', () => {
     const data = seed();
-    // 前一天 09-11 有 500 分钟专注，但 daily 目标只评估 09-12 当天
+    // 前一天 09-11 有 500 分钟专注，但 daily 目标只评估今天 09-12
     data.focus.push({ id: 'xx', date: '2026-09-11', minutes: 500 });
     const p = GoalEngine.getGoalProgress(
-      weeklyGoal({ period: 'daily', startDate: TODAY, endDate: TODAY, type: 'focus', targetValue: 600 }),
+      weeklyGoal({ period: 'daily', startDate: '2026-09-11', endDate: '2026-12-31', type: 'focus', targetValue: 600 }),
       data, { today: TODAY });
-    expect(p.currentValue).toBe(0); // 09-12 无专注
+    expect(p.currentValue).toBe(0); // 今天无专注
     expect(p.percentage).toBe(0);
   });
   test('当天有记录 → 计入', () => {
@@ -226,6 +235,26 @@ describe('daily 目标是单日，不从创建日累计', () => {
       data, { today: TODAY });
     expect(p.currentValue).toBe(60);
     expect(p.isComplete).toBe(true);
+  });
+  test('V2 修复回归：昨天创建的每日目标，今天仍在进行中（不误判已过期）', () => {
+    // 复现路径（V2 发现）：Goals → 新建目标 → 周期选「每日」→ 第二天打开
+    // 修复前：目标落入「已过期」桶；修复后：循环评估今天，状态 active
+    const data = seed();
+    data.focus.push({ id: 'y1', date: '2026-09-11', minutes: 120 }); // 昨天达成 120/120
+    const p = GoalEngine.getGoalProgress(
+      weeklyGoal({ period: 'daily', startDate: '2026-09-11', endDate: '2026-12-31', type: 'focus', targetValue: 120 }),
+      data, { today: TODAY });
+    expect(p.status).toBe('active');          // 今天还没做 → active，绝不 expired
+    expect(p.currentValue).toBe(0);           // 只评估今天，不背昨天的账
+    expect(p.isExpired).toBe(false);
+  });
+  test('未到开始日：daily 目标 active，不提前用今天的数据', () => {
+    const data = seed();
+    const p = GoalEngine.getGoalProgress(
+      weeklyGoal({ period: 'daily', startDate: '2026-09-20', endDate: '2026-12-31', type: 'focus', targetValue: 60 }),
+      seed(), { today: TODAY });
+    expect(p.status).toBe('active');
+    expect(p.currentValue).toBe(0);
   });
 });
 

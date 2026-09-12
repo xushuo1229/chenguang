@@ -136,13 +136,18 @@ function validateGoal(def) {
  */
 function goalRange(g, opts) {
   g = g || {};
+  opts = opts || {};
   var s = String(g.startDate || '');
   var e = String(g.endDate || '');
   if (!isValidDateStr(s)) return null;
   switch (g.period) {
     case 'daily':
-      // 单日周期：评估「startDate 那一天」，不从创建日累计到今天（§44）
-      return [s, s];
+      // 每日目标：循环评估「今天」单独一天，绝不从创建日累计到今天（§44 不累计原则保留）。
+      // 未到开始日则评估开始日当天。
+      // （V2 验收修复：此前只评估 startDate 单日，导致「每天学习 2 小时」这类
+      //  最常见目标第二天就被误判为「已过期」，与用户预期「每天重来」冲突。）
+      var d = (isValidDateStr(opts.today) && s <= opts.today) ? opts.today : s;
+      return [d, d];
     case 'weekly':
       return Analytics.thisWeek(s);        // [周一, 周日] 含 startDate 所在周
     case 'monthly':

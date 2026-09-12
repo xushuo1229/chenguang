@@ -137,6 +137,20 @@ test('洞察：已达成目标不出现在 active，也不触发风险', async (
   expect(ctx.insights.find((i) => i.type === 'goal_risk' && i.goalId === 'g3')).toBeUndefined();
 });
 
+test('V2 修复回归：每日目标（今天刚开始、进度 0）不触发「剩余时间不足」误报', async () => {
+  const { store, AIContext } = await boot(seedData());
+  const snap = store.get();
+  // 昨天创建的每日目标，今天 0 进度：daysRemaining=0，修复前会被误判 high 风险
+  snap.goals.push({
+    id: 'gd', title: '每天背 50 词', type: 'english', metric: 'words', targetValue: 50,
+    period: 'daily', startDate: day(-1), endDate: day(300), status: 'active',
+    createdAt: 'x', updatedAt: 'x',
+  });
+  const ctx = AIContext.buildContext(snap, { today: TODAY });
+  expect(ctx.goals.active.find((p) => p.id === 'gd')).toBeTruthy();   // 在进行中
+  expect(ctx.insights.find((i) => i.type === 'goal_risk' && i.goalId === 'gd')).toBeUndefined();
+});
+
 test('洞察：连续打卡 ≥3 天 → strong_habit', async () => {
   const { store, AIContext } = await boot(seedData());
   // 补足 3 天连续打卡

@@ -334,6 +334,7 @@ function buildInsights(buckets, info) {
   active.forEach(function (p) {
     if (!p || p.isComplete) return;
     var g = p.goal || {};
+    if (g.period === 'daily') return;   // 每日目标循环重算，没有「剩余时间不足」概念，不产生误报
     var pct = _num(p.percentage);
     var dr = _num(p.daysRemaining);
     var severity = null; var reason = '';

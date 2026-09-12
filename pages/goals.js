@@ -62,6 +62,7 @@ function dueText(p) {
   if (p.status === 'archived') return '已归档';   // 归档卡不计剩余天数，避免与徽标语义冲突
   if (p.isComplete) return '✓ 已完成';
   if (p.isExpired) return '已过期';
+  if (p.goal && p.goal.period === 'daily') return '每日重算';   // 每日目标循环评估，无「截止」概念
   var d = p.daysRemaining;
   if (d <= 0) return '今天截止';
   return '剩余 ' + d + ' 天';
@@ -114,7 +115,7 @@ function renderCard(p) {
       (over ? '<div class="goal-over">' + over + '</div>' : '') +
       '<div class="goal-foot">' +
         '<span>' + esc(remainingText) + '</span>' +
-        '<span class="goal-due' + ((p.status === 'active' && p.isComplete === false && p.daysRemaining <= 2 && p.daysRemaining >= 0) ? ' due-warn' : '') + '">' + esc(dueText(p)) + '</span>' +
+        '<span class="goal-due' + ((p.status === 'active' && p.isComplete === false && p.daysRemaining <= 2 && p.daysRemaining >= 0 && p.goal && p.goal.period !== 'daily') ? ' due-warn' : '') + '">' + esc(dueText(p)) + '</span>' +
       '</div>' +
       '<div class="goal-actions">' + actions + '</div>' +
     '</div>';
@@ -199,6 +200,26 @@ function setFormDefaults() {
   if ($('#gPeriod')) $('#gPeriod').value = 'weekly';
   if ($('#gTitle')) $('#gTitle').value = '';
   if ($('#gTarget')) $('#gTarget').value = '';
+  syncPeriodForm(true);
+}
+
+/* 周期 → 日期字段联动 + 人话提示。
+   每日目标每天重新计算，把日期固定为今天，避免「开始日期还是周一」的误导。 */
+var PERIOD_HINTS = {
+  daily: '每日目标每天重新计算：今天做了就算今天达标，不累计历史数据',
+  weekly: '每周目标按周一至周日计算 · 自定义周期最长两年',
+  monthly: '每月目标按自然月计算（1 日至月末）',
+  custom: '自定义周期最长两年'
+};
+function syncPeriodForm(updateDates) {
+  var period = ($('#gPeriod') && $('#gPeriod').value) || '';
+  var hint = $('#goalFormHint');
+  if (hint) hint.textContent = PERIOD_HINTS[period] || PERIOD_HINTS.custom;
+  if (updateDates && period === 'daily') {
+    var t = todayStr();
+    if ($('#gStart')) $('#gStart').value = t;
+    if ($('#gEnd')) $('#gEnd').value = t;
+  }
 }
 
 function resetFormError() { var el = $('#goalFormError'); if (el) el.textContent = ''; }
@@ -226,6 +247,7 @@ function openEditModal(goal) {
   if ($('#gPeriod')) $('#gPeriod').value = goal.period || 'custom';
   if ($('#gStart')) $('#gStart').value = goal.startDate || '';
   if ($('#gEnd')) $('#gEnd').value = goal.endDate || '';
+  syncPeriodForm(false);   // 编辑时不改日期，只刷新提示
   resetFormError();
   openModal('modalGoal');
 }
@@ -310,6 +332,9 @@ function setupEvents() {
 
   var typeSel = $('#gType');
   if (typeSel) typeSel.addEventListener('change', function () { populateMetricSelect(typeSel.value); });
+
+  var periodSel = $('#gPeriod');
+  if (periodSel) periodSel.addEventListener('change', function () { syncPeriodForm(true); });
 
   var submit = $('#goalSubmit'); if (submit) submit.addEventListener('click', submitForm);
 

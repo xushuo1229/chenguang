@@ -121,6 +121,23 @@ test('默认加载：4 区块渲染，进行中包含 active/completed，进度�
   expect(document.querySelector('#activeGrid .goal-current').textContent.replace(/\s/g, '')).toContain('120/600min');
 });
 
+test('V2 修复回归：昨天创建的每日目标显示在「进行中」并标注「每日重算」', async () => {
+  const data = seedData();
+  const today = dateStr(0);
+  data.goals = [{
+    id: 'd1', title: '每天学习 2 小时', type: 'focus', metric: 'minutes', targetValue: 120,
+    period: 'daily', startDate: dateOffset(today, -1), endDate: dateOffset(today, 300),
+    status: 'active', createdAt: 'x', updatedAt: 'x',
+  }];
+  await boot(data);
+  expect(document.getElementById('goalsDashboard').hidden).toBe(false);
+  expect(cardCount('activeGrid')).toBe(1);       // 绝不落入已过期
+  expect(cardCount('expiredGrid')).toBe(0);
+  const card = document.querySelector('#activeGrid .goal-card');
+  expect(card.textContent).toContain('每天学习 2 小时');
+  expect(card.textContent).toContain('每日重算');
+});
+
 /* ==================== 空数据 ==================== */
 
 test('空数据：显示空态面板，隐藏驾驶舱', async () => {
