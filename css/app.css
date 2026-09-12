@@ -100,8 +100,8 @@ body{
    ============================================================ */
 /* 按钮：继承字体，清除默认样式，手势操作优化 */
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;touch-action:manipulation}
-/* 表单元素：继承字体和颜色 */
-input,select,textarea{font-family:inherit;color:var(--text-1);font-size:14px}
+/* 表单元素：继承字体和颜色（字号 ≥16px 防 iOS 聚焦强制放大，Phase 15 P1） */
+input,select,textarea{font-family:inherit;color:var(--text-1);font-size:16px}
 /* 聚焦时去除默认轮廓线（后面会自定义聚焦样式） */
 input:focus,select:focus,textarea:focus{outline:none}
 /* 链接：琥珀色，无下划线，悬停时颜色变化 */

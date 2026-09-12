@@ -37,6 +37,8 @@ import '../js/sync.js';
 import { parseScheduleText } from '../js/scheduleTextParser.js';
 // 课程编排层（Phase 9）：归一化 / 今日课程 / 周课表 / 导入去重合并
 import CourseSchedule from '../js/courseSchedule.js';
+// 统计引擎（Phase 10）：成长面板的连续打卡复用唯一事实来源（Phase 15 修复）
+import Analytics from '../js/analytics.js';
 
   // ============================================================
   // IIFE（立即执行函数表达式）— 整个工作台的代码都在这里面
@@ -530,7 +532,7 @@ import CourseSchedule from '../js/courseSchedule.js';
         growthRate: courses.length ? Store.courseAvgProgress() : 0,
         growthFocus: focusAll,
         growthStudy: Store.getEnglish().reduce(function (s, x) { return s + (Number(x.minutes) || 0); }, 0),
-        growthStreak: (u.continuousDays || 0)
+        growthStreak: (Analytics.getStreaks().currentStreak || 0)   // 连续打卡：复用 Analytics 唯一口径（旧 continuousDays 字段从未被写入，恒 0）
       };
     }
 

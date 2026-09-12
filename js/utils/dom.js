@@ -80,11 +80,13 @@ function esc(s) {
 // 比如 setText(el, '<b>加粗</b>')，页面会直接显示 "<b>加粗</b>" 这几个字。
 //
 // 参数：
-//   sel - CSS 选择器字符串，或者 DOM 元素对象
+//   sel - CSS 选择器字符串（'#msg' / '.cls'），或 DOM 元素对象，
+//         也兼容裸 id（'msg'）——workbench 等页大量使用裸 id 调用，
+//         此前会被当作类型选择器而静默失效，导致仪表盘数字冻结（Phase 15 P0 修复）
 //   val - 要显示的文本内容
 function setText(sel, val) {
-  // 判断 sel 是字符串选择器还是 DOM 元素
-  var el = typeof sel === 'string' ? $(sel) : sel;
+  // 字符串：先按 id 精确匹配（裸 id 调用），再回退 CSS 选择器；非字符串按 DOM 元素处理
+  var el = typeof sel === 'string' ? (document.getElementById(sel) || $(sel)) : sel;
   // 找到元素后，用 textContent 设置文本（textContent 是纯文本，不会解析 HTML）
   if (el) el.textContent = val != null ? val : '';
 }

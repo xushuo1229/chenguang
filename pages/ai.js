@@ -456,6 +456,17 @@ if (checkAuth()) {
   loadHistory();
 }
 
+/* visualViewport 高度 → --vvh：iOS 键盘弹出时视口缩小，
+   .main 用它做实时高度，聊天输入框不被软键盘遮挡（Phase 15 P1；dvh 不支持的旧 iOS 也覆盖） */
+if (window.visualViewport) {
+  var vv = window.visualViewport;
+  var applyVVH = function () {
+    document.documentElement.style.setProperty('--vvh', vv.height + 'px');
+  };
+  vv.addEventListener('resize', applyVVH);
+  applyVVH();
+}
+
 /* 注册 Service Worker（仅 http(s) 环境） */
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   window.addEventListener('load', function () {

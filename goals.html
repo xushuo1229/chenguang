@@ -129,7 +129,7 @@
     .form-row label { font-size: 0.8rem; font-weight: 600; color: var(--text-dark); }
     .form-row input, .form-row select {
       background: var(--bg-input); color: var(--text-hi); border: 1px solid var(--border-strong);
-      border-radius: var(--radius-sm); padding: 8px 10px; font-size: 0.85rem; font-family: inherit;
+      border-radius: var(--radius-sm); padding: 8px 10px; font-size: 16px; font-family: inherit; /* ≥16px 防 iOS 聚焦放大 */
     }
     .form-row input:focus, .form-row select:focus { border-color: var(--brand-amber); outline: none; }
     .form-error { color: var(--danger, #c4452e); font-size: 0.78rem; min-height: 1em; margin-top: 2px; }

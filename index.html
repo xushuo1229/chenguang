@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>晨光自律台 · 把坚持变成习惯</title>
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/variables.css">
@@ -92,6 +92,11 @@
       .pain-grid, .solution-grid, .why-grid { grid-template-columns: 1fr; }
       .hero-actions .btn-primary, .hero-actions .btn-outline { width: 100%; justify-content: center; }
       .results-numbers { flex-direction: column; align-items: center; gap: 12px; }
+      /* 375px 顶栏不再溢出：logo + 登录 + 免费注册 需容纳在窄屏内（Phase 15 P1） */
+      .topbar-inner { padding: 10px 12px; gap: 10px; }
+      .topbar .logo { font-size: 1rem; }
+      .topbar-actions { gap: 8px; margin-left: auto; }
+      .topbar-actions .btn-outline, .topbar-actions .btn-primary { padding: 8px 14px; font-size: 0.875rem; }
     }
 
     /* 滚动入场动画 */
@@ -119,7 +124,7 @@
     .form-row { margin-bottom: 14px; }
     .form-row label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
     .form-row label .req { color: var(--brand-rose); margin-left: 2px; }
-    .form-row input { width: 100%; padding: 11px 14px; border-radius: var(--r-sm); border: 1px solid var(--border-strong); background: var(--bg-input); color: var(--text-hi); font-size: 13.5px; outline: none; transition: all .2s ease; font-family: inherit; }
+    .form-row input { width: 100%; padding: 11px 14px; border-radius: var(--r-sm); border: 1px solid var(--border-strong); background: var(--bg-input); color: var(--text-hi); font-size: 16px; outline: none; transition: all .2s ease; font-family: inherit; }
     .form-row input:focus { border-color: var(--brand-amber); box-shadow: 0 0 0 3px var(--brand-amber-weak); }
     .form-row input.err { border-color: var(--brand-rose); box-shadow: 0 0 0 3px var(--danger-light); }
     .hint { font-size: 11.5px; color: var(--text-muted); margin-top: 4px; min-height: 14px; }

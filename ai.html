@@ -13,15 +13,19 @@
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/shared.css">
   <style>
-    body { display: flex; min-height: 100vh; overflow: hidden; }
+    body { display: flex; min-height: 100vh; min-height: 100dvh; overflow: hidden; }
 
     /* ===== 主内容区 ===== */
+    /* height 用 --vvh（visualViewport 实时高度，pages/ai.js 维护）：
+       iOS 键盘弹出时视口缩小，聊天输入框不被遮挡；老浏览器回退 100dvh/100vh（Phase 15 P1） */
     .main {
       flex: 1;
       display: flex;
       flex-direction: column;
       max-width: 100%;
       height: 100vh;
+      height: 100dvh;
+      height: var(--vvh, 100dvh);
       overflow: hidden;
     }
 
@@ -390,7 +394,7 @@
       flex: 1;
       border: none;
       outline: none;
-      font-size: 14px;
+      font-size: 16px; /* ≥16px 防 iOS 聚焦放大（Phase 15 P1） */
       background: transparent;
       color: var(--text-dark);
       resize: none;

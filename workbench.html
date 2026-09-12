@@ -452,7 +452,7 @@
     .modal-body .form-row select {
       width: 100%; padding: 10px 14px;
       border: 1.5px solid rgba(232,168,92,0.15); border-radius: 10px;
-      font-size: .9rem; color: var(--text-hi);
+      font-size: 16px; color: var(--text-hi); /* ≥16px 防 iOS 聚焦放大（Phase 15 P1） */
       transition: .2s; background: var(--bg-card);
     }
     .modal-body .form-row input:focus,
@@ -727,7 +727,7 @@
     .btn-wb.danger:hover { background: rgba(232,121,111,0.1); transform: none; }
     .wb-select {
       padding: 8px 14px; border-radius: 10px; border: 1.5px solid rgba(232,168,92,0.15);
-      font-size: .85rem; color: var(--text-hi); background: var(--bg-card); cursor: pointer;
+      font-size: 16px; color: var(--text-hi); background: var(--bg-card); cursor: pointer; /* ≥16px 防 iOS 聚焦放大 */
     }
     /* 课程视图 */
     .cv-item {
