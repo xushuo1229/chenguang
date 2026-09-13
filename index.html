@@ -190,6 +190,7 @@
   </style>
   <link rel="stylesheet" href="/calm-dawn-pro.css">
   <link rel="stylesheet" href="/calm-dawn-fusion.css">
+  <link rel="stylesheet" href="/calm-dawn-1to1.css">
 </head>
 <body data-theme="fusion">
   <!-- 顶部导航 -->
@@ -224,6 +225,7 @@
         <button type="button" class="btn btn-primary" data-action="register">免费开始记录</button>
         <a href="#solution" class="btn btn-outline">先了解核心能力</a>
       </div>
+      <img class="hero-illustration" src="/design/illus-growth.svg" alt="">
     </section>
 
     <!-- ====== 核心能力（六类真实功能 · 登录后显示你的真实数据） ====== -->
@@ -235,24 +237,10 @@
       <div class="feature-grid">
 
         <!-- 每日运动 -->
-        <div class="feature-card fc-amber" data-feature="sports">
-          <div class="fc-head">
-            <div class="fc-main"><span class="fc-emoji"><i class="fas fa-person-running"></i></span><h4 class="fc-title">每日运动</h4></div>
-            <span class="feature-count">0 条</span>
-          </div>
-          <p class="feature-desc">记录每日运动数据，卡路里消耗、时长追踪</p>
-          <div class="feature-stats">
-            <span>本周 <strong class="weekly-count">0</strong> 次</span>
-            <span>今日 <strong class="today-count">0</strong> 分钟</span>
-          </div>
-          <button class="feature-action">记录运动</button>
-        </div>
-
-        <!-- 课程学习 -->
         <div class="feature-card fc-teal" data-feature="courses">
           <div class="fc-head">
-            <div class="fc-main"><span class="fc-emoji"><i class="fas fa-graduation-cap"></i></span><h4 class="fc-title">课程学习</h4></div>
-            <span class="feature-count">0 门</span>
+            <div class="fc-main"><span class="fc-emoji"><i class="fas fa-person-running"></i></span><h4 class="fc-title">运动</h4></div>
+            <span class="feature-count">0 条</span>
           </div>
           <p class="feature-desc">管理学习课程，追踪学习进度和完成率</p>
           <div class="feature-stats">
@@ -262,10 +250,24 @@
           <button class="feature-action">管理课程</button>
         </div>
 
+        <!-- 每日运动 -->
+        <div class="feature-card fc-amber" data-feature="sports">
+          <div class="fc-head">
+            <div class="fc-main"><span class="fc-emoji"><i class="fas fa-graduation-cap"></i></span><h4 class="fc-title">学习</h4></div>
+            <span class="feature-count">0 门</span>
+          </div>
+          <p class="feature-desc">记录每日运动数据，卡路里消耗、时长追踪</p>
+          <div class="feature-stats">
+            <span>本周 <strong class="weekly-count">0</strong> 次</span>
+            <span>今日 <strong class="today-count">0</strong> 分钟</span>
+          </div>
+          <button class="feature-action">记录运动</button>
+        </div>
+
         <!-- 每日阅读 -->
         <div class="feature-card fc-sky" data-feature="readings">
           <div class="fc-head">
-            <div class="fc-main"><span class="fc-emoji"><i class="fas fa-book"></i></span><h4 class="fc-title">每日阅读</h4></div>
+            <div class="fc-main"><span class="fc-emoji"><i class="fas fa-book"></i></span><h4 class="fc-title">阅读</h4></div>
             <span class="feature-count">0 本</span>
           </div>
           <p class="feature-desc">记录阅读进度，追踪阅读页数和书籍</p>
@@ -291,10 +293,24 @@
         </div>
 
         <!-- 深度专注 -->
+        <div class="feature-card fc-amber" data-feature="checkins">
+          <div class="fc-head">
+            <div class="fc-main"><span class="fc-emoji"><i class="fas fa-stopwatch"></i></span><h4 class="fc-title">专注</h4></div>
+            <span class="feature-count">0 次</span>
+          </div>
+          <p class="feature-desc">查看连续打卡记录和成长轨迹</p>
+          <div class="feature-stats">
+            <span>连续 <strong class="max-streak">0</strong> 天</span>
+            <span>总计 <strong class="total-checkins">0</strong> 天</span>
+          </div>
+          <button class="feature-action">查看详情</button>
+        </div>
+
+        <!-- 深度专注 -->
         <div class="feature-card fc-rose" data-feature="focus">
           <div class="fc-head">
-            <div class="fc-main"><span class="fc-emoji"><i class="fas fa-stopwatch"></i></span><h4 class="fc-title">深度专注</h4></div>
-            <span class="feature-count">0 次</span>
+            <div class="fc-main"><span class="fc-emoji"><i class="fas fa-bullseye"></i></span><h4 class="fc-title">目标</h4></div>
+            <span class="feature-count">0 天</span>
           </div>
           <p class="feature-desc">番茄钟专注计时，沉浸式学习体验</p>
           <div class="feature-stats">
@@ -304,19 +320,18 @@
           <button class="feature-action">开始专注</button>
         </div>
 
-        <!-- 打卡统计 -->
-        <div class="feature-card fc-amber" data-feature="checkins">
+        <a class="ai-coach-card" href="ai.html">
           <div class="fc-head">
-            <div class="fc-main"><span class="fc-emoji"><i class="fas fa-calendar-check"></i></span><h4 class="fc-title">打卡统计</h4></div>
-            <span class="feature-count">0 天</span>
+            <div class="fc-main"><span class="fc-emoji"><i class="fas fa-compass"></i></span><h4 class="fc-title">AI 教练</h4></div>
+            <span class="feature-count">成长伙伴</span>
           </div>
-          <p class="feature-desc">查看连续打卡记录和成长轨迹</p>
+          <p class="feature-desc">读懂数据趋势，给出每日洞察、风险提醒与下一步建议。</p>
           <div class="feature-stats">
-            <span>连续 <strong class="max-streak">0</strong> 天</span>
-            <span>总计 <strong class="total-checkins">0</strong> 天</span>
+            <span>洞察</span>
+            <span>建议</span>
           </div>
-          <button class="feature-action">查看详情</button>
-        </div>
+          <span class="feature-action">开始成长</span>
+        </a>
       </div>
     </section>
 

@@ -476,6 +476,7 @@
   </style>
   <link rel="stylesheet" href="/calm-dawn-pro.css">
   <link rel="stylesheet" href="/calm-dawn-fusion.css">
+  <link rel="stylesheet" href="/calm-dawn-1to1.css">
   </head>
 <body data-theme="fusion">
 
@@ -535,15 +536,28 @@
 
   <!-- ===== 教练仪表盘 ===== -->
   <div class="coach-layout" id="coachDashboard" hidden>
+    <section class="coach-col ai-persona-col" aria-label="AI 人格介绍">
+      <div class="coach-card ai-persona-card">
+        <div class="ai-persona-mark"><i class="fas fa-compass"></i></div>
+        <h2>成长伙伴</h2>
+        <p>你的长期成长教练。它理解你的学习、专注、运动和目标进度，只在真实数据上给洞察。</p>
+        <ul class="ai-persona-list">
+          <li><i class="fas fa-eye"></i>看见趋势与变化</li>
+          <li><i class="fas fa-shield-halved"></i>提前提示风险</li>
+          <li><i class="fas fa-arrow-right"></i>给出下一步行动</li>
+        </ul>
+      </div>
+    </section>
+
     <!-- 左列：状态面板 -->
-    <section class="coach-col" aria-label="数据分析">
+    <section class="coach-col ai-analysis" aria-label="成长分析">
       <div class="coach-card" id="cardToday">
-        <div class="coach-card-head"><i class="fas fa-sun"></i><h3>今日状态</h3></div>
+        <div class="coach-card-head"><i class="fas fa-sun"></i><h3>今日总结</h3></div>
         <div class="today-grid" id="todayGrid"><!-- JS 渲染 --></div>
       </div>
 
       <div class="coach-card" id="cardFindings">
-        <div class="coach-card-head"><i class="fas fa-magnifying-glass-chart"></i><h3>今日发现</h3></div>
+        <div class="coach-card-head"><i class="fas fa-magnifying-glass-chart"></i><h3>发现的问题</h3></div>
         <div class="insight-list" id="findingsList"><!-- JS 渲染 --></div>
       </div>
 
@@ -553,13 +567,13 @@
       </div>
 
       <div class="coach-card" id="cardAdvice">
-        <div class="coach-card-head"><i class="fas fa-lightbulb"></i><h3>AI 建议</h3></div>
+        <div class="coach-card-head"><i class="fas fa-lightbulb"></i><h3>下一步建议</h3></div>
         <div class="insight-list" id="adviceList"><!-- JS 渲染 --></div>
       </div>
     </section>
 
     <!-- 右列：AI 对话 -->
-    <section class="coach-col" aria-label="AI 对话">
+    <section class="coach-col ai-chat-col" aria-label="AI 对话">
       <div class="chat-col">
         <div class="quick-questions" role="group" aria-label="快捷问题">
           <button class="quick-q" data-q="我今天应该做什么？">🎯 我今天应该做什么？</button>

@@ -163,6 +163,7 @@
   </style>
   <link rel="stylesheet" href="/calm-dawn-pro.css">
   <link rel="stylesheet" href="/calm-dawn-fusion.css">
+  <link rel="stylesheet" href="/calm-dawn-1to1.css">
   </head>
 <body data-theme="fusion">
 
@@ -186,8 +187,8 @@
   <!-- 顶部栏 -->
   <div class="topbar">
     <div class="greeting">
-      <h2>我的成长目标 <span id="welcomeName"></span></h2>
-      <div class="date">把「想做到」变成「真做到」</div>
+      <h2>目标空间 <span id="welcomeName"></span></h2>
+      <div class="date">长期方向、阶段进度与下一步建议</div>
     </div>
     <div class="actions">
       <button class="btn-new" id="newGoalBtn" aria-label="新建目标"><i class="fas fa-plus"></i> 新建目标</button>
@@ -226,7 +227,7 @@
     <!-- 进行中 -->
     <section class="goals-section" id="secActive" aria-labelledby="activeTitle">
       <div class="section-head">
-        <h3 id="activeTitle"><i class="fas fa-fire"></i> 进行中</h3>
+        <h3 id="activeTitle"><i class="fas fa-fire"></i> 当前目标</h3>
         <span class="count" id="activeCount"></span>
       </div>
       <div class="goal-grid" id="activeGrid"></div>
@@ -235,7 +236,7 @@
     <!-- 已完成 -->
     <section class="goals-section" id="secCompleted" aria-labelledby="completedTitle">
       <div class="section-head">
-        <h3 id="completedTitle"><i class="fas fa-check-circle"></i> 已完成</h3>
+        <h3 id="completedTitle"><i class="fas fa-check-circle"></i> 完成轨迹</h3>
         <span class="count" id="completedCount"></span>
       </div>
       <div class="goal-grid" id="completedGrid"></div>
@@ -244,7 +245,7 @@
     <!-- 已过期 -->
     <section class="goals-section" id="secExpired" aria-labelledby="expiredTitle">
       <div class="section-head">
-        <h3 id="expiredTitle"><i class="fas fa-clock"></i> 已过期</h3>
+        <h3 id="expiredTitle"><i class="fas fa-clock"></i> 待复盘</h3>
         <span class="count" id="expiredCount"></span>
       </div>
       <div class="goal-grid" id="expiredGrid"></div>
@@ -253,7 +254,7 @@
     <!-- 已归档 -->
     <section class="goals-section" id="secArchived" aria-labelledby="archivedTitle">
       <div class="section-head">
-        <h3 id="archivedTitle"><i class="fas fa-archive"></i> 已归档</h3>
+        <h3 id="archivedTitle"><i class="fas fa-archive"></i> 长期沉淀</h3>
         <span class="count" id="archivedCount"></span>
       </div>
       <div class="goal-grid" id="archivedGrid"></div>
