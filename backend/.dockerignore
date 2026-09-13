@@ -1,0 +1,11 @@
+.env
+.env.*
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+node_modules
+logs
+test
+npm-debug.log*
+yarn-error.log*

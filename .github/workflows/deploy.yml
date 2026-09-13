@@ -1,15 +1,8 @@
 # ============================================================
 # 晨光自律台 · CI/CD 部署工作流
 # ------------------------------------------------------------
-# 触发条件: push 到 main 分支
-# 执行步骤:
-#   Job 1 (deploy-frontend): 前端静态文件 → GitHub Pages
-#   Job 2 (deploy-backend):  后端 Express → Vercel Serverless
-#
-# 前置准备 (GitHub 仓库 Settings → Secrets):
-#   VERCEL_TOKEN           — Vercel 账号 Token (vercel.com/account/tokens)
-#   VERCEL_ORG_ID          — Vercel 团队 ID (vercel.com dashboard → settings)
-#   VERCEL_PROJECT_ID      — Vercel 项目 ID (项目 settings → General)
+# 执行顺序: install → frontend test → backend test → build → deploy
+# 任一测试或构建失败时，needs 依赖会阻止后续部署。
 # ============================================================
 
 name: Deploy
@@ -17,10 +10,8 @@ name: Deploy
 on:
   push:
     branches: [main]
-  # 支持手动触发
   workflow_dispatch:
 
-# 同一时间只允许一个部署, 取消旧的
 concurrency:
   group: deploy-production
   cancel-in-progress: true
@@ -31,12 +22,63 @@ permissions:
   id-token: write
 
 jobs:
-  # ============================================================
-  # Job 1: 部署前端到 GitHub Pages
-  # ============================================================
+  quality:
+    name: Frontend / Backend Quality Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Run frontend tests
+        run: npm test
+
+      - name: Setup backend Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Run backend tests
+        run: npm test
+        working-directory: backend
+
+      - name: Build production frontend
+        run: npm run build
+
+      - name: Verify deployment artifacts
+        shell: bash
+        run: |
+          test -f dist/manifest.json
+          test -f dist/service-worker.js
+          ! grep -R "localhost" dist --include='*.html' --include='*.js' --include='*.json'
+
+      - name: Upload frontend build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist
+          retention-days: 1
+
   deploy-frontend:
     name: Deploy Frontend to GitHub Pages
     runs-on: ubuntu-latest
+    needs: quality
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -45,77 +87,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install build deps
-        run: npm install
-
-      - name: Build (压缩 HTML/CSS/JS)
-        run: npm run build
-
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload artifact (compressed files)
+      - name: Download frontend build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist
+
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # 从 dist/ 目录上传压缩后的静态文件
           path: dist
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
 
-  # ============================================================
-  # Job 2: 部署后端到 Vercel
-  # ============================================================
   deploy-backend:
-    name: Deploy Backend to Vercel
+    name: Deploy Backend to Render Persistent Disk
     runs-on: ubuntu-latest
-    needs: deploy-frontend
+    needs: quality
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: server/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-        working-directory: server
-
-      - name: Install Vercel CLI
-        run: npm i -g vercel@latest
-
-      - name: Pull Vercel environment (staging)
-        run: vercel pull --yes --environment=production --token=$VERCEL_TOKEN
-        working-directory: server
+      - name: Trigger Render deployment
+        run: curl --fail-with-body --show-error --request POST "$RENDER_DEPLOY_HOOK_URL"
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-      - name: Build (no build needed, but ensure link)
-        run: vercel build --prod --token=$VERCEL_TOKEN
-        working-directory: server
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-      - name: Deploy to Vercel (production)
-        run: vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
-        working-directory: server
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}

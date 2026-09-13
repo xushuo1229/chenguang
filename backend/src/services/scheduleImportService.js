@@ -22,11 +22,20 @@
  * - routes/scheduleImport.js 上的 importLimiter 负责频控（防被当 SSRF 代理刷外网）。
  */
 const cheerio = require('cheerio');
+const dns = require('dns').promises;
+const net = require('net');
 const config = require('../config/env');
 const ApiError = require('../utils/ApiError');
 
 // 允许的 URL 协议白名单
 const ALLOWED_PROTOCOLS = ['http:', 'https:'];
+
+// 课表导入最多允许的重定向次数；每次跳转都会重新做 SSRF 校验。
+const MAX_IMPORT_REDIRECTS = 5;
+
+// 常见内网专用域名后缀；课表导入只应访问公网教务系统。
+const INTERNAL_HOSTNAMES = new Set(['localhost', 'ip6-localhost', 'ip6-loopback']);
+const INTERNAL_HOST_SUFFIXES = ['.local', '.internal', '.localhost', '.home.arpa'];
 
 // 星期识别映射（文本 → 星期序号 0=周一 ... 6=周日）
 // 支持中文「周一/星期一/周一上午」与英文 Mon/Monday 等，逐条精确映射，
@@ -70,7 +79,150 @@ function validateUrl(url) {
   if (!ALLOWED_PROTOCOLS.includes(parsed.protocol)) {
     throw ApiError.badRequest('IMPORT_URL_PROTOCOL', '仅支持 http/https 课表链接');
   }
+  if (parsed.username || parsed.password) {
+    throw ApiError.badRequest('IMPORT_URL_CREDENTIALS', '课表链接不支持携带账号密码');
+  }
   return parsed.href;
+}
+
+/**
+ * 判断 IPv4 是否位于私有、回环、链路本地或保留网段。
+ */
+function isPrivateIpv4(ip) {
+  const parts = ip.split('.').map(Number);
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+    return false;
+  }
+  const [a, b] = parts;
+  return (
+    a === 0 ||
+    a === 10 ||
+    a === 127 ||
+    (a === 100 && b >= 64 && b <= 127) ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) ||
+    (a === 198 && (b === 18 || b === 19)) ||
+    a >= 224
+  );
+}
+
+/**
+ * 将 IPv6 地址转换为 BigInt，便于按 RFC 网段比较。
+ */
+function ipv6ToBigInt(ip) {
+  const [head = '', tail = ''] = ip.toLowerCase().split('::');
+  const headGroups = head ? head.split(':') : [];
+  const tailGroups = tail ? tail.split(':') : [];
+  const missing = 8 - headGroups.length - tailGroups.length;
+  if (missing < 0) return null;
+  const groups = [...headGroups, ...Array(missing).fill('0'), ...tailGroups];
+  if (groups.length !== 8) return null;
+
+  return groups.reduce((value, group) => {
+    const parsed = Number.parseInt(group || '0', 16);
+    if (!Number.isInteger(parsed) || parsed < 0 || parsed > 0xffff) return null;
+    return (value << 16n) + BigInt(parsed);
+  }, 0n);
+}
+
+function ipv6InPrefix(ip, prefix, bits) {
+  const value = ipv6ToBigInt(ip);
+  const prefixValue = ipv6ToBigInt(prefix);
+  if (value === null || prefixValue === null) return false;
+  const shift = BigInt(128 - bits);
+  return value >> shift === prefixValue >> shift;
+}
+
+/**
+ * 判断 IPv6 是否位于回环、未指定、ULA、链路本地、组播或 IPv4-mapped 私网。
+ */
+function isPrivateIpv6(ip) {
+  const normalized = ip.toLowerCase().replace(/^\[|\]$/g, '');
+  if (normalized === '::' || normalized === '::1') return true;
+  if (normalized.startsWith('::ffff:')) {
+    const value = ipv6ToBigInt(normalized);
+    if (value !== null) {
+      const octets = [0, 1, 2, 3].map((index) =>
+        Number((value >> BigInt(24 - index * 8)) & 0xffn)
+      );
+      return isPrivateIpv4(octets.join('.'));
+    }
+  }
+  if (normalized.includes('.')) {
+    const lastGroup = normalized.split(':').pop();
+    if (net.isIP(lastGroup) === 4) return isPrivateIpv4(lastGroup);
+  }
+
+  return (
+    ipv6InPrefix(normalized, 'fc00::', 7) ||
+    ipv6InPrefix(normalized, 'fe80::', 10) ||
+    ipv6InPrefix(normalized, 'ff00::', 8) ||
+    ipv6InPrefix(normalized, '2001:db8::', 32)
+  );
+}
+
+function isPrivateIp(ip) {
+  const version = net.isIP(ip);
+  if (version === 4) return isPrivateIpv4(ip);
+  if (version === 6) return isPrivateIpv6(ip);
+  return false;
+}
+
+function isInternalHostname(hostname) {
+  const host = String(hostname || '').toLowerCase().replace(/^\[|\]$/g, '');
+  if (INTERNAL_HOSTNAMES.has(host)) return true;
+  if (INTERNAL_HOST_SUFFIXES.some((suffix) => host === suffix.slice(1) || host.endsWith(suffix))) return true;
+  return false;
+}
+
+/**
+ * 结构校验 + DNS 解析校验，确保目标只能访问公网地址。
+ */
+async function validatePublicUrl(url) {
+  const cleanUrl = validateUrl(url);
+  const parsed = new URL(cleanUrl);
+  const hostname = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+
+  if (isInternalHostname(hostname)) {
+    throw ApiError.badRequest('IMPORT_PRIVATE_TARGET', '课表链接不能指向内网地址');
+  }
+
+  if (net.isIP(hostname)) {
+    if (isPrivateIp(hostname)) {
+      throw ApiError.badRequest('IMPORT_PRIVATE_TARGET', '课表链接不能指向内网地址');
+    }
+    return cleanUrl;
+  }
+
+  let addresses;
+  try {
+    addresses = await dns.lookup(hostname, { all: true });
+  } catch (_) {
+    throw ApiError.badRequest('IMPORT_HOST_NOT_FOUND', '无法解析课表网站地址');
+  }
+
+  if (!addresses.length || addresses.some((address) => isPrivateIp(address.address))) {
+    throw ApiError.badRequest('IMPORT_PRIVATE_TARGET', '课表链接不能指向内网地址');
+  }
+
+  return cleanUrl;
+}
+
+/**
+ * 校验 Location 跳转目标；重定向不允许绕过 SSRF 白名单。
+ */
+async function assertSafeRedirectUrl(baseUrl, location) {
+  if (!location) {
+    throw ApiError.badRequest('IMPORT_REDIRECT_INVALID', '课表网站返回了无效跳转');
+  }
+  let redirectUrl;
+  try {
+    redirectUrl = new URL(location, baseUrl);
+  } catch (_) {
+    throw ApiError.badRequest('IMPORT_REDIRECT_INVALID', '课表网站返回了无效跳转');
+  }
+  return validatePublicUrl(redirectUrl.href);
 }
 
 /**
@@ -218,28 +370,46 @@ function parseCourses(html) {
  * @returns {Promise<{courses:Array, source:string}>}
  */
 async function importFromUrl(url) {
-  const cleanUrl = validateUrl(url);
+  let currentUrl = await validatePublicUrl(url);
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), config.importTimeoutMs);
 
   let text;
   try {
-    const res = await fetch(cleanUrl, {
-      method: 'GET',
-      signal: controller.signal,
-      headers: { 'Accept': 'text/html,application/xhtml+xml' },
-      redirect: 'follow',
-    });
-    if (!res.ok) {
-      throw ApiError.badRequest('IMPORT_UPSTREAM_ERROR', `抓取课表页失败（HTTP ${res.status}），请确认链接可公开访问`);
+    let finalUrl = currentUrl;
+    for (let redirectCount = 0; redirectCount <= MAX_IMPORT_REDIRECTS; redirectCount += 1) {
+      const res = await fetch(finalUrl, {
+        method: 'GET',
+        signal: controller.signal,
+        headers: { 'Accept': 'text/html,application/xhtml+xml' },
+        redirect: 'manual',
+      });
+
+      if ([301, 302, 303, 307, 308].includes(res.status)) {
+        const location = res.headers.get('location');
+        if (res.body) await res.body.cancel();
+        finalUrl = await assertSafeRedirectUrl(finalUrl, location);
+        continue;
+      }
+
+      if (!res.ok) {
+        throw ApiError.badRequest('IMPORT_UPSTREAM_ERROR', `抓取课表页失败（HTTP ${res.status}），请确认链接可公开访问`);
+      }
+
+      const buf = Buffer.from(await res.arrayBuffer());
+      if (buf.length > config.importMaxBodyBytes) {
+        throw ApiError.badRequest('IMPORT_PAGE_TOO_BIG', '课表页面过大，无法解析');
+      }
+
+      currentUrl = finalUrl;
+      text = buf.toString('utf-8');
+      break;
     }
-    const buf = Buffer.from(await res.arrayBuffer());
-    if (buf.length > config.importMaxBodyBytes) {
-      throw ApiError.badRequest('IMPORT_PAGE_TOO_BIG', '课表页面过大，无法解析');
+
+    if (text == null) {
+      throw ApiError.badRequest('IMPORT_TOO_MANY_REDIRECTS', '课表网站跳转次数过多');
     }
-    // 尝试按 charset 或 utf-8 解码；中文站常用 GBK，可能乱码，但表格结构仍可解析
-    text = buf.toString('utf-8');
   } catch (err) {
     if (err && (err.name === 'AbortError' || err.code === 'ESOCKETTIMEDOUT')) {
       throw ApiError.internal('IMPORT_TIMEOUT', '抓取课表超时，请稍后再试');
@@ -254,7 +424,14 @@ async function importFromUrl(url) {
   }
 
   const courses = parseCourses(text);
-  return { courses, source: cleanUrl };
+  return { courses, source: currentUrl };
 }
 
-module.exports = { importFromUrl, parseCourses, validateUrl };
+module.exports = {
+  assertSafeRedirectUrl,
+  importFromUrl,
+  isPrivateIp,
+  parseCourses,
+  validatePublicUrl,
+  validateUrl,
+};

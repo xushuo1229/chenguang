@@ -22,10 +22,91 @@ import { defineConfig } from 'vite';
 // resolve 用于拼接文件的绝对路径
 import { resolve } from 'path';
 
-// 导出 Vite 配置对象
-export default defineConfig({
+// Node 文件系统模块用于在构建完成后生成部署资产
+import { readdirSync, readFileSync, statSync, writeFileSync } from 'fs';
+import { createHash } from 'crypto';
+
+/**
+ * 构建后收集 dist 内真实文件，并生成 PWA 部署资产。
+ * 禁止在 Service Worker 源码中手写打包前路径。
+ */
+function chenguangDeploymentAssets() {
+  let projectRoot = process.cwd();
+  let outputDirectory = '';
+
+  function listFiles(directory) {
+    const files = [];
+    for (const entry of readdirSync(directory)) {
+      const fullPath = resolve(directory, entry);
+      if (statSync(fullPath).isDirectory()) {
+        files.push(...listFiles(fullPath));
+      } else {
+        files.push(fullPath);
+      }
+    }
+    return files;
+  }
+
+  return {
+    name: 'chenguang-deployment-assets',
+    apply: 'build',
+    configResolved(config) {
+      projectRoot = config.root;
+      outputDirectory = resolve(config.root, config.build.outDir);
+    },
+    generateBundle() {
+      const manifest = readFileSync(resolve(projectRoot, 'manifest.json'), 'utf8');
+      this.emitFile({
+        type: 'asset',
+        fileName: 'manifest.json',
+        source: manifest
+      });
+    },
+    closeBundle() {
+      const source = readFileSync(resolve(projectRoot, 'service-worker.js'), 'utf8');
+      const urls = new Set(['/', '/manifest.json', '/service-worker.js']);
+      for (const file of listFiles(outputDirectory)) {
+        urls.add(`/${file.slice(outputDirectory.length + 1).split('\\').join('/')}`);
+      }
+      const urlList = [...urls].sort();
+      const buildId = createHash('sha256')
+        .update(urlList.join('\n'))
+        .digest('hex')
+        .slice(0, 12);
+      const prelude = [
+        `globalThis.__CHENGUANG_PRECACHE_URLS__ = ${JSON.stringify(urlList, null, 2)};`,
+        `globalThis.__CHENGUANG_BUILD_ID__ = '${buildId}';`,
+        '',
+        ''
+      ].join('\n');
+      writeFileSync(resolve(outputDirectory, 'service-worker.js'), prelude + source);
+    }
+  };
+}
+
+function chenguangManifestLink() {
+  return {
+    name: 'chenguang-manifest-link',
+    transformIndexHtml() {
+      return [{
+        tag: 'link',
+        attrs: { rel: 'manifest', href: '/manifest.json' },
+        injectTo: 'head'
+      }];
+    }
+  };
+}
+
+// 导出 Vite 配置对象；生产构建不注入 localhost 开发地址
+export default defineConfig(({ mode }) => ({
   // root: 项目根目录，'.' 表示当前目录（F:\chenguang-platform）
   root: '.',
+
+  define: {
+    __CHENGUANG_DEV_API_BASE__: JSON.stringify(
+      mode === 'production' ? '' : 'http://localhost:3000/api'
+    )
+  },
 
   // publicDir: 静态资源目录，放在这里的文件会原样复制到构建输出目录
   // 比如 assets/logo.svg 会被复制到 dist/assets/logo.svg
@@ -82,4 +163,7 @@ export default defineConfig({
     // open: 启动开发服务器后自动打开浏览器，打开的是 /index.html
     open: '/index.html',
   },
-});
+
+  // 构建后注入 manifest 与真实资源清单
+  plugins: [chenguangDeploymentAssets(), chenguangManifestLink()],
+}));

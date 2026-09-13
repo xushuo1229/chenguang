@@ -26,14 +26,7 @@
 
 /* ===== 常量配置 ===== */
 
-/**
- * API_BASE —— 后端 API 的基础地址
- *
- * 【作用】所有 API 请求都发往这个地址 + 具体路径。
- * 【默认值】http://localhost:3000/api（本地开发环境）
- * 【注意】可以通过 CGAPI.config.setBaseUrl() 动态修改
- */
-var API_BASE = 'http://localhost:3000/api';
+import { getApiBase, setApiBase } from './config/apiBase.js';
 
 /**
  * STORAGE —— localStorage 中的键名常量
@@ -181,7 +174,7 @@ function isAuthenticated() {
  */
 function request(method, path, data, opts) {
   opts = opts || {};
-  var url = API_BASE + path;
+  var url = getApiBase() + path;
   var headers = {
     'Content-Type': 'application/json',
     'X-Requested-With': 'XMLHttpRequest'
@@ -311,7 +304,7 @@ var CGAPI = {
    * 【用途】比如从本地开发切换到生产环境时调用
    */
   config: {
-    setBaseUrl: function (url) { API_BASE = url; }
+    setBaseUrl: setApiBase
   },
 
   /* ===== 认证接口 ===== */

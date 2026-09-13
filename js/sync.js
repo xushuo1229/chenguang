@@ -42,8 +42,7 @@ import CGStore from './store.js';
 
 /* ===== 常量配置 ===== */
 
-/** API_BASE —— 后端服务地址前缀 */
-var API_BASE = 'http://localhost:3000/api';
+import { getApiBase } from './config/apiBase.js';
 
 /** TOKEN_KEY —— 登录 Token 在 localStorage 中的键名（与 store.js 一致） */
 var TOKEN_KEY = 'cg_token';
@@ -214,7 +213,7 @@ function req(method, path, body) {
     body: body != null ? JSON.stringify(body) : undefined
   };
   if (controller) fetchOpts.signal = controller.signal;
-  return fetch(API_BASE + path, fetchOpts).then(function (r) {
+  return fetch(getApiBase() + path, fetchOpts).then(function (r) {
     if (timeoutId) clearTimeout(timeoutId);
     // 204 无内容、304 未修改：不解析 JSON 体（304 若硬解析会因空体抛错）
     if (r.status === 204 || r.status === 304) {

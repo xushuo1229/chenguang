@@ -9,7 +9,13 @@
 
 const { test, describe } = require('node:test');
 const assert = require('node:assert');
-const { parseCourses, validateUrl } = require('../src/services/scheduleImportService');
+const {
+  assertSafeRedirectUrl,
+  isPrivateIp,
+  parseCourses,
+  validatePublicUrl,
+  validateUrl
+} = require('../src/services/scheduleImportService');
 
 describe('validateUrl', () => {
   test('合法 http 链接通过', () => {
@@ -86,6 +92,64 @@ describe('parseCourses', () => {
     assert.throws(
       () => parseCourses('<table><tr><td>甲</td><td>乙</td></tr></table>'),
       /未能识别课表里的星期列/
+    );
+  });
+});
+
+describe('SSRF protection', () => {
+  test('localhost is rejected', async () => {
+    await assert.rejects(
+      () => validatePublicUrl('http://localhost:8080/schedule'),
+      /内网地址/
+    );
+  });
+
+  test('internal domains are rejected', async () => {
+    await assert.rejects(
+      () => validatePublicUrl('https://jw.school.local/schedule'),
+      /内网地址/
+    );
+    await assert.rejects(
+      () => validatePublicUrl('https://admin.internal/schedule'),
+      /内网地址/
+    );
+  });
+
+  test('private IPv4 literals are rejected', async () => {
+    const urls = [
+      'http://127.0.0.1/schedule',
+      'http://10.1.2.3/schedule',
+      'http://172.16.0.1/schedule',
+      'http://192.168.1.1/schedule',
+      'http://169.254.169.254/latest/meta-data'
+    ];
+    for (const url of urls) {
+      await assert.rejects(() => validatePublicUrl(url), /内网地址/);
+    }
+  });
+
+  test('private IPv6 and IPv4-mapped IPv6 are rejected', async () => {
+    await assert.rejects(() => validatePublicUrl('http://[::1]/schedule'), /内网地址/);
+    await assert.rejects(
+      () => validatePublicUrl('http://[::ffff:192.168.1.1]/schedule'),
+      /内网地址/
+    );
+    assert.strictEqual(isPrivateIp('fd00::1'), true);
+    assert.strictEqual(isPrivateIp('fe80::1'), true);
+  });
+
+  test('public literal IPv4 is accepted', async () => {
+    await assert.doesNotReject(() => validatePublicUrl('http://93.184.216.34/schedule'));
+  });
+
+  test('redirect targets are revalidated', async () => {
+    await assert.rejects(
+      () => assertSafeRedirectUrl('https://example.com/schedule', 'http://127.0.0.1/admin'),
+      /内网地址/
+    );
+    await assert.rejects(
+      () => assertSafeRedirectUrl('https://example.com/schedule', 'ftp://example.com/schedule'),
+      /http\/https/
     );
   });
 });

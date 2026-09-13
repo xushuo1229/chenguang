@@ -28,10 +28,10 @@
  * ============================================================
  */
 
-// ==================== 缓存版本号 ====================
-// 每次发布新版本时，递增这个值（如 cgl-v10 → cgl-v11）
-// 这会强制清除用户的旧缓存，确保他们获取最新资源
-const CACHE_VERSION = 'cgl-v16';
+// ==================== 构建注入的部署清单 ====================
+// 生产构建会把 dist 内真实文件写入全局变量；开发环境保持空清单。
+const BUILD_ID = globalThis.__CHENGUANG_BUILD_ID__ || 'dev';
+const CACHE_VERSION = `cgl-${BUILD_ID}`;
 
 // 两个缓存空间：
 //   - CACHE_STATIC：存放预缓存的核心静态资源（构建时确定）
@@ -39,43 +39,7 @@ const CACHE_VERSION = 'cgl-v16';
 const CACHE_STATIC = `${CACHE_VERSION}-static`;
 const CACHE_RUNTIME = `${CACHE_VERSION}-runtime`;
 
-// ==================== 预缓存资源列表 ====================
-// 这些文件会在 Service Worker 安装时就被下载并缓存
-// 好处：首次访问后，这些文件就存在本地了，再次访问时直接从缓存读取，非常快
-//
-// ⚠️ 重要：列表中的文件必须真实存在！任何一个 404 都会导致 addAll 整体失败
-const PRECACHE_URLS = [
-  '/',                    // 首页
-  '/index.html',          // 落地页
-  '/workbench.html',      // 工作台
-  '/stats.html',          // 统计页
-  '/goals.html',          // 目标页
-  '/ai.html',             // AI 教练页
-  '/css/variables.css',   // CSS 变量（主题色等）
-  '/css/shared.css',      // 公共组件样式
-  '/css/app.css',         // 落地页样式
-  '/js/utils/dom.js',     // DOM 工具函数
-  '/js/utils/date.js',    // 日期工具函数
-  '/js/ui/toast.js',      // Toast 提示组件
-  '/js/ui/modal.js',      // 弹窗组件
-  '/js/apiClient.js',     // API 客户端
-  '/js/store.js',         // 数据存储层
-  '/js/sync.js',          // 数据同步模块
-  '/js/analytics.js',     // Phase 10 统计引擎
-  '/js/goals.js',         // Phase 12 目标引擎
-  '/js/aiContext.js',     // Phase 13 AI Context Builder
-  '/pages/index.js',      // 首页脚本
-  '/pages/workbench.js',  // 工作台脚本
-  '/pages/stats.js',      // 统计页脚本
-  '/pages/goals.js',      // 目标页脚本
-  '/pages/ai.js',         // AI 教练脚本
-  '/assets/vendor/fontawesome/css/all.min.css',       // FontAwesome 图标库样式
-  '/assets/vendor/fontawesome/webfonts/fa-solid-900.woff2',    // FontAwesome 字体文件
-  '/assets/vendor/fontawesome/webfonts/fa-regular-400.woff2',
-  '/assets/vendor/fontawesome/webfonts/fa-brands-400.woff2',
-  '/assets/vendor/chart.umd.min.js',                 // Chart.js 图表库
-  '/assets/logo.svg',      // 网站 Logo
-];
+const PRECACHE_URLS = globalThis.__CHENGUANG_PRECACHE_URLS__ || [];
 
 // ==================== CDN 域名列表 ====================
 // 来自这些域名的资源使用 Stale-While-Revalidate 策略
@@ -93,14 +57,13 @@ const CDN_HOSTS = [
 // 当 Service Worker 首次安装时触发（浏览器第一次加载页面时）
 // 负责下载并缓存 PRECACHE_URLS 中列出的所有文件
 self.addEventListener('install', (event) => {
-  // event.waitUntil() 告诉浏览器：等这个 Promise 完成后才算安装成功
-  event.waitUntil(
-    // 打开名为 CACHE_STATIC 的缓存空间
-    caches.open(CACHE_STATIC)
-      .then((cache) => cache.addAll(PRECACHE_URLS))  // addAll：批量下载并缓存所有文件
-      .then(() => self.skipWaiting())  // skipWaiting()：安装完成后立即激活，不等旧版 SW 关闭
-      .catch((err) => console.warn('[SW] 预缓存失败:', err))  // 缓存失败只打印警告，不影响使用
-  );
+  event.waitUntil((async () => {
+    if (PRECACHE_URLS.length) {
+      const cache = await caches.open(CACHE_STATIC);
+      await cache.addAll(PRECACHE_URLS);
+    }
+    await self.skipWaiting();
+  })().catch((err) => console.warn('[SW] 预缓存失败:', err)));
 });
 
 // ============================================================

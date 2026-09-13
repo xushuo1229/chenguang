@@ -93,6 +93,7 @@ function cardCount(gridId) {
 }
 
 beforeEach(() => {
+  globalThis.CGStore?.flushPersist?.();
   localStorage.clear();
 });
 
