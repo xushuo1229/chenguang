@@ -302,7 +302,7 @@ function submitForm() {
     } else {
       var added = Store.addGoal(def);
       if (!added) { if (errEl) errEl.textContent = '目标值必须大于 0'; return; }
-      toast('✅ 目标已创建', 'success');
+      toast('目标已创建，回工作台完成第一次记录', 'success');
     }
     closeModal('modalGoal');
     loadAll();   // 纯读取，revision 不变

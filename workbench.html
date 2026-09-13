@@ -879,21 +879,22 @@
       cursor: default;
       pointer-events: none;
     }
-    .onboard-close {
+    .onboard-skip {
       position: absolute;
       top: 8px; right: 8px;
-      width: 26px; height: 26px;
-      border-radius: 50%;
+      padding: 5px 9px;
+      border-radius: 999px;
       border: 1px solid rgba(255,255,255,0.12);
       background: rgba(255,255,255,0.05);
       color: var(--text-muted);
       cursor: pointer;
-      font-size: .8rem;
+      font-size: .75rem;
+      font-weight: 600;
       transition: .2s;
     }
     /* 触控目标 ≥40px：伪元素扩大热区，视觉不变（Phase 15 移动端走查排序 4） */
-    .onboard-close::after { content: ''; position: absolute; inset: -8px; border-radius: 50%; }
-    .onboard-close:hover { color: #fff; background: rgba(232,121,111,0.3); }
+    .onboard-skip::after { content: ''; position: absolute; inset: -8px; border-radius: 999px; }
+    .onboard-skip:hover { color: #fff; background: rgba(232,121,111,0.3); }
   </style>
 
   <style>
@@ -1034,7 +1035,7 @@
       <button class="onboard-step" data-ob="todo">④ 新建待办</button>
     </div>
     <span class="onboard-progress" id="onboardProgress">0 / 4</span>
-    <button class="onboard-close" id="onboardClose" title="关闭引导" aria-label="关闭引导">✕</button>
+    <button class="onboard-skip" id="onboardClose" title="跳过引导" aria-label="跳过引导">跳过</button>
   </div>
 
   <!-- ===== 功能网格 ===== -->
