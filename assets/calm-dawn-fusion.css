@@ -1,0 +1,1011 @@
+/*
+  Calm Dawn Fusion · A+B+C unified visual system
+  Scope: all six pages via body[data-theme="fusion"]
+  Rules: no business logic changes, no fake data, no glassmorphism abuse
+*/
+
+body[data-theme="fusion"] {
+  --fd-bg: #faf8f2;
+  --fd-bg-soft: #f4f1ea;
+  --fd-bg-card: #ffffff;
+  --fd-bg-card-hover: #fffdf9;
+  --fd-text: #172033;
+  --fd-text-2: #4a5468;
+  --fd-text-3: #838ea4;
+  --fd-line: rgba(23, 32, 51, 0.08);
+  --fd-line-strong: rgba(23, 32, 51, 0.14);
+  --fd-amber: #ffb347;
+  --fd-amber-deep: #e4911c;
+  --fd-amber-soft: rgba(255, 179, 71, 0.12);
+  --fd-green: #65c89b;
+  --fd-green-soft: rgba(101, 200, 155, 0.12);
+  --fd-purple: #a78bfa;
+  --fd-purple-soft: rgba(167, 139, 250, 0.13);
+  --fd-blue: #7aa7d9;
+  --fd-blue-soft: rgba(122, 167, 217, 0.12);
+  --fd-red: #f58a7a;
+  --fd-shadow-sm: 0 1px 2px rgba(23, 32, 51, 0.04), 0 4px 14px rgba(23, 32, 51, 0.04);
+  --fd-shadow-md: 0 2px 6px rgba(23, 32, 51, 0.05), 0 18px 40px rgba(23, 32, 51, 0.06);
+  --fd-radius-sm: 12px;
+  --fd-radius-md: 18px;
+  --fd-radius-lg: 24px;
+  --fd-radius-xl: 28px;
+  --fd-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --fd-font: "PingFang SC", "Microsoft YaHei", Inter, system-ui, sans-serif;
+  color-scheme: light;
+  background: var(--fd-bg);
+  color: var(--fd-text);
+  font-family: var(--fd-font);
+  letter-spacing: -0.01em;
+}
+
+body[data-theme="fusion"] [hidden] {
+  display: none !important;
+}
+
+body[data-theme="fusion"],
+body[data-theme="fusion"] .main,
+body[data-theme="fusion"] .content {
+  background:
+    radial-gradient(circle at 80% -10%, rgba(255, 179, 71, 0.16), transparent 42%),
+    radial-gradient(circle at 8% 10%, rgba(167, 139, 250, 0.07), transparent 38%),
+    linear-gradient(180deg, #fdfaf3 0%, var(--fd-bg) 50%, #f6f4ee 100%);
+}
+
+body[data-theme="fusion"] {
+  background-attachment: fixed;
+}
+
+body[data-theme="fusion"] .main,
+body[data-theme="fusion"] .content {
+  background: transparent;
+}
+
+body[data-theme="fusion"]::before {
+  content: none;
+}
+
+/* ---------- Shared cards ---------- */
+body[data-theme="fusion"] .func-card,
+body[data-theme="fusion"] .view-card,
+body[data-theme="fusion"] .data-section,
+body[data-theme="fusion"] .cg-insight,
+body[data-theme="fusion"] .onboard-card {
+  background: var(--fd-bg-card);
+  border: 1px solid var(--fd-line);
+  border-radius: var(--fd-radius-lg);
+  box-shadow: var(--fd-shadow-sm);
+  transition: transform 220ms var(--fd-ease), box-shadow 220ms var(--fd-ease), border-color 220ms var(--fd-ease);
+}
+
+body[data-theme="fusion"] .func-card:hover,
+body[data-theme="fusion"] .view-card:hover,
+body[data-theme="fusion"] .data-section:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--fd-shadow-md);
+  border-color: var(--fd-line-strong);
+}
+
+body[data-theme="fusion"] .card-header .label,
+body[data-theme="fusion"] .view-card > h3,
+body[data-theme="fusion"] .data-header h3 {
+  color: var(--fd-text);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+body[data-theme="fusion"] .status,
+body[data-theme="fusion"] .unit,
+body[data-theme="fusion"] .d-label,
+body[data-theme="fusion"] .empty-hint {
+  color: var(--fd-text-3);
+}
+
+body[data-theme="fusion"] .card-body .num {
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .card-action,
+body[data-theme="fusion"] .btn-wb,
+body[data-theme="fusion"] .btn-primary {
+  min-height: 40px;
+  border-radius: var(--fd-radius-sm);
+  font-weight: 600;
+}
+
+body[data-theme="fusion"] .btn-primary {
+  background: linear-gradient(135deg, #ffc46e, #ff9a2b);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(255, 154, 43, 0.18);
+  border: none;
+}
+
+body[data-theme="fusion"] .btn-wb {
+  background: var(--fd-bg-card);
+  border: 1px solid var(--fd-line-strong);
+  color: var(--fd-text);
+}
+
+/* ---------- Sidebar ---------- */
+body[data-theme="fusion"] .sidebar {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(18px);
+  border-right: 1px solid var(--fd-line);
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .sidebar .logo {
+  color: var(--fd-amber-deep);
+}
+
+body[data-theme="fusion"] .sidebar .nav-item {
+  color: var(--fd-text-2);
+  border-radius: 12px;
+}
+
+body[data-theme="fusion"] .sidebar .nav-item:hover {
+  background: var(--fd-amber-soft);
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .sidebar .nav-item.active {
+  background: var(--fd-amber-soft);
+  color: var(--fd-amber-deep);
+  font-weight: 700;
+}
+
+body[data-theme="fusion"] .sidebar .nav-item.active::before {
+  background: var(--fd-amber);
+  width: 3px;
+  top: 14px;
+  bottom: 14px;
+}
+
+/* ---------- Topbar ---------- */
+body[data-theme="fusion"] .topbar {
+  background: transparent;
+  border-bottom: none;
+}
+
+body[data-theme="fusion"] .topbar .greeting h2 {
+  color: var(--fd-text);
+  font-size: 28px;
+  letter-spacing: -0.03em;
+}
+
+body[data-theme="fusion"] .topbar .greeting .date {
+  color: var(--fd-text-2);
+}
+
+body[data-theme="fusion"] .topbar .actions a,
+body[data-theme="fusion"] .topbar .actions button {
+  background: var(--fd-bg-card);
+  border: 1px solid var(--fd-line-strong);
+  border-radius: 12px;
+  color: var(--fd-text-2);
+}
+
+/* ---------- Lists & progress ---------- */
+body[data-theme="fusion"] .item-row,
+body[data-theme="fusion"] .cv-item,
+body[data-theme="fusion"] .task-row {
+  background: var(--fd-bg-card);
+  border: 1px solid var(--fd-line);
+  border-radius: var(--fd-radius-sm);
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .task-row.done .t-text {
+  color: var(--fd-text-3);
+}
+
+body[data-theme="fusion"] .t-check.checked {
+  background: var(--fd-green);
+  border-color: var(--fd-green);
+}
+
+body[data-theme="fusion"] .progressbar,
+body[data-theme="fusion"] .d-bar,
+body[data-theme="fusion"] .focus-prog {
+  background: #eef0f5;
+  border-radius: 999px;
+}
+
+body[data-theme="fusion"] .progressbar-fill,
+body[data-theme="fusion"] .d-fill,
+body[data-theme="fusion"] .focus-prog-fill {
+  background: linear-gradient(90deg, #ffc46e, #ff9a2b);
+}
+
+/* ---------- Modals ---------- */
+body[data-theme="fusion"] .modal-box,
+body[data-theme="fusion"] .confirm-box {
+  background: var(--fd-bg-card);
+  border: 1px solid var(--fd-line);
+  border-radius: var(--fd-radius-md);
+  color: var(--fd-text);
+  box-shadow: var(--fd-shadow-md);
+}
+
+body[data-theme="fusion"] .modal-box h3,
+body[data-theme="fusion"] .confirm-box h3 {
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .wb-select,
+body[data-theme="fusion"] .modal-body input,
+body[data-theme="fusion"] .modal-body select,
+body[data-theme="fusion"] .modal-body textarea {
+  background: #fafaf7;
+  border-color: var(--fd-line-strong);
+  color: var(--fd-text);
+}
+
+/* ---------- Login ---------- */
+body[data-theme="fusion"] .login-wrap {
+  background:
+    radial-gradient(circle at 20% 10%, rgba(255, 179, 71, 0.2), transparent 40%),
+    radial-gradient(circle at 80% 100%, rgba(167, 139, 250, 0.14), transparent 40%),
+    linear-gradient(135deg, #fdfaf3, #f4f1ea);
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .brand-pane {
+  background: transparent;
+  border-right: none;
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .brand-logo {
+  color: var(--fd-amber-deep);
+}
+
+body[data-theme="fusion"] .brand-main h1 {
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .brand-sub {
+  color: var(--fd-text-2);
+}
+
+body[data-theme="fusion"] .form-pane {
+  background: transparent;
+}
+
+body[data-theme="fusion"] .form-card {
+  background: var(--fd-bg-card);
+  border: 1px solid var(--fd-line);
+  border-radius: var(--fd-radius-xl);
+  box-shadow: var(--fd-shadow-md);
+}
+
+body[data-theme="fusion"] .input {
+  background: #fafaf7;
+  border-color: var(--fd-line-strong);
+  color: var(--fd-text);
+  border-radius: 14px;
+}
+
+/* ---------- Landing ---------- */
+body[data-theme="fusion"] .topbar-inner,
+body[data-theme="fusion"] .hero,
+body[data-theme="fusion"] .feature-grid,
+body[data-theme="fusion"] .ai-section,
+body[data-theme="fusion"] .cta-section {
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .hero h1 {
+  color: var(--fd-text);
+  letter-spacing: -0.03em;
+}
+
+body[data-theme="fusion"] .hero p {
+  color: var(--fd-text-2);
+}
+
+body[data-theme="fusion"] .feature-card {
+  background: var(--fd-bg-card);
+  border: 1px solid var(--fd-line);
+  border-radius: var(--fd-radius-lg);
+  box-shadow: var(--fd-shadow-sm);
+  transition: transform 220ms var(--fd-ease), box-shadow 220ms var(--fd-ease);
+}
+
+body[data-theme="fusion"] .feature-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--fd-shadow-md);
+}
+
+body[data-theme="fusion"] .feature-card h3 {
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .feature-card p {
+  color: var(--fd-text-2);
+}
+
+/* ---------- Goals ---------- */
+body[data-theme="fusion"] .goal-card {
+  background: var(--fd-bg-card);
+  border: 1px solid var(--fd-line);
+  border-radius: var(--fd-radius-md);
+  box-shadow: var(--fd-shadow-sm);
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .goal-title {
+  color: var(--fd-text);
+}
+
+/* ---------- Stats ---------- */
+body[data-theme="fusion"] .stat-card {
+  background: var(--fd-bg-card);
+  border: 1px solid var(--fd-line);
+  border-radius: var(--fd-radius-md);
+  box-shadow: var(--fd-shadow-sm);
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .stat-card .label {
+  color: var(--fd-text-3);
+}
+
+body[data-theme="fusion"] .stat-card .value {
+  color: var(--fd-text);
+}
+
+/* ---------- AI ---------- */
+body[data-theme="fusion"] .coach-card {
+  background: var(--fd-purple-soft);
+  border: 1px solid rgba(167, 139, 250, 0.24);
+  border-radius: var(--fd-radius-md);
+  color: #4c38a7;
+}
+
+body[data-theme="fusion"] .quick-q {
+  background: var(--fd-bg-card);
+  border: 1px solid var(--fd-line);
+  color: var(--fd-text);
+  border-radius: 14px;
+}
+
+body[data-theme="fusion"] .chat-input-bar {
+  background: var(--fd-bg-card);
+  border: 1px solid var(--fd-line-strong);
+  border-radius: 16px;
+}
+
+/* ---------- Mobile ---------- */
+body[data-theme="fusion"] .mobile-tabbar {
+  background: rgba(255, 255, 255, 0.88);
+  border-top: 1px solid var(--fd-line);
+  backdrop-filter: blur(20px);
+}
+
+body[data-theme="fusion"] .mobile-tabbar a {
+  color: var(--fd-text-3);
+}
+
+body[data-theme="fusion"] .mobile-tabbar a.active {
+  color: var(--fd-amber-deep);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body[data-theme="fusion"] .func-card,
+  body[data-theme="fusion"] .feature-card,
+  body[data-theme="fusion"] .stat-card,
+  body[data-theme="fusion"] .goal-card {
+    animation: fd-rise 420ms var(--fd-ease) both;
+  }
+}
+
+@keyframes fd-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Login page polish ---------- */
+body[data-theme="fusion"] .login-wrap {
+  min-height: 100vh;
+}
+
+body[data-theme="fusion"] .brand-pane {
+  padding: 64px 64px;
+  position: relative;
+}
+
+body[data-theme="fusion"] .brand-main h1 {
+  font-size: 44px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+body[data-theme="fusion"] .brand-sub {
+  font-size: 16px;
+  line-height: 1.7;
+  max-width: 440px;
+}
+
+body[data-theme="fusion"] .cap-item {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--fd-line);
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+
+body[data-theme="fusion"] .cap-item strong {
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .cap-item p {
+  color: var(--fd-text-2);
+}
+
+body[data-theme="fusion"] .form-pane {
+  display: grid;
+  place-items: center;
+  padding: 64px 48px;
+}
+
+body[data-theme="fusion"] .auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--fd-bg-card);
+  border: 1px solid var(--fd-line);
+  border-radius: 28px;
+  box-shadow: var(--fd-shadow-md);
+  padding: 36px 32px;
+}
+
+body[data-theme="fusion"] .auth-card h2 {
+  color: var(--fd-text);
+  font-size: 26px;
+  letter-spacing: -0.02em;
+}
+
+body[data-theme="fusion"] .auth-card .auth-desc {
+  color: var(--fd-text-2);
+}
+
+body[data-theme="fusion"] .form-row input,
+body[data-theme="fusion"] .form-row select,
+body[data-theme="fusion"] .form-row textarea {
+  background: #fafaf7;
+  border: 1px solid var(--fd-line-strong);
+  border-radius: 14px;
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .hint {
+  color: var(--fd-text-3);
+}
+
+/* ---------- Landing page polish ---------- */
+body[data-theme="fusion"] .topbar-inner {
+  background: transparent;
+}
+
+body[data-theme="fusion"] .topbar .logo {
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .topbar nav a {
+  color: var(--fd-text-2);
+}
+
+body[data-theme="fusion"] .topbar nav a:hover,
+body[data-theme="fusion"] .topbar nav a.active {
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .hero {
+  padding-top: 100px;
+}
+
+body[data-theme="fusion"] .hero h1 {
+  color: var(--fd-text);
+  font-size: clamp(2.8rem, 5.6vw, 4.2rem);
+}
+
+body[data-theme="fusion"] .hero h1 .accent {
+  color: var(--fd-amber-deep);
+}
+
+body[data-theme="fusion"] .hero-desc {
+  color: var(--fd-text-2);
+}
+
+body[data-theme="fusion"] .hero-badge {
+  background: var(--fd-amber-soft);
+  color: var(--fd-amber-deep);
+  border-color: rgba(255, 179, 71, 0.3);
+}
+
+body[data-theme="fusion"] .section-head .eyebrow {
+  color: var(--fd-amber-deep);
+}
+
+body[data-theme="fusion"] .section-head h2 {
+  color: var(--fd-text);
+  letter-spacing: -0.02em;
+}
+
+body[data-theme="fusion"] .section-sub {
+  color: var(--fd-text-2);
+}
+
+body[data-theme="fusion"] .feature-card {
+  background: var(--fd-bg-card);
+  border: 1px solid var(--fd-line);
+  border-radius: 22px;
+  box-shadow: var(--fd-shadow-sm);
+}
+
+body[data-theme="fusion"] .feature-card h3 {
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .feature-card p {
+  color: var(--fd-text-2);
+}
+
+body[data-theme="fusion"] .ai-section {
+  background: linear-gradient(180deg, rgba(167, 139, 250, 0.08), rgba(255, 179, 71, 0.08));
+  border-radius: 32px;
+  border: 1px solid var(--fd-line);
+}
+
+body[data-theme="fusion"] .ai-section h2 {
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .ai-section p {
+  color: var(--fd-text-2);
+}
+
+body[data-theme="fusion"] .cta-section {
+  background: var(--fd-bg-card);
+  border: 1px solid var(--fd-line);
+  border-radius: 32px;
+}
+
+body[data-theme="fusion"] .cta-section h2 {
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .cta-section .section-sub {
+  color: var(--fd-text-2);
+}
+
+body[data-theme="fusion"] .btn-outline {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: var(--fd-line-strong);
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .btn-outline:hover {
+  border-color: rgba(255, 179, 71, 0.48);
+  color: var(--fd-amber-deep);
+}
+
+body[data-theme="fusion"] .feature-card .fc-title,
+body[data-theme="fusion"] .xp-text h3,
+body[data-theme="fusion"] .ai-principle h4,
+body[data-theme="fusion"] .idea-item strong,
+body[data-theme="fusion"] .footer {
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .feature-card .feature-desc,
+body[data-theme="fusion"] .feature-card .feature-stats span,
+body[data-theme="fusion"] .xp-text p,
+body[data-theme="fusion"] .xp-text h3 small,
+body[data-theme="fusion"] .ai-principle p,
+body[data-theme="fusion"] .idea-item p,
+body[data-theme="fusion"] .cta-trust,
+body[data-theme="fusion"] .footer-links a,
+body[data-theme="fusion"] .footer-slogan {
+  color: var(--fd-text-2);
+}
+
+body[data-theme="fusion"] .xp-illus,
+body[data-theme="fusion"] .ai-principle,
+body[data-theme="fusion"] .idea-illus {
+  background: var(--fd-bg-card);
+  border-color: var(--fd-line);
+  box-shadow: var(--fd-shadow-sm);
+}
+
+body[data-theme="fusion"] .wb-pro .onboard-info h3,
+body[data-theme="fusion"] .wb-pro .onboard-step {
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .wb-pro .onboard-info h3 {
+  color: var(--fd-text) !important;
+}
+
+body[data-theme="fusion"] .wb-pro .func-card .card-header .status,
+body[data-theme="fusion"] .wb-pro .item-tag,
+body[data-theme="fusion"] .wb-pro .chip {
+  background: #fffaf2;
+  border: 1px solid rgba(255, 179, 71, 0.18);
+  color: var(--fd-text-2) !important;
+}
+
+body[data-theme="fusion"] .mobile-tabbar {
+  background: rgba(255, 255, 255, 0.94);
+  border-top: 1px solid var(--fd-line);
+  box-shadow: 0 -12px 32px rgba(23, 32, 51, 0.06);
+}
+
+body[data-theme="fusion"] .mobile-tabbar a {
+  color: var(--fd-text-3);
+}
+
+body[data-theme="fusion"] .wb-pro .onboard-step {
+  background: #fffaf2;
+  border-color: rgba(255, 179, 71, 0.24);
+}
+
+body[data-theme="fusion"] .wb-pro .onboard-skip {
+  background: var(--fd-bg-soft);
+  border-color: var(--fd-line);
+  color: var(--fd-text-2);
+}
+
+body[data-theme="fusion"] .wb-pro .onboard-skip:hover {
+  background: #f0ece3;
+  color: var(--fd-text);
+}
+
+/* ---------- Goals polish ---------- */
+body[data-theme="fusion"] .goals-header h1 {
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .goals-header .subtitle {
+  color: var(--fd-text-2);
+}
+
+body[data-theme="fusion"] .goal-card {
+  background: var(--fd-bg-card);
+  border: 1px solid var(--fd-line);
+  border-radius: 20px;
+  box-shadow: var(--fd-shadow-sm);
+}
+
+body[data-theme="fusion"] .goal-card .goal-title {
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .goal-card .goal-meta {
+  color: var(--fd-text-3);
+}
+
+/* ---------- Stats polish ---------- */
+body[data-theme="fusion"] .stats-header h1 {
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .stats-header .subtitle {
+  color: var(--fd-text-2);
+}
+
+body[data-theme="fusion"] .stat-card {
+  background: var(--fd-bg-card);
+  border: 1px solid var(--fd-line);
+  border-radius: 20px;
+  box-shadow: var(--fd-shadow-sm);
+}
+
+body[data-theme="fusion"] .stat-card .value {
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .stat-card .label {
+  color: var(--fd-text-3);
+}
+
+/* ---------- AI page polish ---------- */
+body[data-theme="fusion"] .chat-main {
+  background: transparent;
+}
+
+body[data-theme="fusion"] .coach-card {
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.14), rgba(255, 179, 71, 0.12));
+  border: 1px solid rgba(167, 139, 250, 0.22);
+  border-radius: 20px;
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .msg-bubble.user {
+  background: var(--fd-amber);
+  color: #fff;
+}
+
+body[data-theme="fusion"] .msg-bubble.ai {
+  background: var(--fd-bg-card);
+  border: 1px solid var(--fd-line);
+  color: var(--fd-text);
+}
+
+/* ---------- UI-FINAL-POLISH ---------- */
+body[data-theme="fusion"] {
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body[data-theme="fusion"],
+body[data-theme="fusion"] .main,
+body[data-theme="fusion"] .coach-layout,
+body[data-theme="fusion"] .coach-col,
+body[data-theme="fusion"] .goals-section,
+body[data-theme="fusion"] .stats-section,
+body[data-theme="fusion"] .brand-main,
+body[data-theme="fusion"] .auth-card,
+body[data-theme="fusion"] .feature-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+body[data-theme="fusion"] .reveal {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* Notion-like page headers on the goal, stats and coach pages. */
+body[data-theme="fusion"]:not(.wb-pro) .main .topbar {
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 26px clamp(20px, 4vw, 36px);
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, 0.94), rgba(255, 252, 246, 0.76) 62%, rgba(244, 249, 255, 0.66)),
+    radial-gradient(circle at 92% 0, rgba(255, 179, 71, 0.14), transparent 32%);
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  border-radius: var(--fd-radius-xl);
+  box-shadow: var(--fd-shadow-sm);
+  backdrop-filter: blur(18px);
+}
+
+body[data-theme="fusion"]:not(.wb-pro) .main .topbar .greeting h2 {
+  font-size: clamp(23px, 2.4vw, 32px);
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+body[data-theme="fusion"]:not(.wb-pro) .goals-header,
+body[data-theme="fusion"]:not(.wb-pro) .stats-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+}
+
+/* Complete the light card sweep for selectors missed by the first pass. */
+body[data-theme="fusion"] .stats-section,
+body[data-theme="fusion"] .coach-card,
+body[data-theme="fusion"] .chat-col,
+body[data-theme="fusion"] .state-block,
+body[data-theme="fusion"] .empty-state {
+  background: var(--fd-bg-card);
+  border: 1px solid var(--fd-line);
+  border-radius: var(--fd-radius-lg);
+  box-shadow: var(--fd-shadow-sm);
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .state-block h3,
+body[data-theme="fusion"] .state-block p,
+body[data-theme="fusion"] .mini-empty,
+body[data-theme="fusion"] .chat-disclaimer {
+  color: var(--fd-text-2);
+}
+
+body[data-theme="fusion"] .section-head h3,
+body[data-theme="fusion"] .data-header h3,
+body[data-theme="fusion"] .stat-value,
+body[data-theme="fusion"] .stat-row .value,
+body[data-theme="fusion"] .stat-row .label,
+body[data-theme="fusion"] .range-hint,
+body[data-theme="fusion"] .topbar-info h2,
+body[data-theme="fusion"] .topbar-info p,
+body[data-theme="fusion"] .goals-sub {
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .section-head h3,
+body[data-theme="fusion"] .data-header h3,
+body[data-theme="fusion"] .topbar-info h2 {
+  font-weight: 720;
+}
+
+body[data-theme="fusion"] .range-hint,
+body[data-theme="fusion"] .stat-row .label,
+body[data-theme="fusion"] .topbar-info p,
+body[data-theme="fusion"] .goals-sub,
+body[data-theme="fusion"] .stat-note {
+  color: var(--fd-text-2);
+}
+
+body[data-theme="fusion"] .range-tabs,
+body[data-theme="fusion"] .custom-range,
+body[data-theme="fusion"] .chat-input-area {
+  background: var(--fd-bg-card);
+  border: 1px solid var(--fd-line);
+  box-shadow: var(--fd-shadow-sm);
+}
+
+body[data-theme="fusion"] .range-tabs {
+  border-radius: 999px;
+}
+
+body[data-theme="fusion"] .custom-range {
+  border-radius: var(--fd-radius-md);
+  color: var(--fd-text-2);
+}
+
+body[data-theme="fusion"] .chat-input-area {
+  border: 0;
+  border-top: 1px solid var(--fd-line);
+}
+
+body[data-theme="fusion"] .today-stat,
+body[data-theme="fusion"] .insight-item {
+  background: #faf7f0;
+  border: 1px solid rgba(23, 32, 51, 0.05);
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .today-stat .ts-label,
+body[data-theme="fusion"] .coach-card .count {
+  color: var(--fd-text-3);
+}
+
+body[data-theme="fusion"] .today-stat .ts-value,
+body[data-theme="fusion"] .coach-card-head h3,
+body[data-theme="fusion"] .state-block h3 {
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .quick-questions {
+  background: #fbf9f4;
+  border-bottom: 1px solid var(--fd-line);
+}
+
+body[data-theme="fusion"] .quick-q {
+  background: #fff;
+  border-color: var(--fd-line-strong);
+  color: var(--fd-text-2);
+}
+
+body[data-theme="fusion"] .quick-q:hover {
+  background: var(--fd-amber-soft);
+  border-color: rgba(255, 179, 71, 0.38);
+  color: var(--fd-amber-deep);
+}
+
+body[data-theme="fusion"] .chat-messages {
+  background: var(--fd-bg-card);
+}
+
+body[data-theme="fusion"] .chat-input-wrap {
+  background: #fff;
+  border-color: var(--fd-line-strong);
+}
+
+body[data-theme="fusion"] .chat-input {
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .auth-toast {
+  right: 22px;
+  top: 22px;
+  z-index: 999;
+  min-height: 42px;
+  padding: 11px 18px;
+  background: rgba(23, 32, 51, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  box-shadow: 0 18px 44px rgba(23, 32, 51, 0.18);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 550;
+  backdrop-filter: blur(16px);
+}
+
+/* Login: keep the helper link at the pane edge and the form optically centered. */
+body[data-theme="fusion"] .form-pane {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 34px clamp(22px, 5vw, 48px) 44px;
+}
+
+body[data-theme="fusion"] .form-center {
+  flex: 1;
+  width: 100%;
+  display: grid;
+  place-items: center;
+}
+
+body[data-theme="fusion"] .brand-main h1,
+body[data-theme="fusion"] .auth-card h2 {
+  line-height: 1.2;
+}
+
+/* Keep long Chinese headings composed on narrow screens. */
+body[data-theme="fusion"] .brand-main h1,
+body[data-theme="fusion"] .topbar .greeting h2,
+body[data-theme="fusion"] .wb-pro .topbar .greeting h2 {
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+body[data-theme="fusion"] .wb-pro .topbar {
+  min-height: 178px;
+  padding: clamp(24px, 3vw, 38px) clamp(22px, 4vw, 38px);
+}
+
+body[data-theme="fusion"] .wb-pro .topbar .greeting h2 {
+  line-height: 1.18;
+}
+
+body[data-theme="fusion"] .wb-pro .onboard-card h3,
+body[data-theme="fusion"] .wb-pro .onboard-card p {
+  color: var(--fd-text);
+}
+
+body[data-theme="fusion"] .wb-pro .onboard-card p {
+  color: var(--fd-text-2);
+}
+
+@media (max-width: 860px) {
+  body[data-theme="fusion"]:not(.wb-pro) .main {
+    width: 100%;
+    max-width: 100%;
+    padding: 16px 16px 84px;
+  }
+
+  body[data-theme="fusion"]:not(.wb-pro) .main .topbar {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 22px 18px;
+  }
+
+  body[data-theme="fusion"]:not(.wb-pro) .goals-header,
+  body[data-theme="fusion"]:not(.wb-pro) .stats-header {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-theme="fusion"] .wb-pro .main {
+    padding: 16px 16px 88px;
+  }
+
+  body[data-theme="fusion"] .wb-pro .topbar {
+    margin-bottom: 16px;
+    border-radius: 24px;
+  }
+
+  body[data-theme="fusion"] .wb-pro .topbar .greeting h2 {
+    font-size: clamp(24px, 7vw, 31px);
+  }
+
+  body[data-theme="fusion"] .brand-pane {
+    padding: 26px 22px 30px;
+  }
+
+  body[data-theme="fusion"] .form-pane {
+    align-items: stretch;
+    padding: 24px 20px 38px;
+  }
+
+  body[data-theme="fusion"] .auth-toast {
+    right: 14px;
+    top: 14px;
+    max-width: calc(100% - 28px);
+  }
+}

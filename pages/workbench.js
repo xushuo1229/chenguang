@@ -560,6 +560,10 @@ import Analytics from '../js/analytics.js';
       setText('planDone', s.planDone);
       setText('planTotal', s.planTotal);
       setText('planStatus', '今日 ' + s.planDone + ' / ' + s.planTotal);
+      var planPercent = s.planTotal > 0 ? Math.round((s.planDone / s.planTotal) * 100) : 0;
+      var planRing = document.getElementById('planRing');
+      if (planRing) planRing.style.setProperty('--plan-percent', String(planPercent));
+      setText('planRingNum', planPercent + '%');
       var nextEl = $('#todayNext');
       if (nextEl) {
         var nextAction = nextActionText(s);

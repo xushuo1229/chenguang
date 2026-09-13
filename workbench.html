@@ -984,20 +984,37 @@
     .ic-sample-link:hover { border-bottom-style: solid; }
   </style>
   <link rel="stylesheet" href="/calm-dawn-pro.css">
+  <link rel="stylesheet" href="/workbench-pro.css">
+  <link rel="stylesheet" href="/calm-dawn-fusion.css">
   </head>
-<body>
+<body class="wb-pro" data-theme="fusion">
 
 <!-- ===== 左侧导航 ===== -->
 <aside class="sidebar">
-  <a href="#" class="logo">☀</a>
-  <a href="#" class="nav-item active" data-nav="home"><i class="fas fa-home"></i>首页</a>
+  <div class="wb-brand">
+    <div class="wb-brand-mark">☀</div>
+    <div class="wb-brand-copy">
+      <strong>晨光自律台</strong>
+      <span>把坚持变成习惯</span>
+    </div>
+  </div>
+  <a href="#" class="nav-item active" data-nav="home"><i class="fas fa-home"></i>工作台</a>
+  <a href="#" class="nav-item" data-nav="focus"><i class="fas fa-stopwatch"></i>专注</a>
+  <a href="#" class="nav-item" data-nav="course"><i class="fas fa-graduation-cap"></i>课程</a>
   <a href="goals.html" class="nav-item" data-nav="goals"><i class="fas fa-bullseye"></i>目标</a>
-  <a href="stats.html" class="nav-item" data-nav="stats"><i class="fas fa-chart-line"></i>数据</a>
-  <a href="ai.html" class="nav-item" data-nav="ai"><i class="fas fa-compass"></i>AI</a>
-  <a href="#" class="nav-item" data-nav="course"><i class="fas fa-book"></i>课程</a>
+  <a href="stats.html" class="nav-item" data-nav="stats"><i class="fas fa-chart-line"></i>统计</a>
+  <a href="ai.html" class="nav-item" data-nav="ai"><i class="fas fa-robot"></i>AI 助手</a>
   <div class="nav-bottom">
     <a href="#" class="nav-item" data-nav="manage"><i class="fas fa-cog"></i>管理</a>
     <a href="#" class="nav-item" data-nav="profile"><i class="fas fa-user"></i>我的</a>
+    <div class="wb-user">
+      <div class="wb-user-avatar">明</div>
+      <div class="wb-user-copy">
+        <strong id="sidebarUserName">小明同学</strong>
+        <span>大学生</span>
+      </div>
+    </div>
+    <div class="wb-motto">每天进步一点点<br>未来会很酷</div>
   </div>
 </aside>
 
@@ -1049,10 +1066,15 @@
         <span class="status" id="planStatus">今日 0 / 0</span>
       </div>
       <div class="card-body">
-        <span class="num hero-num" id="planDone">0</span><span class="unit">项完成</span>
-        <span style="margin:0 4px;color:var(--text-light);">·</span>
-        <span class="num hero-num" id="planTotal">0</span><span class="unit">项待办</span>
-        <span id="planEmpty" style="margin-left:8px;" class="empty-hint">添加一件 10 分钟就能开始的小事</span>
+        <div class="plan-ring" id="planRing" style="--plan-percent:0%;">
+          <span id="planRingNum">0%</span>
+          <small>今日完成</small>
+        </div>
+        <div class="plan-summary">
+          <div><strong class="num hero-num" id="planDone">0</strong><span class="unit">项完成</span></div>
+          <div><strong class="num hero-num" id="planTotal">0</strong><span class="unit">项待办</span></div>
+          <span id="planEmpty" class="empty-hint">添加一件 10 分钟就能开始的小事</span>
+        </div>
       </div>
       <div class="hero-actions">
         <a href="#" class="btn-primary" data-act="checkin">✅ 今日打卡</a>
@@ -1834,6 +1856,34 @@
   </div>
 
 </main>
+
+<aside class="ai-rail" aria-label="AI 自律教练">
+  <div class="wb-ai-head">
+    <div>
+      <h2>AI 自律教练</h2>
+      <p>基于你的数据，给出专属建议</p>
+    </div>
+    <div class="wb-ai-bot"></div>
+  </div>
+  <div class="wb-ai-card">
+    <h3>早上好，<span id="aiRailName">小明</span>！</h3>
+    <p>我分析了你最近的学习和生活数据。今天建议你保持稳定节奏，把最重要的事情放在精力最好的时间。</p>
+  </div>
+  <ul class="wb-ai-list">
+    <li><i>1</i><span>继续保持今天的专注节奏，专注时长正在稳定提升。</span></li>
+    <li><i>2</i><span>适当增加英语学习时间，词汇积累还有提升空间。</span></li>
+    <li><i>3</i><span>保持运动习惯，这会让你的学习效率更高。</span></li>
+  </ul>
+  <a class="wb-ai-cta" href="ai.html"><i class="fas fa-comment-dots"></i> 开始对话</a>
+  <div class="wb-ai-quick-label">你可以问我</div>
+  <div class="wb-ai-quick">
+    <a href="ai.html"><i class="fas fa-calendar-day"></i> 今天该怎么安排？</a>
+    <a href="ai.html"><i class="fas fa-chart-simple"></i> 我的学习状态如何？</a>
+    <a href="ai.html"><i class="fas fa-brain"></i> 如何提高专注力？</a>
+    <a href="ai.html"><i class="fas fa-bullseye"></i> 查看我的目标进度</a>
+  </div>
+  <div class="wb-ai-note">有问题 · 随时问我</div>
+</aside>
 
 <!-- ===== 移动端底部 Tab 栏 ===== -->
 <nav class="mobile-tabbar">
