@@ -512,6 +512,12 @@ import Analytics from '../js/analytics.js';
       var sportsToday = Store.getSportsByDate(today());
       var focusToday = Store.getFocusByDate(today());
       var focusAll = Store.totalFocusMinutes();
+      var yesterday = Store.today(new Date(new Date().setDate(new Date().getDate() - 1)));
+      var todosYesterday = Store.getTodosByDate(yesterday);
+      var yesterdayActivity = Store.getReadingsByDate(yesterday).length +
+        Store.getEnglishByDate(yesterday).length +
+        Store.getSportsByDate(yesterday).length +
+        Store.getFocusByDate(yesterday).length;
 
       return {
         nick: nick, day: joinDays,
@@ -527,6 +533,10 @@ import Analytics from '../js/analytics.js';
         sportCal: sportsToday.reduce(function (s, x) { return s + (Number(x.calories) || 0); }, 0),
         focusTodayCount: focusToday.length,
         focusTodayMin: focusToday.reduce(function (s, x) { return s + (Number(x.minutes) || 0); }, 0),
+        nextTodo: todos.find(function (x) { return !x.done; }),
+        yesterdayTodoTotal: todosYesterday.length,
+        yesterdayTodoDone: todosYesterday.filter(function (x) { return x.done; }).length,
+        yesterdayActivity: yesterdayActivity,
         growthBooks: Store.totalBooksFinished(),
         growthPages: Store.totalPagesRead(),
         growthRate: courses.length ? Store.courseAvgProgress() : 0,
@@ -550,6 +560,12 @@ import Analytics from '../js/analytics.js';
       setText('planDone', s.planDone);
       setText('planTotal', s.planTotal);
       setText('planStatus', '今日 ' + s.planDone + ' / ' + s.planTotal);
+      var nextEl = $('#todayNext');
+      if (nextEl) {
+        var nextAction = nextActionText(s);
+        setText('todayNextText', nextAction);
+        nextEl.hidden = !nextAction;
+      }
       var pe = $('#planEmpty');
       if (pe) pe.style.display = (s.planTotal > 0) ? 'none' : 'inline';
 
@@ -562,21 +578,21 @@ import Analytics from '../js/analytics.js';
 
       setText('readBooks', s.readBooks);
       setText('readPages', s.readPages);
-      setText('readStatus', (s.readBooks + s.readPages) > 0 ? '今日进行中' : '今日未开始');
+      setText('readStatus', (s.readBooks + s.readPages) > 0 ? '今日进行中' : '今天可从 10 页开始');
 
       setText('englishCount', s.englishCount);
       setText('englishMinutes', s.englishMinutes);
-      setText('englishStatus', (s.englishCount + s.englishMinutes) > 0 ? '今日进行中' : '今日未开始');
+      setText('englishStatus', (s.englishCount + s.englishMinutes) > 0 ? '今日进行中' : '今天可从 10 词开始');
 
       setText('sportCount', s.sportCount);
       setText('sportCal', s.sportCal);
-      setText('sportStatus', (s.sportCount + s.sportCal) > 0 ? '今日进行中' : '今日未开始');
+      setText('sportStatus', (s.sportCount + s.sportCal) > 0 ? '今日进行中' : '今天可从 10 分钟开始');
       var st = $('#sportTip');
       if (st) st.style.display = (s.sportCount + s.sportCal) > 0 ? 'none' : 'inline';
 
       setText('focusCount', s.focusTodayCount);
       setText('focusMinutes', s.focusTodayMin);
-      setText('focusStatus', s.focusTodayMin > 0 ? '今日专注 ' + s.focusTodayMin + ' 分钟' : '今日未开始');
+      setText('focusStatus', s.focusTodayMin > 0 ? '今日专注 ' + s.focusTodayMin + ' 分钟' : '今天可专注 25 分钟');
 
       // 打卡按钮完成态
       var checkinBtn = document.querySelector('.hero-actions .btn-primary[data-act="checkin"]');
@@ -629,6 +645,15 @@ import Analytics from '../js/analytics.js';
       if (typeof updateOnboardUI === 'function') updateOnboardUI();
     }
 
+    function nextActionText(s) {
+      if (s.nextTodo) return '从「' + (s.nextTodo.text || '未命名待办') + '」开始，完成后进度会立刻更新。';
+      if (!s.nextTodo && !Store.getGoals().length) return '先去目标页定一个小目标，今天的记录就有了方向。';
+      if (!Store.isCheckedIn(today())) return '先完成今日打卡，把今天的节奏启动起来。';
+      if (!Store.getCourses().length) return '添加一门课程，学习进度会开始自动汇总。';
+      if (s.planTotal === 0) return '今天的计划还是空的，添加一件 10 分钟的小事。';
+      return '今日待办已完成，可以补一条阅读、运动或专注记录。';
+    }
+
     /* ========== 今日发现（UI-2）==========
      * 基于真实记录的本地规则洞察（非 AI、非虚构）：
      * 只读 CGStore/Analytics 展示层数据，无任何写入。 */
@@ -647,6 +672,16 @@ import Analytics from '../js/analytics.js';
       if (!list) return;
 
       var items = [];
+      // 昨日承接：只引用真实历史记录，帮助用户感知连续性。
+      if (s.yesterdayTodoTotal > 0) {
+        items.push(s.yesterdayTodoDone > 0
+          ? { dot: 'sky', text: '昨天完成 ' + s.yesterdayTodoDone + ' / ' + s.yesterdayTodoTotal + ' 项待办，今天接着推进。' }
+          : { dot: 'sky', text: '昨天计划了 ' + s.yesterdayTodoTotal + ' 项待办，今天可以从中挑一件重新开始。' });
+      } else if (s.yesterdayActivity > 0) {
+        items.push({ dot: 'sky', text: '昨天有 ' + s.yesterdayActivity + ' 条成长记录，今天继续接上就好。' });
+      } else if (s.planTotal === 0 && s.growthStreak === 0) {
+        items.push({ dot: 'amber', text: '还没有历史记录。先打卡或做一件 10 分钟的小事，洞察会从这里开始。' });
+      }
       // 连续记录：有积累时给正反馈
       if (s.growthStreak >= 2) {
         items.push({ dot: 'teal', text: '你已经连续打卡 ' + s.growthStreak + ' 天，节奏保持得很好。' });
@@ -690,7 +725,7 @@ import Analytics from '../js/analytics.js';
       var courses = Store.getCourses();
       host.innerHTML = '';
       if (!courses.length) {
-        host.innerHTML = '<div class="item-empty">暂无课程，点击「添加课程」开始</div>';
+        host.innerHTML = '<div class="item-empty">还没有课程。点击「添加课程」，学习进度会自动汇总。</div>';
         return;
       }
       courses.forEach(function (c) {
@@ -748,7 +783,7 @@ import Analytics from '../js/analytics.js';
       var sports = Store.getSports().reverse();
       host.innerHTML = '';
       if (!sports.length) {
-        host.innerHTML = '<div class="item-empty">暂无运动记录，动起来吧！</div>';
+        host.innerHTML = '<div class="item-empty">还没有运动记录。今天 10 分钟散步也算一次有效开始。</div>';
         return;
       }
       sports.slice(0, 20).forEach(function (s) {
@@ -771,7 +806,7 @@ import Analytics from '../js/analytics.js';
       var records = Store.getEnglish().reverse();
       host.innerHTML = '';
       if (!records.length) {
-        host.innerHTML = '<div class="item-empty">暂无英语学习记录</div>';
+        host.innerHTML = '<div class="item-empty">还没有英语记录。先背 10 个词，节奏就建立起来了。</div>';
         return;
       }
       records.slice(0, 20).forEach(function (r) {
@@ -817,7 +852,7 @@ import Analytics from '../js/analytics.js';
       var todos = Store.getTodosByDate(today());
       host.innerHTML = '';
       if (!todos.length) {
-        host.innerHTML = '<div class="item-empty">今天还没有任务，点击「+ 添加任务」开始规划 ✨</div>';
+        host.innerHTML = '<div class="item-empty">今天还没有任务。点击「+ 添加任务」，先安排一件 10 分钟的小事。</div>';
         return;
       }
       todos.slice(0, 20).forEach(function (t) {
@@ -1082,7 +1117,7 @@ import Analytics from '../js/analytics.js';
       Store.addCourse(payload);
       updateUI();
       closeModal('modalAddCourse');
-      toast(isDupName ? '已存在同名课程，本次已作为新的班次添加。' : '✅ 课程已添加：' + name, 'success');
+      toast(isDupName ? '已存在同名课程，本次已作为新的班次添加。' : '课程已添加：' + name, 'success');
     });
 
     // 导入课表：通过链接抓取并解析课程，按名称去重合并进 Store
@@ -1450,7 +1485,7 @@ import Analytics from '../js/analytics.js';
       Store.addSport({ date: today(), name: type, calories: cal, duration: min, type: 'general' });
       updateUI();
       closeModal('modalAddSport');
-      toast('✅ 运动已记录：' + type, 'success');
+      toast('运动已记录：' + type, 'success');
     });
 
     // 保存英语
@@ -1461,7 +1496,7 @@ import Analytics from '../js/analytics.js';
       Store.addEnglish({ date: today(), words: words, minutes: mins });
       updateUI();
       closeModal('modalAddEnglish');
-      toast('✅ 英语学习已记录：' + words + ' 词', 'success');
+      toast('英语学习已记录：' + words + ' 词', 'success');
     });
 
     // 保存新建任务
@@ -1472,7 +1507,7 @@ import Analytics from '../js/analytics.js';
       Store.addTodo({ text: text, date: today(), done: false, priority: pri });
       updateUI();
       closeModal('modalAddTask');
-      toast('✅ 已添加任务：' + text, 'success');
+      toast('已添加任务：' + text, 'success');
     });
     $('#taskText').addEventListener('keydown', function (e) {
       if (e.key === 'Enter') $('#saveTaskBtn').click();
@@ -1540,7 +1575,7 @@ import Analytics from '../js/analytics.js';
       Store.addFocus({ date: today(), minutes: elapsedMin, task: task });
       updateUI();
       closeModal('modalFocusTimer');
-      toast(auto ? ('🎉 专注完成！+' + elapsedMin + ' 分钟') : ('⏹ 已记录 ' + elapsedMin + ' 分钟专注'), 'success');
+      toast(auto ? ('专注完成，+' + elapsedMin + ' 分钟') : ('已记录 ' + elapsedMin + ' 分钟专注'), 'success');
     }
     function focusReset() {
       stopFocusTick();
@@ -1810,6 +1845,7 @@ import Analytics from '../js/analytics.js';
     function onboardState() {
       return {
         checkin: !!Store.isCheckedIn(today()),
+        goal: (Store.getGoals() || []).length > 0,
         course: (Store.getCourses() || []).length > 0,
         todo: (Store.getTodosByDate(today()) || []).length > 0,
       };
@@ -1817,7 +1853,7 @@ import Analytics from '../js/analytics.js';
 
     function hasAnyRecord() {
       var s = onboardState();
-      return s.checkin || s.course || s.todo ||
+      return s.checkin || s.goal || s.course || s.todo ||
         (Store.getReadings() || []).length > 0 ||
         (Store.getSports() || []).length > 0 ||
         (Store.getEnglish() || []).length > 0 ||
@@ -1828,13 +1864,13 @@ import Analytics from '../js/analytics.js';
       var card = $('#onboardCard');
       if (!card || card.classList.contains('hidden')) return;
       var s = onboardState();
-      [['checkin', s.checkin], ['course', s.course], ['todo', s.todo]].forEach(function (pair) {
+      [['checkin', s.checkin], ['goal', s.goal], ['course', s.course], ['todo', s.todo]].forEach(function (pair) {
         var btn = document.querySelector('#onboardActions [data-ob="' + pair[0] + '"]');
         if (btn) btn.classList.toggle('done', pair[1]);
       });
-      var doneCount = (s.checkin ? 1 : 0) + (s.course ? 1 : 0) + (s.todo ? 1 : 0);
-      setText('#onboardProgress', doneCount + ' / 3');
-      if (doneCount === 3) finishOnboard(true);
+      var doneCount = (s.checkin ? 1 : 0) + (s.goal ? 1 : 0) + (s.course ? 1 : 0) + (s.todo ? 1 : 0);
+      setText('#onboardProgress', doneCount + ' / 4');
+      if (doneCount === 4) finishOnboard(true);
     }
 
     function maybeShowOnboard() {
@@ -1852,7 +1888,7 @@ import Analytics from '../js/analytics.js';
       var card = $('#onboardCard');
       if (card) card.classList.add('hidden');
       try { Store.setUser({ onboarded: true }); } catch (_) {}
-      if (!silent) toast('🎉 新手指引完成，开始记录你的成长吧！', 'success');
+      if (!silent) toast('新手指引完成，开始记录你的成长吧！', 'success');
     }
 
     /* ---------- 课程弹窗表单辅助 ---------- */
@@ -1885,6 +1921,10 @@ import Analytics from '../js/analytics.js';
         }
         return;
       }
+      if (action === 'goal') {
+        location.href = 'goals.html';
+        return;
+      }
       if (action === 'course') {
         resetCourseForm();
         openModal('modalAddCourse');
@@ -1903,7 +1943,7 @@ import Analytics from '../js/analytics.js';
     var obCloseBtn = $('#onboardClose');
     if (obCloseBtn) obCloseBtn.addEventListener('click', function () {
       finishOnboard(true);
-      toast('已跳过新手引导，随时可以从零开始添加记录 ✨', 'info');
+      toast('已跳过新手引导，随时可以从目标页开始', 'info');
     });
     document.querySelectorAll('#onboardActions [data-ob]').forEach(function (btn) {
       btn.addEventListener('click', function () { runOnboardAction(this.getAttribute('data-ob')); });

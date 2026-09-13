@@ -188,6 +188,25 @@
       color: var(--text-muted);
     }
 
+    .today-next {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 2px 0 10px;
+      padding: 10px 13px;
+      background: rgba(232, 168, 92, 0.09);
+      border: 1px solid rgba(232, 168, 92, 0.22);
+      border-radius: var(--r-sm);
+      color: var(--text-mid);
+      font-size: 0.88rem;
+    }
+
+    .today-next i {
+      color: var(--brand-amber);
+      font-size: 0.8rem;
+    }
+
     .func-card .card-action {
       font-size: 0.8rem;
       color: var(--primary);
@@ -1005,15 +1024,16 @@
   <!-- ===== 新手指引 ===== -->
   <div class="onboard-card hidden" id="onboardCard">
     <div class="onboard-info">
-      <h3>🚀 3 步上手晨光自律台</h3>
-      <p>跟着做一遍，你的成长记录就正式开始了</p>
+      <h3>4 步上手晨光自律台</h3>
+      <p>先定方向，再用记录看见成长</p>
     </div>
     <div class="onboard-actions" id="onboardActions">
       <button class="onboard-step" data-ob="checkin">① 今日打卡</button>
-      <button class="onboard-step" data-ob="course">② 添加课程</button>
-      <button class="onboard-step" data-ob="todo">③ 新建待办</button>
+      <button class="onboard-step" data-ob="goal">② 设定目标</button>
+      <button class="onboard-step" data-ob="course">③ 添加课程</button>
+      <button class="onboard-step" data-ob="todo">④ 新建待办</button>
     </div>
-    <span class="onboard-progress" id="onboardProgress">0 / 3</span>
+    <span class="onboard-progress" id="onboardProgress">0 / 4</span>
     <button class="onboard-close" id="onboardClose" title="关闭引导" aria-label="关闭引导">✕</button>
   </div>
 
@@ -1030,13 +1050,14 @@
         <span class="num hero-num" id="planDone">0</span><span class="unit">项完成</span>
         <span style="margin:0 4px;color:var(--text-light);">·</span>
         <span class="num hero-num" id="planTotal">0</span><span class="unit">项待办</span>
-        <span id="planEmpty" style="margin-left:8px;" class="empty-hint">还没有任务</span>
+        <span id="planEmpty" style="margin-left:8px;" class="empty-hint">添加一件 10 分钟就能开始的小事</span>
       </div>
       <div class="hero-actions">
         <a href="#" class="btn-primary" data-act="checkin">✅ 今日打卡</a>
         <a href="#" class="card-action" data-act="add">+ 添加任务</a>
       </div>
       <span class="expand-toggle" data-expand="taskPanel">查看任务 <i class="fas fa-chevron-down chevron"></i></span>
+      <div class="today-next" id="todayNext" aria-live="polite"><i class="fas fa-arrow-right"></i><span id="todayNextText"></span></div>
       <div class="expand-panel" id="taskPanel">
         <div class="item-list" id="taskList"></div>
       </div>
@@ -1049,7 +1070,7 @@
         <span class="status" id="courseStatus">0 门</span>
       </div>
       <div class="card-body">
-        <span id="courseEmpty" class="empty-hint">暂无课程</span>
+        <span id="courseEmpty" class="empty-hint">添加一门课程，进度会自动汇总</span>
         <span id="courseBody" style="display:none;">
           <span class="num" id="courseCount">0</span><span class="unit">门</span>
           <span style="margin:0 4px;color:var(--text-light);">·</span>
