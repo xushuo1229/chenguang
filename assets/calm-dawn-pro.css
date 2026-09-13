@@ -1,0 +1,687 @@
+/*
+  晨光自律台 · Calm Dawn PRO
+  ------------------------------------------------------------
+  本文件是 Phase UI-PRO 的统一视觉层：
+  1) 只做视觉与微动效；
+  2) 不修改页面结构、业务 JS、数据模型与同步协议；
+  3) 通过覆盖既有类名，让六页共享同一套设计语言。
+*/
+
+:root {
+  --pro-line: rgba(255, 255, 255, 0.07);
+  --pro-line-strong: rgba(255, 255, 255, 0.14);
+  --pro-card: #191c22;
+  --pro-elev: #21252d;
+  --pro-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
+  --pro-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.22), 0 12px 28px rgba(0, 0, 0, 0.16);
+  --pro-gutter: clamp(18px, 3.5vw, 48px);
+  --pro-section: clamp(28px, 4vw, 56px);
+  --pro-radius: 22px;
+  --pro-radius-lg: 28px;
+}
+
+/* ===== 全局基线 ===== */
+body {
+  background: #0f1114;
+  color: #f2efe8;
+  letter-spacing: -0.01em;
+}
+
+body::before {
+  display: none;
+}
+
+@keyframes uiProRise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== 应用骨架 ===== */
+.main {
+  padding: var(--pro-section) var(--pro-gutter) 88px;
+}
+
+.topbar,
+.sidebar,
+.mobile-tabbar {
+  background: rgba(15, 17, 20, 0.9);
+  backdrop-filter: blur(18px);
+  border-color: var(--pro-line);
+}
+
+.topbar {
+  min-height: 74px;
+  padding: 18px var(--pro-gutter);
+}
+
+.topbar .greeting h2 {
+  font-size: clamp(1.25rem, 2vw, 1.6rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.topbar .date,
+.topbar-info p {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+.topbar .actions,
+.topbar-actions {
+  gap: 10px;
+}
+
+.nav-link,
+.btn-refresh,
+.topbar .actions a,
+.topbar .actions button,
+.goals-sub {
+  color: var(--text-mid);
+}
+
+.nav-link,
+.topbar .actions a,
+.topbar .actions button {
+  min-height: 38px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  transition: background 160ms var(--ease), border-color 160ms var(--ease), color 160ms var(--ease);
+}
+
+.nav-link:hover,
+.topbar .actions a:hover,
+.topbar .actions button:hover,
+.btn-refresh:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--pro-line-strong);
+  color: var(--text-hi);
+}
+
+.sidebar {
+  border-right: 1px solid var(--pro-line);
+}
+
+.sidebar .logo {
+  color: var(--brand-amber);
+}
+
+.sidebar .nav-item {
+  border-radius: 12px;
+  color: var(--text-muted);
+}
+
+.sidebar .nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-hi);
+}
+
+.sidebar .nav-item.active {
+  background: var(--brand-amber-weak);
+  color: var(--brand-amber);
+}
+
+.mobile-tabbar {
+  padding-top: 8px;
+  box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-tabbar a {
+  min-height: 48px;
+  border-radius: 14px;
+  font-size: 10px;
+}
+
+/* ===== 卡片与信息层级 ===== */
+.card,
+.stats-section,
+.func-card,
+.goal-card,
+.coach-card,
+.empty-state,
+.cg-insight,
+.feature-card,
+.xp-illus,
+.ai-principle,
+.idea-illus {
+  background: var(--pro-card);
+  border: 1px solid var(--pro-line);
+  border-radius: var(--pro-radius);
+  box-shadow: var(--pro-shadow);
+}
+
+.card,
+.stats-section,
+.func-card,
+.goal-card,
+.coach-card,
+.empty-state,
+.cg-insight,
+.feature-card {
+  transition: border-color 160ms var(--ease), box-shadow 240ms var(--ease), transform 240ms var(--ease);
+}
+
+.card:hover,
+.stats-section:hover,
+.func-card:hover,
+.goal-card:hover,
+.coach-card:hover,
+.feature-card:hover {
+  border-color: var(--pro-line-strong);
+  box-shadow: var(--pro-shadow-hover);
+  transform: translateY(-2px);
+}
+
+.func-card,
+.goal-card,
+.coach-card {
+  padding: 20px;
+}
+
+.card-header,
+.goal-head,
+.coach-card-head,
+.section-head {
+  align-items: center;
+}
+
+.card-header .label,
+.goal-title,
+.coach-card-head h3,
+.section-head h3,
+.section-title {
+  letter-spacing: -0.02em;
+}
+
+.hero-card,
+.today-next,
+.onboard-card {
+  border-radius: var(--pro-radius);
+  box-shadow: var(--pro-shadow);
+}
+
+.hero-card {
+  padding: 24px;
+}
+
+.hero-num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+}
+
+.today-next {
+  background: rgba(232, 168, 92, 0.08);
+  border: 1px solid rgba(232, 168, 92, 0.16);
+  padding: 12px 14px;
+  font-size: 0.88rem;
+}
+
+.today-next i {
+  color: var(--brand-amber);
+}
+
+.onboard-card {
+  background: rgba(232, 168, 92, 0.08);
+  border: 1px solid rgba(232, 168, 92, 0.18);
+  padding: 18px;
+}
+
+.onboard-step,
+.quick-questions button,
+.range-tab,
+.action-btn,
+.action-chip {
+  border: 1px solid var(--pro-line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-mid);
+  transition: background 160ms var(--ease), border-color 160ms var(--ease), color 160ms var(--ease);
+}
+
+.onboard-step:hover,
+.quick-questions button:hover,
+.range-tab:hover,
+.action-btn:hover,
+.action-chip:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--pro-line-strong);
+  color: var(--text-hi);
+}
+
+.range-tab.is-active {
+  background: var(--brand-amber);
+  border-color: transparent;
+  color: var(--text-on-accent);
+  font-weight: 650;
+}
+
+.empty-state {
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.empty-state h3 {
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+
+.empty-state p {
+  max-width: 36em;
+  margin: 0 auto 20px;
+}
+
+.empty-state-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: rgba(232, 168, 92, 0.1);
+  color: var(--brand-amber);
+}
+
+/* ===== 按钮与表单 ===== */
+.btn,
+.btn-primary,
+.btn-outline,
+.btn-new,
+.btn-sm,
+.btn-lg,
+.modal-close {
+  border-radius: 14px;
+}
+
+.btn {
+  min-height: 40px;
+  letter-spacing: -0.01em;
+}
+
+.btn-primary {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--brand-amber-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-new {
+  min-height: 40px;
+  padding: 9px 18px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+}
+
+input,
+select,
+textarea,
+.wb-select,
+.form-row input,
+.form-row select,
+.custom-range input,
+.custom-range select {
+  border-color: var(--pro-line);
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+input:hover,
+select:hover,
+textarea:hover,
+.wb-select:hover,
+.form-row input:hover,
+.form-row select:hover,
+.custom-range input:hover,
+.custom-range select:hover {
+  border-color: var(--pro-line-strong);
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.wb-select:focus,
+.form-row input:focus,
+.form-row select:focus,
+.custom-range input:focus,
+.custom-range select:focus {
+  border-color: var(--brand-amber);
+  box-shadow: 0 0 0 3px rgba(232, 168, 92, 0.12);
+}
+
+/* ===== Landing / Login ===== */
+.login-wrap {
+  min-height: 100vh;
+  background: #0f1114;
+}
+
+.brand-pane {
+  background: transparent;
+  border-right: 1px solid var(--pro-line);
+  padding: 48px clamp(28px, 5vw, 68px);
+}
+
+.form-pane {
+  background: transparent;
+  padding: 48px clamp(24px, 5vw, 72px);
+}
+
+.auth-card {
+  max-width: 424px;
+  border: 1px solid var(--pro-line);
+  border-radius: var(--pro-radius-lg);
+  background: var(--pro-card);
+  box-shadow: var(--pro-shadow);
+  padding: clamp(26px, 4vw, 36px);
+}
+
+.auth-card h2,
+.brand-main h1 {
+  letter-spacing: -0.035em;
+}
+
+.cap-item {
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  padding: 14px;
+  transition: background 160ms var(--ease), border-color 160ms var(--ease);
+}
+
+.cap-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--pro-line);
+}
+
+.hero,
+.section {
+  max-width: 1180px;
+}
+
+.section {
+  padding: var(--pro-section) 0;
+}
+
+.section-title {
+  font-size: clamp(1.65rem, 3vw, 2.2rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+}
+
+.section-sub {
+  max-width: 44em;
+  color: var(--text-mid);
+}
+
+.feature-grid,
+.xp-row,
+.ai-row {
+  gap: 24px;
+}
+
+.feature-card {
+  padding: 24px;
+}
+
+.feature-card .fc-title {
+  letter-spacing: -0.02em;
+}
+
+/* ===== Stats ===== */
+.stat-grid,
+.duo-grid,
+.trend-grid,
+.pb-grid {
+  gap: 16px;
+}
+
+.stat-item,
+.d-stat,
+.pb-item,
+.mini-card {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--pro-line);
+  border-radius: 16px;
+  box-shadow: none;
+}
+
+.stat-num,
+.d-num,
+.pb-value {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+.chart-container,
+.trend-cell,
+.hm-container {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--pro-line);
+  border-radius: 16px;
+}
+
+/* ===== Goals ===== */
+.goal-card {
+  padding: 20px;
+}
+
+.goal-title {
+  font-size: 1.08rem;
+  font-weight: 650;
+}
+
+.goal-progress-row {
+  color: var(--text-mid);
+}
+
+.progressbar {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.progressbar-fill {
+  border-radius: 999px;
+  transition: width 320ms var(--ease);
+}
+
+.badge,
+.goal-badge,
+.goal-chips .chip {
+  border: 1px solid var(--pro-line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-mid);
+}
+
+.badge-active {
+  background: rgba(232, 168, 92, 0.12);
+  border-color: rgba(232, 168, 92, 0.22);
+  color: var(--brand-amber);
+}
+
+.badge-completed {
+  background: rgba(79, 195, 180, 0.12);
+  border-color: rgba(79, 195, 180, 0.2);
+  color: var(--brand-teal);
+}
+
+.badge-expired {
+  background: rgba(232, 121, 111, 0.1);
+  border-color: rgba(232, 121, 111, 0.2);
+  color: var(--brand-rose);
+}
+
+.goal-actions .ga-btn,
+.goal-actions button {
+  min-height: 34px;
+  border-radius: 10px;
+}
+
+/* ===== AI ===== */
+.coach-layout {
+  gap: 20px;
+}
+
+.coach-col {
+  gap: 16px;
+}
+
+.coach-card {
+  padding: 18px;
+}
+
+.coach-card-head h3 {
+  font-size: 0.96rem;
+}
+
+.today-grid {
+  gap: 10px;
+}
+
+.today-stat {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--pro-line);
+  border-radius: 14px;
+}
+
+.insight-list,
+.mini-empty,
+.msg-bubble {
+  color: var(--text-mid);
+}
+
+.msg-ai .msg-avatar {
+  background: rgba(167, 141, 201, 0.12);
+  color: var(--brand-iris);
+}
+
+.msg-ai .msg-bubble {
+  background: rgba(167, 141, 201, 0.08);
+  border: 1px solid rgba(167, 141, 201, 0.14);
+  border-radius: 18px;
+  color: var(--text-hi);
+}
+
+.msg-user .msg-bubble {
+  background: var(--pro-elev);
+  border: 1px solid var(--pro-line);
+  border-radius: 18px;
+}
+
+.chat-input-wrap {
+  border-color: var(--pro-line);
+  border-radius: 20px;
+  background: var(--pro-card);
+}
+
+.chat-input-wrap:focus-within {
+  border-color: rgba(167, 141, 201, 0.55);
+  box-shadow: 0 0 0 3px rgba(167, 141, 201, 0.1);
+}
+
+/* ===== 弹窗与反馈 ===== */
+.modal-box,
+.confirm-box {
+  border: 1px solid var(--pro-line);
+  border-radius: var(--pro-radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-head h3,
+.confirm-title {
+  letter-spacing: -0.02em;
+}
+
+.toast {
+  border: 1px solid var(--pro-line);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+}
+
+/* ===== 微动效 ===== */
+.main > * {
+  animation: uiProRise 360ms var(--ease) both;
+}
+
+@media (max-width: 860px) {
+  :root {
+    --pro-gutter: 18px;
+    --pro-section: 24px;
+  }
+
+  .main {
+    padding-bottom: 92px;
+  }
+
+  .topbar {
+    padding: 14px var(--pro-gutter);
+  }
+
+  .func-card,
+    .goal-card,
+    .coach-card,
+    .stats-section {
+    padding: 16px;
+  }
+
+  .hero-card {
+    padding: 18px;
+  }
+
+  .section {
+    padding: 36px 0;
+  }
+
+  .brand-pane {
+    padding: 28px 20px;
+  }
+
+  .form-pane {
+    padding: 24px 18px 40px;
+  }
+
+  .auth-card {
+    padding: 24px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main {
+    padding: 20px 16px 96px;
+  }
+
+  .topbar .actions a,
+  .topbar .actions button {
+    min-height: 34px;
+    padding: 6px 10px;
+  }
+
+  .today-next,
+  .onboard-card {
+    font-size: 0.84rem;
+  }
+
+  .stat-grid,
+  .today-grid,
+  .duo-grid,
+  .trend-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main > * {
+    animation: none !important;
+  }
+}
