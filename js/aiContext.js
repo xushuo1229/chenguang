@@ -54,6 +54,27 @@ var MAX_INSIGHTS = 12;
 var D7 = 7;
 var D30 = 30;
 
+function compactGrowthRanges(ranges) {
+  var out = {};
+  Object.keys(ranges || {}).forEach(function (key) {
+    var range = ranges[key];
+    if (!range) return;
+    out[key] = {
+      span: range.span,
+      learningTrend: {
+        status: range.learningTrend && range.learningTrend.status,
+        delta: range.learningTrend && range.learningTrend.delta,
+        description: range.learningTrend && range.learningTrend.description
+      },
+      consistency: range.consistency,
+      tasks: range.tasks,
+      strengths: range.strengths,
+      risks: range.risks
+    };
+  });
+  return out;
+}
+
 /* ====================================================================
    数值 / 数组 防御工具
    ==================================================================== */
@@ -254,6 +275,12 @@ function buildContext(data, opts) {
     todos: todos,
     courses: courses,
     goals: goals,
+    growth: {
+      score: growthState.growthScore,
+      trends: compactGrowthRanges(growthState.growthSummary.ranges),
+      risks: growthState.riskSignals,
+      strengths: growthState.positiveSignals
+    },
     growthState: {
       overall: growthState.overall,
       learning: growthState.learningState,
@@ -439,6 +466,7 @@ function trimContextToBudget(ctx, maxTokens) {
 
   // 1) 丢弃 30 天趋势（Level B 里的最次要项）
   if (out.trends) out.trends.days30 = null;
+  if (out.growth && out.growth.trends) out.growth.trends['90d'] = null;
   if (estimateContextTokens(out) <= maxTokens) return out;
 
   // 2) 收缩 insights：只留 high / 前几条
@@ -476,6 +504,8 @@ function compactRetrievalResult(result) {
       scope: 'growthState',
       insufficientData: !!result.insufficientData,
       overall: state.overall,
+      score: state.growthScore,
+      growthSummary: state.growthSummary,
       domainStates: {
         learning: state.learningState,
         execution: state.executionState,

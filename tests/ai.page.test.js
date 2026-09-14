@@ -110,8 +110,8 @@ test('有数据：仪表盘渲染，今日状态 6 格、快捷问题 5 个、�
   // 快捷问题（mandate 规定的 5 个）
   const qs = [...document.querySelectorAll('.quick-q')].map((b) => b.getAttribute('data-q'));
   expect(qs).toEqual([
-    '我今天应该做什么？', '我的效率为什么下降？', '哪个目标最危险？',
-    '我的学习状态怎么样？', '帮我安排今天'
+    '分析我的最近状态', '我最近哪里进步最大？', '我的主要问题是什么？',
+    '哪个目标最危险？', '帮我安排今天'
   ]);
   // 目标风险：即将到期 + 进度低 → 有 high 项
   const riskTexts = [...document.querySelectorAll('#riskList .ii-text')].map((n) => n.textContent);

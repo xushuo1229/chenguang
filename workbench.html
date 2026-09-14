@@ -246,6 +246,38 @@
       grid-column: 1 / -1;
     }
 
+    .growth-brief-score {
+      margin: 0 0 10px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .growth-brief-ranges {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .growth-brief-range {
+      padding: 10px;
+      border: 1px solid rgba(148, 138, 124, 0.16);
+      border-radius: 12px;
+    }
+
+    .growth-brief-range h5 {
+      margin: 0 0 4px;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+    }
+
+    .growth-brief-range p {
+      margin: 0;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      color: var(--text-secondary);
+    }
+
     /* ===== 成长数据区 ===== */
     .data-section {
       background: var(--bg-card);
@@ -1053,6 +1085,8 @@
     </div>
     <div class="card-body">
       <p class="growth-brief-status" id="growthBriefStatus">正在读取你的成长状态…</p>
+      <p class="growth-brief-score" id="growthBriefScore" hidden></p>
+      <div class="growth-brief-ranges" id="growthBriefRanges"></div>
       <div class="growth-brief-grid">
         <div><h4>今日变化</h4><div id="growthBriefChanges"></div></div>
         <div><h4>值得关注</h4><div id="growthBriefFocus"></div></div>

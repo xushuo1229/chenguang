@@ -78,7 +78,8 @@ function getRecentTrends(data, opts) {
       windows: {
         days7: compactTrends(state.trendState.windows['7d']),
         days14: compactTrends(state.trendState.windows['14d']),
-        days30: compactTrends(state.trendState.windows['30d'])
+        days30: compactTrends(state.trendState.windows['30d']),
+        days90: compactTrends(state.trendState.windows['90d'])
       },
       importantChanges: state.trendState.importantChanges
     },
@@ -185,6 +186,8 @@ function getGrowthState(data, opts) {
     scope: 'growthState',
     data: {
       overall: state.overall,
+      growthScore: state.growthScore,
+      growthSummary: state.growthSummary,
       learningState: state.learningState,
       executionState: state.executionState,
       focusState: state.focusState,
@@ -196,6 +199,8 @@ function getGrowthState(data, opts) {
       workloadState: state.workloadState,
       consistencyState: state.consistencyState,
       importantChanges: state.trendState.importantChanges,
+      risks: state.riskSignals,
+      strengths: state.positiveSignals,
       riskSignals: state.riskSignals,
       positiveSignals: state.positiveSignals,
       recommendedFocus: state.recommendedFocus,

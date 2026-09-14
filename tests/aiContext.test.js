@@ -251,3 +251,20 @@ test('坏数据隔离：单条目标字段缺失不崩，Context 仍生成', asy
   const ctx = AIContext.buildContext(store.get(), { today: TODAY });
   expect(ctx.version).toBe('1.0');
 });
+
+test('Context.growth 提供 Growth Score 与 7/30/90 趋势，同时保留旧 growthState', async () => {
+  const { store, AIContext } = await boot(seedData());
+  const before = JSON.stringify(store.get());
+  const revision = store.getRevision();
+  const ctx = AIContext.buildContext(store.get(), { today: TODAY });
+
+  expect(ctx.growth).toBeTruthy();
+  expect(ctx.growth.score.value).toBeGreaterThanOrEqual(0);
+  expect(ctx.growth.score.value).toBeLessThanOrEqual(100);
+  expect(Object.keys(ctx.growth.trends).sort()).toEqual(['30d', '7d', '90d'].sort());
+  expect(ctx.growth.risks).toEqual(ctx.growthState.risks);
+  expect(ctx.growth.strengths).toEqual(ctx.growthState.strengths);
+  expect(ctx.growthState).toBeTruthy();
+  expect(store.getRevision()).toBe(revision);
+  expect(JSON.stringify(store.get())).toBe(before);
+});

@@ -650,22 +650,27 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
       if ($('#englishPanel') && $('#englishPanel').classList.contains('show')) renderEnglishList();
 
       renderWbInsights(s);
-      renderGrowthBrief();
+      renderGrowthBrief(Store.get());
       if (typeof updateOnboardUI === 'function') updateOnboardUI();
     }
 
     var dismissedProposals = [];
 
-    function renderGrowthBrief() {
-      var container = document.getElementById('growthBrief');
+    function renderGrowthBrief(snapshot) {
+      var container = document.getElementById('growthBriefCard');
       if (!container) return;
-      var brief = GrowthIntelligence.buildDailyInsight(Store.get());
+      var brief = GrowthIntelligence.buildDailyInsight(
+        snapshot && typeof snapshot === 'object' ? snapshot : Store.get()
+      );
       AIActions.observeOutcome(Store);
       var statusEl = document.getElementById('growthBriefStatus');
+      var scoreEl = document.getElementById('growthBriefScore');
+      var rangesEl = document.getElementById('growthBriefRanges');
       var dateEl = document.getElementById('growthBriefDate');
       var changesEl = document.getElementById('growthBriefChanges');
       var actionsEl = document.getElementById('growthBriefActions');
       if (statusEl) statusEl.textContent = brief.status;
+      renderGrowthScore(rangesEl, scoreEl, brief.growthState);
       if (dateEl) dateEl.textContent = brief.date;
       var whyEl = document.getElementById('growthBriefWhy');
       if (whyEl) whyEl.textContent = brief.why;
@@ -722,7 +727,7 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
           dismiss.addEventListener('click', function () {
             AIActions.rejectProposal(proposal);
             dismissedProposals.push(proposal.id);
-            renderGrowthBrief();
+      renderGrowthBrief(Store.get());
           });
           buttons.appendChild(adopt);
           buttons.appendChild(dismiss);
@@ -730,6 +735,36 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
           actionsEl.appendChild(row);
         });
       }
+    }
+
+    function renderGrowthScore(rangesEl, scoreEl, growthState) {
+      if (!rangesEl) return;
+      rangesEl.innerHTML = '';
+      if (!growthState || !growthState.growthScore || !growthState.growthSummary) return;
+
+      if (scoreEl) {
+        scoreEl.hidden = false;
+        scoreEl.textContent = 'Growth Score ' + growthState.growthScore.value + ' / 100 · ' +
+          (growthState.growthScore.dataSufficient ? '由完成、连续性与趋势加权得出' : '数据不足，等待更多记录');
+      }
+
+      ['7d', '30d', '90d'].forEach(function (key) {
+        var range = growthState.growthSummary.ranges && growthState.growthSummary.ranges[key];
+        if (!range) return;
+        var card = document.createElement('div');
+        card.className = 'growth-brief-range';
+        var title = document.createElement('h5');
+        title.textContent = key === '7d' ? '7天' : (key === '30d' ? '30天' : '90天');
+        var body = document.createElement('p');
+        body.textContent = [
+          '学习：' + range.learningTrend.description,
+          range.consistency.description,
+          range.tasks.description
+        ].join(' ');
+        card.appendChild(title);
+        card.appendChild(body);
+        rangesEl.appendChild(card);
+      });
     }
 
     function elBriefLine(text) {
@@ -749,7 +784,7 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
         window.location.href = result.result.navigation === 'goals' ? 'goals.html' : 'stats.html';
         return;
       }
-      renderGrowthBrief();
+            renderGrowthBrief(Store.get());
       toast('已加入今日计划，完成后会反馈到成长简报', 'success');
     }
 

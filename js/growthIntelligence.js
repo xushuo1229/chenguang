@@ -6,7 +6,7 @@ import GoalEngine from './goals.js';
 import { todayStr, dateOffset } from './utils/date.js';
 
 var VERSION = '1.0';
-var SPANS = [7, 14, 30];
+var SPANS = [7, 14, 30, 90];
 var stateCache = { key: null, state: null };
 var METRICS = {
   study: { label: '学习时长', reader: 'study' },
@@ -132,6 +132,208 @@ function buildGoalSignals(goals, data, today) {
   };
 }
 
+function clamp100(value) {
+  return pct(value);
+}
+
+function momentumValue(trend) {
+  if (!trend || trend.insufficientData) return null;
+  if (trend.status === 'rising' || trend.status === 'new_activity') {
+    return clamp100(72 + trend.delta * 0.08);
+  }
+  if (trend.status === 'falling') {
+    return clamp100(45 + trend.delta * 0.2);
+  }
+  if (trend.status === 'volatile') return 50;
+  return clamp100(60 + trend.delta * 0.2);
+}
+
+function average(values) {
+  var usable = arr(values).filter(function (value) { return value != null; });
+  if (!usable.length) return null;
+  return usable.reduce(function (sum, value) { return sum + value; }, 0) / usable.length;
+}
+
+function factor(label, weight, value, explanation) {
+  return {
+    label: label,
+    weight: weight,
+    value: value == null ? null : pct(value),
+    available: value != null,
+    explanation: explanation || ''
+  };
+}
+
+function buildGrowthScore(snap, trends, todoToday, streaks, courses, today) {
+  var range = rangeFor(30, today);
+  var summary30 = Analytics.getDateRangeSummary(range[0], range[1], snap) || {};
+  var completion = summary30.completion || {};
+  var todoRate = num(completion.todoCompletionRate);
+  var activeDayRate = num(completion.activeDayCompletionRate);
+  var courseProgress = courses.length
+    ? courses.reduce(function (sum, course) { return sum + num(course.progress); }, 0) / courses.length
+    : null;
+  var hasCompletionData = num(summary30.todos && summary30.todos.total) > 0 || courseProgress != null;
+  var completionValue = hasCompletionData
+    ? (todoRate * 0.7) + ((courseProgress == null ? activeDayRate : courseProgress) * 0.3)
+    : null;
+
+  var activeDays30 = num(trendForRange(trends, 30, 'activity') && trendForRange(trends, 30, 'activity').current);
+  var consistencyValue = activeDays30 > 0
+    ? clamp100((Math.min(activeDays30 / 21, 1) * 70) + (Math.min(num(streaks.currentStreak) / 7, 1) * 30))
+    : null;
+
+  var momentumTrends = ['study', 'focus', 'english', 'reading', 'exercise', 'todoDone', 'activity']
+    .map(function (metricKey) { return trendForRange(trends, 30, metricKey); })
+    .filter(function (trend) { return trend && !trend.insufficientData; });
+  var momentumScores = momentumTrends.map(momentumValue);
+  var momentumRaw = average(momentumScores);
+
+  var factors = {
+    completion: factor('完成情况', 0.45, completionValue, '待办完成率和课程进度代表长期执行结果。'),
+    consistency: factor('连续性', 0.30, consistencyValue, '30 天活跃天数和当前连续记录代表习惯稳定度。'),
+    momentum: factor('趋势变化', 0.25, momentumRaw, '学习、专注、运动、任务等近期环比变化代表成长方向。')
+  };
+  var available = Object.keys(factors).filter(function (key) { return factors[key].available; });
+  var effectiveWeight = available.reduce(function (sum, key) { return sum + factors[key].weight; }, 0);
+  var weighted = available.reduce(function (sum, key) { return sum + (factors[key].value * factors[key].weight); }, 0);
+  var value = effectiveWeight > 0 ? pct(weighted / effectiveWeight) : 0;
+  var explanation = [
+    'Growth Score = 完成情况 45% + 连续性 30% + 趋势变化 25%。',
+    value > 0
+      ? '缺失因子不参与计算，分数只由当前可验证的数据驱动。'
+      : '目前没有足够的活跃记录、任务或课程数据。'
+  ];
+  if (momentumTrends.length) {
+    explanation.push('趋势因子覆盖 ' + momentumTrends.length + ' 个有数据的指标。');
+  }
+
+  return {
+    version: VERSION,
+    scale: '0-100',
+    value: value,
+    factors: factors,
+    dataSufficient: effectiveWeight > 0,
+    explanation: explanation
+  };
+}
+
+function aggregateTrendStatus(metrics) {
+  var usable = arr(metrics).filter(function (trend) { return trend && !trend.insufficientData; });
+  if (!usable.length) {
+    return { status: 'insufficient_data', delta: 0, description: '这个范围内还没有可验证的学习数据。' };
+  }
+  var rising = usable.filter(function (trend) { return trend.status === 'rising' || trend.status === 'new_activity'; }).length;
+  var falling = usable.filter(function (trend) { return trend.status === 'falling'; }).length;
+  var delta = average(usable.map(function (trend) { return num(trend.delta); })) || 0;
+  var status = rising > falling ? 'rising' : (falling > rising ? 'falling' : (usable.some(function (trend) { return trend.status === 'volatile'; }) ? 'volatile' : 'stable'));
+  var direction = { rising: '上升', falling: '下降', volatile: '波动', stable: '保持稳定' }[status];
+  return {
+    status: status,
+    delta: round(delta),
+    description: usable.length + ' 项学习指标中，主要方向为' + direction + '。'
+  };
+}
+
+function buildRangeSummary(span, trends, rangeSummary, state) {
+  var learningMetrics = ['study', 'focus', 'english', 'reading']
+    .map(function (metricKey) { return trends && trends[metricKey]; })
+    .filter(Boolean);
+  var learningTrend = aggregateTrendStatus(learningMetrics);
+  learningTrend.metrics = learningMetrics.map(function (trend) {
+    return {
+      metric: trend.metric,
+      label: trend.label,
+      current: trend.current,
+      previous: trend.previous,
+      delta: trend.delta,
+      status: trend.status
+    };
+  });
+
+  var activity = (trends && trends.activity) || {};
+  var consistency = state.consistencyState.summary || {};
+  var activeDays = num(activity.current);
+  var consistencyStatus = activeDays === 0 ? 'insufficient_data' : (activeDays >= Math.max(3, Math.round(span * 0.4)) ? 'strong' : (activeDays >= Math.max(2, Math.round(span * 0.17)) ? 'building' : 'interrupted'));
+  var consistencyText = {
+    strong: '记录节奏稳定。',
+    building: '记录节奏正在建立。',
+    interrupted: '记录节奏出现中断。',
+    insufficient_data: '记录数据不足。'
+  }[consistencyStatus];
+
+  var todos = (rangeSummary && rangeSummary.todos) || {};
+  var completionRate = num(todos.completionRate);
+  var taskStatus = num(todos.total) === 0 ? 'insufficient_data' : (completionRate >= 80 ? 'strong' : (completionRate >= 40 ? 'stable' : 'needs_attention'));
+
+  var strengths = learningMetrics
+    .filter(function (trend) { return trend.status === 'rising' || trend.status === 'new_activity'; })
+    .sort(function (a, b) { return b.delta - a.delta; })
+    .slice(0, 2)
+    .map(function (trend) {
+      return {
+        type: trend.metric + '_momentum',
+        description: '最近 ' + span + ' 天，' + trend.label + '上升 ' + trend.delta + '%。'
+      };
+    });
+  if (consistencyStatus === 'strong') {
+    strengths.push({ type: 'consistency', description: '最近 ' + span + ' 天有 ' + activeDays + ' 天保持活跃。' });
+  }
+  if (taskStatus === 'strong') {
+    strengths.push({ type: 'task_completion', description: '最近 ' + span + ' 天任务完成率达到 ' + completionRate + '%。' });
+  }
+
+  var risks = learningMetrics
+    .filter(function (trend) { return trend.status === 'falling'; })
+    .sort(function (a, b) { return a.delta - b.delta; })
+    .slice(0, 2)
+    .map(function (trend) {
+      return {
+        type: trend.metric + '_declining',
+        level: 'medium',
+        description: '最近 ' + span + ' 天，' + trend.label + '下降 ' + Math.abs(trend.delta) + '%。'
+      };
+    });
+  if (taskStatus === 'needs_attention') {
+    risks.push({ type: 'todo_backlog', level: 'medium', description: '最近 ' + span + ' 天任务完成率只有 ' + completionRate + '%。' });
+  }
+
+  return {
+    span: span + 'd',
+    learningTrend: learningTrend,
+    consistency: {
+      status: consistencyStatus,
+      activeDays: activeDays,
+      days: num(activity.evidence && activity.evidence.currentActiveDays) || activeDays,
+      currentStreak: num(consistency.currentStreak),
+      description: consistencyText
+    },
+    tasks: {
+      status: taskStatus,
+      total: num(todos.total),
+      done: num(todos.done),
+      completionRate: completionRate,
+      description: num(todos.total) === 0 ? '这个范围内没有任务记录。' : '任务完成率为 ' + completionRate + '%。'
+    },
+    strengths: strengths.slice(0, 3),
+    risks: risks.slice(0, 3)
+  };
+}
+
+function buildGrowthSummary(snap, state) {
+  var ranges = {};
+  [7, 30, 90].forEach(function (span) {
+    var range = rangeFor(span, state.today);
+    var rangeSummary = Analytics.getDateRangeSummary(range[0], range[1], snap) || {};
+    ranges[span + 'd'] = buildRangeSummary(span, state.trendState.windows[span + 'd'], rangeSummary, state);
+  });
+  return {
+    version: VERSION,
+    generatedAt: new Date().toISOString(),
+    ranges: ranges
+  };
+}
+
 function buildSignals(data, today, trends, todoToday, course, goalSignals) {
   var risks = [];
   var positives = [];
@@ -181,7 +383,7 @@ function buildActionProposals(data, today, signals, todoToday, goalSignals) {
     proposals.push({ id: 'review-risk-goal', type: 'review_goal', title: '复核最可能落后的目标', why: goalSignals.risk[0].title + ' 进度偏低', evidence: { goalId: goalSignals.risk[0].id }, requiresConfirmation: true });
   }
   if (!proposals.length) {
-    proposals.push({ id: 'keep-positive-focus', type: 'add_todo', title: '延续一次有效专注', date: today, priority: 'normal', why: '当前有正向趋势，适合维持节奏', evidence: { positiveType: signals.positives[0].type }, requiresConfirmation: true });
+    proposals.push({ id: 'keep-positive-focus', type: 'add_todo', title: '延续一次有效专注', date: today, priority: 'normal', why: '当前有正向趋势，适合维持节奏', evidence: { positiveType: signals.positives[0] ? signals.positives[0].type : null }, requiresConfirmation: true });
   }
   return proposals.slice(0, 3);
 }
@@ -211,6 +413,7 @@ function computeGrowthState(data, opts) {
   var avgProgress = courses.length ? Math.round(courses.reduce(function (sum, course) { return sum + num(course.progress); }, 0) / courses.length) : 0;
   var goalSignals = buildGoalSignals(arr(snap.goals), snap, today);
   var streaks = Analytics.getStreaks(snap, { today: today });
+  var growthScore = buildGrowthScore(snap, trends, todoToday, streaks, courses, today);
   var signals = buildSignals(snap, today, trends, todoToday, {
     total: courses.length,
     pending: doingCourses.length,
@@ -267,6 +470,7 @@ function computeGrowthState(data, opts) {
     generatedAt: new Date().toISOString(),
     today: today,
     overall: overallStatus,
+    growthScore: growthScore,
     learningState: domains.learningState,
     executionState: domains.executionState,
     focusState: domains.focusState,
@@ -284,6 +488,7 @@ function computeGrowthState(data, opts) {
     actionProposals: proposals,
     dataSufficiency: dataSufficiency
   };
+  state.growthSummary = buildGrowthSummary(snap, state);
   if (cache) {
     stateCache.key = cache;
     stateCache.state = state;
@@ -305,6 +510,20 @@ function buildDailyInsight(data, opts) {
     recommendedActions: state.actionProposals,
     why: insufficient ? '没有足够的连续记录或目标数据。' : (state.recommendedFocus[0] ? state.recommendedFocus[0].reason : '当前没有高风险信号。'),
     growthState: state
+  };
+}
+
+function buildGrowthOverview(data, opts) {
+  var state = computeGrowthState(data, opts);
+  return {
+    version: VERSION,
+    generatedAt: state.generatedAt,
+    today: state.today,
+    score: state.growthScore,
+    ranges: state.growthSummary.ranges,
+    strengths: state.positiveSignals,
+    risks: state.riskSignals,
+    dataSufficiency: state.dataSufficiency
   };
 }
 
@@ -379,10 +598,11 @@ var GrowthIntelligence = {
   VERSION: VERSION,
   computeGrowthState: computeGrowthState,
   buildDailyInsight: buildDailyInsight,
+  buildGrowthOverview: buildGrowthOverview,
   buildGrowthProfile: buildGrowthProfile,
   buildWeeklyReview: buildWeeklyReview
 };
 
 globalThis.CGGrowthIntelligence = GrowthIntelligence;
 export default GrowthIntelligence;
-export { computeGrowthState, buildDailyInsight, buildGrowthProfile, buildWeeklyReview };
+export { computeGrowthState, buildDailyInsight, buildGrowthOverview, buildGrowthProfile, buildWeeklyReview };

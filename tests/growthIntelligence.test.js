@@ -104,3 +104,78 @@ test('异常数据不崩溃，Growth Profile 不虚构最佳时段', async () =>
   expect(profile.bestTimeSlots).toHaveLength(0);
   expect(profile.bestTimeSlotsAvailable).toBe(false);
 });
+
+test('Growth Overview 覆盖 7/30/90 天窗口并输出可解释范围结论', async () => {
+  const Growth = (await import('../js/growthIntelligence.js')).default;
+  const overview = Growth.buildGrowthOverview(seedData(), { today: TODAY });
+  expect(Object.keys(overview.ranges).sort()).toEqual(['30d', '7d', '90d'].sort());
+  for (const range of Object.values(overview.ranges)) {
+    expect(range).toHaveProperty('learningTrend');
+    expect(range).toHaveProperty('consistency');
+    expect(range).toHaveProperty('tasks');
+    expect(Array.isArray(range.strengths)).toBe(true);
+    expect(Array.isArray(range.risks)).toBe(true);
+  }
+  expect(overview.ranges['7d'].learningTrend.metrics.map((item) => item.metric)).toEqual(expect.arrayContaining(['study', 'focus', 'english', 'reading']));
+  expect(overview.ranges['7d'].tasks.completionRate).toBe(25);
+});
+
+test('Growth Score 使用完成度、连续性与动量加权，并在动量更好时更高', async () => {
+  const Growth = (await import('../js/growthIntelligence.js')).default;
+  const base = {
+    user: { name: '测试' },
+    checkins: Array.from({ length: 14 }, (_, index) => ({ id: 'c' + index, date: day(-index), status: 'done' })),
+    todos: Array.from({ length: 20 }, (_, index) => ({ id: 't' + index, date: day(-index % 10), text: '任务', done: index % 2 === 0 })),
+    focus: [
+      { id: 'old-1', date: day(-40), minutes: 300 },
+      { id: 'old-2', date: day(-35), minutes: 300 },
+    ],
+    sports: [{ id: 's1', date: day(-1), minutes: 30 }],
+    readings: [{ id: 'r1', date: day(-1), pages: 20 }],
+    english: [{ id: 'e1', date: day(-1), minutes: 20, words: 20 }],
+    courses: [{ id: 'course-1', name: '课程', progress: 80, status: 'doing' }],
+    goals: [],
+  };
+  const rising = Growth.buildGrowthOverview({
+    ...base,
+    focus: [
+      { id: 'old-1', date: day(-40), minutes: 20 },
+      { id: 'old-2', date: day(-35), minutes: 20 },
+      { id: 'new-1', date: day(-1), minutes: 80 },
+      { id: 'new-2', date: day(0), minutes: 90 },
+    ],
+  }, { today: TODAY });
+  const falling = Growth.buildGrowthOverview({
+    ...base,
+    focus: [
+      { id: 'old-1', date: day(-40), minutes: 100 },
+      { id: 'old-2', date: day(-35), minutes: 100 },
+      { id: 'new-1', date: day(-1), minutes: 20 },
+      { id: 'new-2', date: day(0), minutes: 15 },
+    ],
+  }, { today: TODAY });
+
+  expect(rising.score.value).toBeGreaterThan(falling.score.value);
+  expect(rising.score.factors).toMatchObject({
+    completion: { weight: 0.45 },
+    consistency: { weight: 0.30 },
+    momentum: { weight: 0.25 },
+  });
+  expect(rising.score.explanation.length).toBeGreaterThan(0);
+});
+
+test('空数据和大量数据的 Growth Score 保持安全且不崩溃', async () => {
+  const Growth = (await import('../js/growthIntelligence.js')).default;
+  const empty = Growth.buildGrowthOverview(seedEmpty(), { today: TODAY });
+  expect(empty.score.value).toBe(0);
+  expect(empty.score.dataSufficient).toBe(false);
+
+  const large = seedData();
+  for (let index = 0; index < 1200; index++) {
+    large.todos.push({ id: 'bulk-' + index, date: day(-index % 90), text: '任务', done: index % 3 === 0 });
+    large.focus.push({ id: 'bulk-focus-' + index, date: day(-index % 90), minutes: 10 });
+  }
+  const overview = Growth.buildGrowthOverview(large, { today: TODAY });
+  expect(overview.score.value).toBeGreaterThanOrEqual(0);
+  expect(overview.score.value).toBeLessThanOrEqual(100);
+});

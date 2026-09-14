@@ -56,6 +56,18 @@ test('工作台展示基于真实待办的下一步，而不是静态空文案',
   expect(document.getElementById('todayNextText').textContent).toContain('完成高数第三章习题');
 });
 
+test('成长简报展示 Growth Score 和 7/30/90 天洞察', async () => {
+  await boot();
+  const score = document.getElementById('growthBriefScore');
+  const ranges = document.getElementById('growthBriefRanges');
+  expect(score?.hidden).toBe(false);
+  expect(score?.textContent).toContain('Growth Score');
+  expect(ranges?.textContent).toContain('7天');
+  expect(ranges?.textContent).toContain('30天');
+  expect(ranges?.textContent).toContain('90天');
+  expect(ranges?.textContent).toContain('学习');
+});
+
 test('课程入口切换工作台内课程视图，而不是无响应', async () => {
   await boot();
   document.querySelector('.sidebar a[data-nav="course"]').click();
