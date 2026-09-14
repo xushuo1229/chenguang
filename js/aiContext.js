@@ -29,6 +29,8 @@
 import CGStore from './store.js';
 import Analytics, { isValidDateStr } from './analytics.js';
 import GoalEngine from './goals.js';
+import GrowthIntelligence from './growthIntelligence.js';
+import AIRetrieval from './aiDataRetrieval.js';
 import { todayStr, dateOffset } from './utils/date.js';
 
 /* ====================================================================
@@ -232,6 +234,8 @@ function buildContext(data, opts) {
     expired: buckets.expired.slice(0, 5).map(stripGoal)
   };
 
+  var growthState = GrowthIntelligence.computeGrowthState(snap, { today: today });
+
   /* ---- insights（确定性规则） ---- */
   var insights = buildInsights(buckets, { activeDays: overview.activeDays, currentStreak: overview.currentStreak, longestStreak: overview.longestStreak, trends: trends, courseLib: courseLib, courses: courses, todos: todos }).slice(0, MAX_INSIGHTS);
 
@@ -249,6 +253,25 @@ function buildContext(data, opts) {
     todos: todos,
     courses: courses,
     goals: goals,
+    growthState: {
+      overall: growthState.overall,
+      learning: growthState.learningState,
+      execution: growthState.executionState,
+      focus: growthState.focusState,
+      english: growthState.englishState,
+      reading: growthState.readingState,
+      exercise: growthState.exerciseState,
+      course: growthState.courseState,
+      goal: growthState.goalState,
+      workload: growthState.workloadState,
+      consistency: growthState.consistencyState,
+      importantChanges: growthState.trendState.importantChanges,
+      risks: growthState.riskSignals,
+      strengths: growthState.positiveSignals,
+      recommendedFocus: growthState.recommendedFocus,
+      actionProposals: growthState.actionProposals,
+      dataSufficiency: growthState.dataSufficiency
+    },
     insights: insights
   };
 
@@ -444,6 +467,58 @@ function trimContextToBudget(ctx, maxTokens) {
   return out;
 }
 
+function compactRetrievalResult(result) {
+  if (!result || typeof result !== 'object') return null;
+  if (result.scope === 'growthState') {
+    var state = result.data || {};
+    return {
+      scope: 'growthState',
+      insufficientData: !!result.insufficientData,
+      overall: state.overall,
+      domainStates: {
+        learning: state.learningState,
+        execution: state.executionState,
+        focus: state.focusState,
+        english: state.englishState,
+        reading: state.readingState,
+        exercise: state.exerciseState,
+        course: state.courseState,
+        goal: state.goalState,
+        workload: state.workloadState,
+        consistency: state.consistencyState
+      },
+      importantChanges: state.trendState && state.trendState.importantChanges,
+      risks: state.riskSignals,
+      strengths: state.positiveSignals,
+      recommendedFocus: state.recommendedFocus,
+      actionProposals: state.actionProposals,
+      dataSufficiency: state.dataSufficiency
+    };
+  }
+  return { scope: result.scope, range: result.range, insufficientData: !!result.insufficientData, data: result.data };
+}
+
+function buildQueryContext(data, message, opts) {
+  opts = opts || {};
+  var base = opts.baseContext || buildContext(data, { today: opts.today });
+  var retrieval = AIRetrieval.query(message, data, { today: opts.today });
+  var relevant = {};
+  retrieval.requestedQueries.forEach(function (name) {
+    if (retrieval.results[name]) relevant[name] = compactRetrievalResult(retrieval.results[name]);
+  });
+  return Object.assign({}, base, {
+    question: retrieval.question,
+    retrieval: {
+      version: retrieval.version,
+      intents: retrieval.intents,
+      requestedQueries: retrieval.requestedQueries,
+      allowedQueries: retrieval.allowedQueries,
+      currentUserOnly: retrieval.currentUserOnly,
+      relevant: relevant
+    }
+  });
+}
+
 /* ====================================================================
    便捷：UI 判定数据是否足够丰富
    ==================================================================== */
@@ -472,6 +547,7 @@ var AIContext = {
   estimateTokens: estimateTokens,
   estimateContextTokens: estimateContextTokens,
   buildContext: buildContext,
+  buildQueryContext: buildQueryContext,
   trimContextToBudget: trimContextToBudget,
   buildInsights: buildInsights,
   hasEvidence: hasEvidence
@@ -482,6 +558,7 @@ globalThis.CGAIContext = AIContext;
 export default AIContext;
 export {
   estimateTokens, estimateContextTokens, buildContext, trimContextToBudget,
+  buildQueryContext,
   buildInsights, hasEvidence,
   VERSION, MAX_COURSES
 };

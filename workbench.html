@@ -1009,10 +1009,10 @@
     <a href="#" class="nav-item" data-nav="manage"><i class="fas fa-cog"></i>管理</a>
     <a href="#" class="nav-item" data-nav="profile"><i class="fas fa-user"></i>我的</a>
     <div class="wb-user">
-      <div class="wb-user-avatar">明</div>
+      <div class="wb-user-avatar" id="sidebarUserAvatar">同</div>
       <div class="wb-user-copy">
         <strong id="sidebarUserName">小明同学</strong>
-        <span>大学生</span>
+        <span>成长记录</span>
       </div>
     </div>
     <div class="wb-motto">每天进步一点点<br>未来会很酷</div>
@@ -1040,6 +1040,22 @@
 
   <!-- ===== 视图：首页 ===== -->
   <div id="wb-view-home">
+
+  <section class="func-card full" id="growthBriefCard" aria-label="今日成长简报">
+    <div class="card-header">
+      <span class="label"><span class="card-ico"><i class="fas fa-compass"></i></span> 今日成长简报</span>
+      <span class="status" id="growthBriefDate">晨光发现</span>
+    </div>
+    <div class="card-body">
+      <p class="growth-brief-status" id="growthBriefStatus">正在读取你的成长状态…</p>
+      <div class="growth-brief-grid">
+        <div><h4>今日变化</h4><div id="growthBriefChanges"></div></div>
+        <div><h4>值得关注</h4><div id="growthBriefFocus"></div></div>
+      </div>
+      <div class="growth-brief-why" id="growthBriefWhy"></div>
+      <div id="growthBriefActions" class="growth-brief-actions"></div>
+    </div>
+  </section>
 
   <!-- ===== 新手指引 ===== -->
   <div class="onboard-card hidden" id="onboardCard">
@@ -1900,6 +1916,7 @@
 
 <!-- 模块 -->
 <script type="module" src="pages/workbench.js"></script>
+<script type="module" src="js/userChrome.js"></script>
 
 
 </body>

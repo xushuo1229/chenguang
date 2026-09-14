@@ -6,6 +6,7 @@ import '../js/store.js';
 import '../js/sync.js';
 import Analytics from '../js/analytics.js';
 import CGAIContext from '../js/aiContext.js';
+import GrowthIntelligence from '../js/growthIntelligence.js';
 
 // ====================================================================
 // 晨光自律台 · AI 教练页 (Phase 13 AI 2.0)
@@ -146,6 +147,7 @@ function renderInsightList(container, insights, emptyText) {
 function renderPanels() {
   var ctx = currentContext || {};
   var insights = Array.isArray(ctx.insights) ? ctx.insights : [];
+  var growth = GrowthIntelligence.computeGrowthState(Store.get());
 
   renderToday();
 
@@ -162,8 +164,21 @@ function renderPanels() {
   var rc = $('#riskCount');
   if (rc) rc.textContent = risks.length ? risks.length + ' 项' : '';
 
-  // AI 建议：初始为确定性建议，AI 回复后由 response.suggestions 更新
-  renderAdvice(ctx && ctx.insights ? ctx.insights.slice(0, 3) : []);
+  renderInsightList(
+    $('#trendList'),
+    growth.trendState.importantChanges.map(function (trend) {
+      return {
+        type: trend.status === 'falling' ? 'declining_trend' : 'opportunity',
+        severity: trend.status === 'falling' ? 'medium' : 'positive',
+        reason: '最近 ' + trend.span + '，' + trend.label + '从 ' + fmtNum(trend.previous) + ' 变为 ' + fmtNum(trend.current) + '（' + (trend.delta > 0 ? '+' : '') + trend.delta + '%）'
+      };
+    }),
+    '当前数据不足，暂时无法判断长期趋势。'
+  );
+
+  renderAdvice(growth.actionProposals.map(function (proposal) {
+    return { severity: 'high', text: proposal.title + '：' + proposal.why };
+  }));
 }
 
 var lastSuggestions = [];
@@ -353,7 +368,7 @@ function sendMessage(text) {
     call = globalThis.CGAPI.ai.chat({
       message: text,
       history: historyToSend,
-      context: currentContext,
+      context: AIContext.buildQueryContext(Store.get(), text, { baseContext: currentContext }),
       contextVersion: AIContext.VERSION
     });
   } catch (e) {

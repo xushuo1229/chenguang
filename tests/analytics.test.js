@@ -3,7 +3,7 @@
  * 覆盖：Daily / Weekly / Monthly / Completion / Streak / Trend /
  *       分主题摘要 / Defensive / 不变量（不修改数据、revision 不变）。
  */
-import { test, expect } from 'vitest';
+import { test, expect, vi } from 'vitest';
 import Analytics from '../js/analytics.js';
 
 /** 标准测试数据（围绕 2026-09-07 周一开学的学期） */
@@ -375,15 +375,21 @@ test('TodoSummary：过期 = date 早于今天(today 可注入)且未做', () =>
 });
 
 test('CourseSummary：今日排课 / 本周 / 库概览', () => {
-  const c = Analytics.getCourseSummary(fixture());
-  expect(c.count).toBe(3);
-  expect(c.done).toBe(1);
-  expect(c.avgProgress).toBe(47);
-  expect(c.totalCredits).toBe(9);
-  expect(c.typeDistribution).toEqual({ 必修: 2, 选修: 1 });
-  expect(c.todayScheduleCount).toBe(0); // 周五无课
-  expect(c.weekly.sessions).toBe(3);
-  expect(c.weekly.distinctCourses).toBe(3);
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-09-11T12:00:00'));
+  try {
+    const c = Analytics.getCourseSummary(fixture());
+    expect(c.count).toBe(3);
+    expect(c.done).toBe(1);
+    expect(c.avgProgress).toBe(47);
+    expect(c.totalCredits).toBe(9);
+    expect(c.typeDistribution).toEqual({ 必修: 2, 选修: 1 });
+    expect(c.todayScheduleCount).toBe(0); // 周五无课
+    expect(c.weekly.sessions).toBe(3);
+    expect(c.weekly.distinctCourses).toBe(3);
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 /* ==================== Activity ==================== */

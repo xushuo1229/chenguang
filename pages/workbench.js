@@ -39,6 +39,8 @@ import { parseScheduleText } from '../js/scheduleTextParser.js';
 import CourseSchedule from '../js/courseSchedule.js';
 // 统计引擎（Phase 10）：成长面板的连续打卡复用唯一事实来源（Phase 15 修复）
 import Analytics from '../js/analytics.js';
+import GrowthIntelligence from '../js/growthIntelligence.js';
+import AIActions from '../js/aiActions.js';
 
   // ============================================================
   // IIFE（立即执行函数表达式）— 整个工作台的代码都在这里面
@@ -646,7 +648,104 @@ import Analytics from '../js/analytics.js';
       if ($('#englishPanel') && $('#englishPanel').classList.contains('show')) renderEnglishList();
 
       renderWbInsights(s);
+      renderGrowthBrief();
       if (typeof updateOnboardUI === 'function') updateOnboardUI();
+    }
+
+    var dismissedProposals = [];
+
+    function renderGrowthBrief() {
+      var container = document.getElementById('growthBrief');
+      if (!container) return;
+      var brief = GrowthIntelligence.buildDailyInsight(Store.get());
+      var statusEl = document.getElementById('growthBriefStatus');
+      var dateEl = document.getElementById('growthBriefDate');
+      var changesEl = document.getElementById('growthBriefChanges');
+      var actionsEl = document.getElementById('growthBriefActions');
+      if (statusEl) statusEl.textContent = brief.status;
+      if (dateEl) dateEl.textContent = brief.date;
+      var whyEl = document.getElementById('growthBriefWhy');
+      if (whyEl) whyEl.textContent = brief.why;
+      if (changesEl) {
+        changesEl.innerHTML = '';
+        if (!brief.dataSufficient) {
+          changesEl.appendChild(elBriefLine('当前数据不足，先连续记录 7 天后再看趋势。'));
+        } else if (!brief.changes.length) {
+          changesEl.appendChild(elBriefLine('最近没有明显变化，节奏平稳。'));
+        } else {
+          brief.changes.forEach(function (change) {
+            changesEl.appendChild(elBriefLine(change.label + '：' + change.current + (change.previous ? '（上期 ' + change.previous + '）' : '') + '，' + (change.delta > 0 ? '+' : '') + change.delta + '%'));
+          });
+        }
+      }
+      var focusEl = document.getElementById('growthBriefFocus');
+      if (focusEl) {
+        focusEl.innerHTML = '';
+        if (brief.concern) focusEl.appendChild(elBriefLine('关注：' + brief.concern.reason));
+        if (brief.strength) focusEl.appendChild(elBriefLine('保持：' + brief.strength.reason));
+        if (!brief.concern && !brief.strength) focusEl.appendChild(elBriefLine('暂无足够数据生成风险或优势信号。'));
+      }
+      if (actionsEl) {
+        actionsEl.innerHTML = '';
+        var outcomes = AIActions.observeOutcome(Store);
+        outcomes.forEach(function (outcome) {
+          if (outcome.status === 'pending') return;
+          var line = elBriefLine(outcome.status === 'completed' ? '已完成的建议：' + outcome.id : '进行中的建议：' + outcome.id);
+          line.classList.add('brief-positive');
+          actionsEl.appendChild(line);
+        });
+        var proposals = brief.recommendedActions.filter(function (proposal) {
+          return dismissedProposals.indexOf(proposal.id) < 0;
+        });
+        if (!proposals.length && !outcomes.length) actionsEl.appendChild(elBriefLine('当前数据不足，暂无可靠建议。'));
+        proposals.forEach(function (proposal) {
+          var row = document.createElement('div');
+          row.className = 'growth-brief-action';
+          var copy = document.createElement('div');
+          copy.appendChild(document.createElement('strong')).textContent = proposal.title;
+          copy.appendChild(document.createElement('span')).textContent = '为什么：' + proposal.why;
+          row.appendChild(copy);
+          var buttons = document.createElement('div');
+          var adopt = document.createElement('button');
+          adopt.type = 'button';
+          adopt.className = 'btn-primary brief-adopt';
+          adopt.textContent = proposal.type === 'review_goal' ? '查看目标' : '采用建议';
+          adopt.addEventListener('click', function () { adoptProposal(proposal); });
+          var dismiss = document.createElement('button');
+          dismiss.type = 'button';
+          dismiss.className = 'btn-wb ghost';
+          dismiss.textContent = '忽略';
+          dismiss.addEventListener('click', function () {
+            dismissedProposals.push(proposal.id);
+            renderGrowthBrief();
+          });
+          buttons.appendChild(adopt);
+          buttons.appendChild(dismiss);
+          row.appendChild(buttons);
+          actionsEl.appendChild(row);
+        });
+      }
+    }
+
+    function elBriefLine(text) {
+      var line = document.createElement('div');
+      line.className = 'growth-brief-line';
+      line.textContent = text;
+      return line;
+    }
+
+    function adoptProposal(proposal) {
+      var result = AIActions.applyProposal(Store, proposal);
+      if (!result.accepted) {
+        toast('这个建议暂时不能自动执行', 'warn');
+        return;
+      }
+      if (result.result && result.result.navigation) {
+        window.location.href = result.result.navigation === 'goals' ? 'goals.html' : 'stats.html';
+        return;
+      }
+      renderGrowthBrief();
+      toast('已加入今日计划，完成后会反馈到成长简报', 'success');
     }
 
     function nextActionText(s) {

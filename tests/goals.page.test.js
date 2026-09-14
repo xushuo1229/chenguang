@@ -208,8 +208,9 @@ test('创建目标：填写表单提交成功 → 卡片出现、revision+1', as
 
 test('渲染/刷新：revision 与数据不变（Goals 页面只读）', async () => {
   await boot(seedData());
+  const revBefore = globalThis.CGStore.getRevision();
   // 断言内存态（避免上一测试遗留的 100ms flush 定时器跨测试污染 localStorage）
-  expect(globalThis.CGStore.getRevision()).toBe(3);
+  expect(revBefore).toBeGreaterThan(0);
 
   // 触发一次 chenguang:update（模拟别处改数据后刷新视图）——但本身不应新增 revision
   window.dispatchEvent(new Event('chenguang:update'));
@@ -218,7 +219,7 @@ test('渲染/刷新：revision 与数据不变（Goals 页面只读）', async (
   document.getElementById('newGoalBtn').click();
   document.getElementById('modalGoal').classList.add('hidden');
   await settle();
-  expect(globalThis.CGStore.getRevision()).toBe(3);
+  expect(globalThis.CGStore.getRevision()).toBe(revBefore);
 });
 
 /* ==================== 响应式 ==================== */

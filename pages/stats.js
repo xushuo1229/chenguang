@@ -559,7 +559,12 @@ function showEmpty() { setHidden('statsError', true); setHidden('statsEmpty', fa
 
 function render(vm, snap) {
   var labelText = describeRange(vm.range);
+  var accountUser = (() => {
+    try { return JSON.parse(localStorage.getItem('cg_user') || 'null') || {}; } catch (_) { return {}; }
+  })();
+  var displayName = (snap.user && snap.user.name) || accountUser.nickname || accountUser.name || '';
   setText('rangeLabel', labelText);
+  setText('welcomeName', displayName ? '· ' + displayName : '');
   setHint('ovHint', labelText);
   setHint('learnHint', labelText);
   setHint('exHint', labelText);

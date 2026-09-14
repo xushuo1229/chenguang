@@ -721,12 +721,12 @@ body[data-theme="fusion"] .coach-card {
   color: var(--fd-text);
 }
 
-body[data-theme="fusion"] .msg-bubble.user {
+body[data-theme="fusion"] .msg-user .msg-bubble {
   background: var(--fd-amber);
   color: #fff;
 }
 
-body[data-theme="fusion"] .msg-bubble.ai {
+body[data-theme="fusion"] .msg-ai .msg-bubble {
   background: var(--fd-bg-card);
   border: 1px solid var(--fd-line);
   color: var(--fd-text);

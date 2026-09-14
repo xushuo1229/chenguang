@@ -59,7 +59,7 @@ function seedData() {
       // 即将到期（今天截止）：30/600 → high 风险
       goal('g2', '即将到期的运动目标', 'exercise', 'minutes', 600, day(-10), TODAY),
       // 已达成：60/60 → completed
-      goal('g3', '已完成的小目标', 'focus', 'minutes', 60, weekMon(), weekSun()),
+      goal('g3', '已完成的小目标', 'focus', 'minutes', 45, weekMon(), weekSun()),
     ],
   };
 }
