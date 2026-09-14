@@ -132,6 +132,10 @@ async function coachChat(p) {
   const messages = [{ role: 'system', content: promptBuilder.buildSystemPrompt({ today: context && context.today }) }];
   if (context) {
     messages.push({ role: 'user', content: promptBuilder.buildContextBlock(context, p.contextVersion) });
+    const coachBlock = promptBuilder.buildCoachBlock(context.coach);
+    if (coachBlock) {
+      messages.push({ role: 'user', content: coachBlock });
+    }
   }
   for (const h of history) messages.push(h);
   messages.push({ role: 'user', content: message.trim() });

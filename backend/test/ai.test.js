@@ -154,6 +154,26 @@ describe('promptBuilder', () => {
 });
 
 describe('coachChat', () => {
+  test('buildCoachBlock 分层输出 Coach 派生洞察，并从 Context 块中移除重复数据', () => {
+    const coach = {
+      version: '1.0',
+      role: 'growth_coach',
+      insights: [{ type: 'strength', message: '专注趋势上升' }],
+      warnings: [{ type: 'risk', message: '任务完成率回落' }],
+      recommendations: [{ type: 'recommendation', title: '安排 25 分钟专注' }],
+    };
+    const contextWithCoach = Object.assign({}, CONTEXT, { coach });
+    const factBlock = promptBuilder.buildContextBlock(contextWithCoach, '1.0');
+    const coachBlock = promptBuilder.buildCoachBlock(coach);
+
+    assert.ok(factBlock.startsWith('<context'));
+    assert.ok(!factBlock.includes('growth_coach'));
+    assert.ok(coachBlock.startsWith('<coach version="1.0">'));
+    assert.ok(coachBlock.endsWith('</coach>'));
+    assert.ok(coachBlock.includes('growth_coach'));
+    assert.equal(promptBuilder.buildCoachBlock(null), '');
+  });
+
   test('返回 { reply, mode:coach, suggestions, actions, model } 且不发 system 角色', async () => {
     mockFetch('好的，建议如下。');
     const result = await aiService.coachChat({
@@ -174,6 +194,31 @@ describe('coachChat', () => {
     assert.ok(sent[1].content.startsWith('<context'));
     assert.equal(sent[sent.length - 1].role, 'user');
     assert.equal(sent[sent.length - 1].content, '我今天应该做什么？');
+  });
+
+  test('Prompt 按 System → Context → Coach → History → User 分层', async () => {
+    mockFetch('好的');
+    const coachContext = Object.assign({}, CONTEXT, {
+      coach: {
+        version: '1.0',
+        role: 'growth_coach',
+        insights: [{ type: 'strength', message: '专注趋势上升' }],
+        warnings: [{ type: 'risk', message: '任务完成率回落' }],
+        recommendations: [{ type: 'recommendation', title: '安排 25 分钟专注' }],
+      },
+    });
+    await aiService.coachChat({
+      message: '我下一步应该怎么提升？',
+      history: [{ role: 'user', content: '上一轮问题' }],
+      context: coachContext,
+    });
+    const sent = JSON.parse(lastFetch.opts.body).messages;
+    assert.deepEqual(sent.map((item) => item.role), ['system', 'user', 'user', 'user', 'user']);
+    assert.ok(sent[1].content.startsWith('<context'));
+    assert.ok(!sent[1].content.includes('<coach'));
+    assert.ok(sent[2].content.startsWith('<coach'));
+    assert.ok(sent[3].content.includes('上一轮问题'));
+    assert.equal(sent[4].content, '我下一步应该怎么提升？');
   });
 
   test('上下文与历史中不泄漏 API Key，System/Context 之外无伪造 system 消息', async () => {

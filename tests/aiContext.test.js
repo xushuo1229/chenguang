@@ -268,3 +268,21 @@ test('Context.growth 提供 Growth Score 与 7/30/90 趋势，同时保留旧 gr
   expect(store.getRevision()).toBe(revision);
   expect(JSON.stringify(store.get())).toBe(before);
 });
+
+test('Context.coach 提供 AI Coach 洞察，同时保留只读与旧字段', async () => {
+  const { store, AIContext } = await boot(seedData());
+  const before = JSON.stringify(store.get());
+  const revision = store.getRevision();
+  const ctx = AIContext.buildContext(store.get(), { today: TODAY });
+
+  expect(ctx.coach).toBeTruthy();
+  expect(ctx.coach.role).toBe('growth_coach');
+  expect(ctx.coach.readOnly).toBe(true);
+  expect(Array.isArray(ctx.coach.insights)).toBe(true);
+  expect(Array.isArray(ctx.coach.recommendations)).toBe(true);
+  expect(Array.isArray(ctx.coach.warnings)).toBe(true);
+  expect(ctx.growthState).toBeTruthy();
+  expect(ctx.growth).toBeTruthy();
+  expect(store.getRevision()).toBe(revision);
+  expect(JSON.stringify(store.get())).toBe(before);
+});

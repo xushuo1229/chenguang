@@ -67,10 +67,12 @@ function showDash() { hideAll(); if (dashEl) dashEl.hidden = false; }
    ==================================================================== */
 
 var currentContext = null;
+var currentSnapshot = null;
 var currentCoachContext = null;
 
 function buildContext(store) {
   store = (store && typeof store === 'object') ? store : Store.get();
+  currentSnapshot = store;
   currentContext = AIContext.buildContext(store);
   CoachMemory.observeOutcomes(store);
   currentCoachContext = CoachMemory.getCoachContext(store);
@@ -163,7 +165,7 @@ function renderInsightList(container, insights, emptyText) {
 function renderPanels(snap, todayStats) {
   var ctx = currentContext || {};
   var insights = Array.isArray(ctx.insights) ? ctx.insights : [];
-  var growth = GrowthIntelligence.computeGrowthState(snap);
+  var growth = ctx.growthState || GrowthIntelligence.computeGrowthState(snap);
   var weekly = GrowthIntelligence.buildWeeklyReview(snap, {}, currentCoachContext);
 
   renderToday(todayStats);
@@ -183,7 +185,7 @@ function renderPanels(snap, todayStats) {
 
   renderInsightList(
     $('#trendList'),
-    growth.trendState.importantChanges.map(function (trend) {
+    growth.importantChanges.map(function (trend) {
       return {
         type: trend.status === 'falling' ? 'declining_trend' : 'opportunity',
         severity: trend.status === 'falling' ? 'medium' : 'positive',
@@ -212,7 +214,7 @@ function renderAdvice(suggestions) {
 }
 
 function renderCoachMemory() {
-  var coach = currentCoachContext || CoachMemory.getCoachContext(Store.get());
+  var coach = currentCoachContext || (currentSnapshot ? CoachMemory.getCoachContext(currentSnapshot) : { facts: [] });
   renderInsightList($('#memoryList'), coach.facts.map(function (fact) {
     return { type: 'opportunity', severity: 'positive', reason: fact.statement };
   }), '暂无已验证的长期策略经验。连续采纳并完成建议后，这里会积累 Coach Memory。');
@@ -416,7 +418,7 @@ function sendMessage(text) {
     call = globalThis.CGAPI.ai.chat({
       message: text,
       history: historyToSend,
-      context: AIContext.buildQueryContext(Store.get(), text, { baseContext: currentContext, coachContext: currentCoachContext }),
+      context: AIContext.buildQueryContext(currentSnapshot, text, { baseContext: currentContext, coachContext: currentCoachContext }),
       contextVersion: AIContext.VERSION
     });
   } catch (e) {

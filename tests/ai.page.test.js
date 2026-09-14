@@ -107,11 +107,11 @@ test('有数据：仪表盘渲染，今日状态 6 格、快捷问题 5 个、�
 
   // 今日状态 6 格
   expect(document.querySelectorAll('#todayGrid .today-stat')).toHaveLength(6);
-  // 快捷问题（mandate 规定的 5 个）
+  // 快捷问题（成长教练入口，共 5 个）
   const qs = [...document.querySelectorAll('.quick-q')].map((b) => b.getAttribute('data-q'));
   expect(qs).toEqual([
-    '分析我的最近状态', '我最近哪里进步最大？', '我的主要问题是什么？',
-    '哪个目标最危险？', '帮我安排今天'
+    '我的成长情况', '最近哪里进步了', '我应该改善什么',
+    '哪个目标最危险？', '制定下一步计划'
   ]);
   // 目标风险：即将到期 + 进度低 → 有 high 项
   const riskTexts = [...document.querySelectorAll('#riskList .ii-text')].map((n) => n.textContent);
@@ -211,11 +211,11 @@ test('快捷问题点击 → 直接以固定问题发起对话', async () => {
   globalThis.CGAPI.ai.chat = vi.fn().mockResolvedValue({
     data: { reply: '好的', suggestions: [], actions: [] }
   });
-  const qBtn = document.querySelector('.quick-q[data-q="帮我安排今天"]');
+  const qBtn = document.querySelector('.quick-q[data-q="制定下一步计划"]');
   qBtn.click();
   await settle(); await settle();
   expect(globalThis.CGAPI.ai.chat).toHaveBeenCalledTimes(1);
-  expect(globalThis.CGAPI.ai.chat.mock.calls[0][0].message).toBe('帮我安排今天');
+  expect(globalThis.CGAPI.ai.chat.mock.calls[0][0].message).toBe('制定下一步计划');
 });
 
 /* ==================== 只读 / 历史 ==================== */
@@ -234,6 +234,22 @@ test('只读：渲染 + 对话后 revision 与数据不变', async () => {
 
   expect(globalThis.CGStore.getRevision()).toBe(revBefore);
   expect(JSON.stringify(globalThis.CGStore.get())).toBe(snapBefore);
+});
+
+test('性能：刷新与对话复用同一页面快照，不重复读取 Store', async () => {
+  await boot(seedData());
+  const getSpy = vi.spyOn(globalThis.CGStore, 'get');
+  window.dispatchEvent(new Event('chenguang:update'));
+  await settle(); await settle();
+
+  globalThis.CGAPI.ai.chat = vi.fn().mockResolvedValue({
+    data: { reply: 'ok', suggestions: [], actions: [] }
+  });
+  document.getElementById('chatInput').value = '我的成长情况';
+  document.getElementById('chatSend').click();
+  await settle(); await settle();
+
+  expect(getSpy).toHaveBeenCalledTimes(1);
 });
 
 test('对话历史 memory-first：存 sessionStorage，不写 chenguangData', async () => {

@@ -30,6 +30,7 @@ import CGStore from './store.js';
 import Analytics, { isValidDateStr } from './analytics.js';
 import GoalEngine from './goals.js';
 import GrowthIntelligence from './growthIntelligence.js';
+import AICoach from './aiCoach.js';
 import AIRetrieval from './aiDataRetrieval.js';
 import AIToolRunner from './aiToolRunner.js';
 import { todayStr, dateOffset } from './utils/date.js';
@@ -303,6 +304,8 @@ function buildContext(data, opts) {
     insights: insights
   };
 
+  ctx.coach = AICoach.buildCoachContext(ctx);
+
   return trimContextToBudget(ctx);
 }
 
@@ -538,7 +541,7 @@ function buildQueryContext(data, message, opts) {
   requestedTools.forEach(function (tool) {
     if (toolLoop.results[tool]) relevant[tool] = compactRetrievalResult(toolLoop.results[tool]);
   });
-  return Object.assign({}, base, {
+  var result = Object.assign({}, base, {
     question: String(message || '').slice(0, 500),
     toolLoop: {
       version: toolLoop.ok ? AIToolRunner.VERSION : AIToolRunner.VERSION,
@@ -565,6 +568,7 @@ function buildQueryContext(data, message, opts) {
     },
     coachContext: opts.coachContext || null
   });
+  return trimContextToBudget(result);
 }
 
 /* ====================================================================
