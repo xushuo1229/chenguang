@@ -8,6 +8,7 @@ import '../js/sync.js';
 import Analytics, { isValidDateStr } from '../js/analytics.js';
 import AIContext from '../js/aiContext.js';
 import GrowthReport from '../js/growthReport.js';
+import GrowthMemory from '../js/growthMemory.js';
 import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
 
 // ====================================================================
@@ -589,6 +590,30 @@ function renderReport() {
   if (!listEl.children.length) listEl.appendChild(document.createElement('li')).textContent = '数据积累后，这里会显示具体成果和建议。';
 }
 
+function renderMemory(memory) {
+  var listEl = $('#memoryList');
+  var emptyEl = $('#memoryEmpty');
+  if (!listEl || !emptyEl) return;
+  var source = memory || (reportContext && reportContext.memory) || {};
+  var groups = [
+    ['优势', source.insights],
+    ['习惯', source.patterns],
+    ['里程碑', source.milestones],
+    ['偏好', source.preferences]
+  ];
+  listEl.innerHTML = '';
+  groups.forEach(function (group) {
+    var items = Array.isArray(group[1]) ? group[1] : [];
+    items.forEach(function (item) {
+      if (!item || !item.statement) return;
+      var line = document.createElement('li');
+      line.textContent = group[0] + '：' + item.statement;
+      listEl.appendChild(line);
+    });
+  });
+  emptyEl.hidden = listEl.children.length > 0;
+}
+
 function nextPaint() {
   return new Promise(function (resolve) {
     requestAnimationFrame(function () { setTimeout(resolve, 0); });
@@ -643,6 +668,7 @@ async function loadAll() {
     if (!hasAnyData(snap)) { showEmpty(); return; }
     reportContext = AIContext.buildContext(snap);
     renderReport();
+    renderMemory();
     var range = resolveRange(currentRangeKey);
     if (!range) { toast('请先选择有效的自定义日期范围', 'warn'); return; }
     var vm = buildStatsViewModel(snap, range);
@@ -740,6 +766,11 @@ function setupEvents() {
       });
       renderReport();
     });
+  });
+  var memoryRefresh = $('#memoryRefreshBtn');
+  if (memoryRefresh) memoryRefresh.addEventListener('click', function () {
+    if (!reportContext) return;
+    renderMemory(GrowthMemory.updateMemory(Store, reportContext, { today: reportContext.today }));
   });
   var tabsEl = $('.range-tabs');
   if (tabsEl) tabsEl.addEventListener('keydown', function (e) {

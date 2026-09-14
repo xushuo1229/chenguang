@@ -32,6 +32,7 @@ import GoalEngine from './goals.js';
 import GrowthIntelligence from './growthIntelligence.js';
 import AICoach from './aiCoach.js';
 import GrowthReport from './growthReport.js';
+import GrowthMemory from './growthMemory.js';
 import AIRetrieval from './aiDataRetrieval.js';
 import AIToolRunner from './aiToolRunner.js';
 import { todayStr, dateOffset } from './utils/date.js';
@@ -314,6 +315,12 @@ function buildContext(data, opts) {
     insights: insights
   };
 
+  var mergedMemory = GrowthMemory.mergeMemory(
+    snap.user && snap.user.memory,
+    GrowthMemory.buildMemory(ctx, { today: today }),
+    { today: today }
+  );
+  ctx.memory = GrowthMemory.buildContextMemory(mergedMemory);
   ctx.coach = AICoach.buildCoachContext(ctx);
   var reports = GrowthReport.buildReports(ctx);
   ctx.report = { weekly: reports.weekly, monthly: reports.monthly };
@@ -479,7 +486,14 @@ function trimContextToBudget(ctx, maxTokens) {
 
   if (estimateContextTokens(out) <= maxTokens) return out;
 
-  // 0) Report 是派生展示层，超预算时优先收缩，不牺牲原始统计。
+  // 0) Memory/Report 是派生展示层，超预算时优先收缩，不牺牲原始统计。
+  if (out.memory && typeof out.memory === 'object') {
+    ['patterns', 'milestones', 'preferences', 'insights'].forEach(function (key) {
+      if (Array.isArray(out.memory[key])) out.memory[key] = out.memory[key].slice(0, 2);
+    });
+  }
+  if (estimateContextTokens(out) <= maxTokens) return out;
+
   if (out.report && typeof out.report === 'object') {
     ['weekly', 'monthly'].forEach(function (period) {
       var report = out.report[period];
@@ -492,6 +506,9 @@ function trimContextToBudget(ctx, maxTokens) {
   if (estimateContextTokens(out) <= maxTokens) return out;
 
   if (out.report) out.report = null;
+  if (estimateContextTokens(out) <= maxTokens) return out;
+
+  if (out.memory) out.memory = null;
   if (estimateContextTokens(out) <= maxTokens) return out;
 
   // 1) 丢弃 30 天趋势（Level B 里的最次要项）

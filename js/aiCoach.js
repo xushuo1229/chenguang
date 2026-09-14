@@ -47,7 +47,7 @@ function mapSignal(item, type, fallbackSeverity) {
     return directMessage ? { type: type, severity: fallbackSeverity, message: directMessage } : null;
   }
   if (!item || typeof item !== 'object') return null;
-  var message = text(item.reason || item.description || item.message || item.text);
+  var message = text(item.reason || item.description || item.message || item.statement || item.text);
   if (!message) return null;
   return {
     type: text(item.type) || type,
@@ -153,19 +153,35 @@ function buildCoachContext(context) {
   var growth = source.growth && typeof source.growth === 'object' ? source.growth : {};
   var growthState = source.growthState && typeof source.growthState === 'object' ? source.growthState : {};
   var goals = source.goals && typeof source.goals === 'object' ? source.goals : {};
+  var memory = source.memory && typeof source.memory === 'object' ? source.memory : {};
   var trendSignals = mapTrendSignals(growth.trends);
 
-  var insights = dedupe(trendSignals.insights.concat(
+  var memoryChallenges = arr(memory.patterns).filter(function (pattern) {
+    return pattern && (String(pattern.id || '').indexOf('declining') >= 0 ||
+      (pattern.evidence && Number(pattern.evidence.delta) < 0));
+  }).map(function (pattern) {
+    return mapSignal(pattern, 'memory_challenge', 'medium');
+  }).filter(Boolean);
+
+  var memoryInsights = arr(memory.patterns).filter(function (pattern) {
+    return pattern && !memoryChallenges.some(function (warning) {
+      return warning && pattern.statement === warning.message;
+    });
+  }).concat(arr(memory.insights)).map(function (signal) {
+    return mapSignal(signal, 'long_term_memory', 'positive');
+  }).filter(Boolean);
+
+  var insights = dedupe(memoryInsights.concat(trendSignals.insights.concat(
     arr(growth.strengths).concat(arr(growthState.strengths)).map(function (item) {
       return mapSignal(item, 'strength', 'positive');
     })
-  ).filter(Boolean));
+  ).filter(Boolean)));
 
-  var warnings = dedupe(trendSignals.warnings.concat(
+  var warnings = dedupe(memoryChallenges.concat(trendSignals.warnings.concat(
     arr(growth.risks).concat(arr(growthState.risks)).map(function (item) {
       return mapSignal(item, 'risk', 'medium');
     })
-  ).filter(Boolean));
+  ).filter(Boolean)));
 
   var recommendations = dedupe(buildRecommendations(growthState, goals));
   var score = growth.score && typeof growth.score === 'object' ? growth.score : {};

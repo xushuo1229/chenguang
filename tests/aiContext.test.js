@@ -306,3 +306,29 @@ test('Context.report 提供周报与月报，同时兼容旧字段', async () =>
   expect(store.getRevision()).toBe(revision);
   expect(JSON.stringify(store.get())).toBe(before);
 });
+
+test('Context.memory 注入长期记忆，同时保留旧字段且只读', async () => {
+  const { store, AIContext } = await boot(seedData());
+  const revision = store.getRevision();
+  const data = store.get();
+  data.user.memory = {
+    version: '1.0',
+    updatedAt: TODAY,
+    patterns: [{ id: 'pattern:test', kind: 'habit_pattern', statement: '测试长期习惯。', confidence: 'medium', weight: 80, status: 'active', createdAt: TODAY, lastSeenAt: TODAY, occurrences: 2, evidence: {} }],
+    milestones: [],
+    preferences: [],
+    insights: []
+  };
+  const before = JSON.stringify(store.get());
+  const ctx = AIContext.buildContext(data, { today: TODAY });
+
+  expect(ctx.memory).toBeTruthy();
+  expect(ctx.memory.patterns.some((item) => item.id === 'pattern:test')).toBe(true);
+  expect(ctx.growth).toBeTruthy();
+  expect(ctx.growthState).toBeTruthy();
+  expect(ctx.coach).toBeTruthy();
+  expect(ctx.report).toBeTruthy();
+  expect(ctx.memory.patterns[0]).not.toHaveProperty('weight');
+  expect(store.getRevision()).toBe(revision);
+  expect(JSON.stringify(store.get())).toBe(before);
+});

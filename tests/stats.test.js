@@ -182,6 +182,29 @@ test('成长报告：默认展示周报，切换月报不重读 Store', async ()
   expect(storeGetSpy).not.toHaveBeenCalled();
 });
 
+test('成长轨迹：透明展示记忆，显式更新一次持久化', async () => {
+  const data = seedData();
+  for (let index = 0; index < 7; index += 1) {
+    data.checkins.push({ id: 'memory-checkin-' + index, date: dateStr(-index), status: 'done' });
+  }
+  data.focus.push({ id: 'memory-focus', date: dateStr(0), minutes: 120 });
+  await boot(data);
+  const baseline = JSON.parse(localStorage.getItem('chenguangData'));
+  expect(baseline._meta.revision).toBe(7);
+  expect(document.getElementById('memoryList').children.length).toBeGreaterThan(0);
+
+  document.getElementById('memoryRefreshBtn').click();
+  await settle(); await settle();
+  let saved = JSON.parse(localStorage.getItem('chenguangData'));
+  expect(saved._meta.revision).toBe(8);
+  expect(saved.user.memory.patterns.length).toBeGreaterThan(0);
+
+  document.getElementById('memoryRefreshBtn').click();
+  await settle(); await settle();
+  saved = JSON.parse(localStorage.getItem('chenguangData'));
+  expect(saved._meta.revision).toBe(8);
+});
+
 test('切换「本周」：刷新不崩，概览为周口径', async () => {
   await boot(seedData());
   clickRange('week');

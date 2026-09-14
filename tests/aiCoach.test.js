@@ -85,7 +85,7 @@ test('空数据用户不收到虚构洞察或建议', () => {
   const coach = AICoach.buildCoachContext(emptyContext());
   expect(coach.dataSufficient).toBe(false);
   expect(coach.insights).toHaveLength(0);
-  expect(coach.warnings).toHaveLength(0);
+  expect(coach.warnings.some((item) => item.type === 'memory_challenge')).toBe(false);
   expect(coach.recommendations).toHaveLength(0);
   expect(coach.encouragement).toContain('数据');
 });
@@ -122,4 +122,24 @@ test('AI Coach 不修改输入上下文', () => {
 test('AI Coach 模块没有数据写入或直接数据访问', () => {
   expect(aiCoachSrc).not.toMatch(/CGStore|Store\.get|localStorage|sessionStorage|GrowthIntelligence|Analytics/);
   expect(aiCoachSrc).not.toMatch(/\.setItem\(|\.removeItem\(|fetch\(/);
+});
+
+test('AI Coach 基于长期记忆生成亮点与挑战，不修改输入', () => {
+  const context = normalContext();
+  context.memory = {
+    patterns: [{ id: 'pattern:study_rising', kind: 'habit_pattern', statement: '过去 90 天学习节奏保持长期改善。', confidence: 'medium' }],
+    milestones: [{ id: 'milestone:streak_7', kind: 'growth_milestone', statement: '连续成长 7 天。', confidence: 'high' }],
+    preferences: [],
+    insights: [{ id: 'insight:learning', kind: 'growth_insight', statement: '过去 30 天学习动力持续积累。', confidence: 'medium' }]
+  };
+  const before = JSON.stringify(context);
+  const coach = AICoach.buildCoachContext(context);
+  expect(coach.insights.map((item) => item.message).join(' ')).toContain('学习节奏');
+  expect(coach.warnings.some((item) => item.type === 'memory_challenge')).toBe(false);
+
+  context.memory.patterns.push({ id: 'pattern:goal_break_declining', kind: 'habit_pattern', statement: '长期目标容易在执行中段中断。', confidence: 'medium' });
+  const mutatedSnapshot = JSON.stringify(context);
+  const challengeCoach = AICoach.buildCoachContext(context);
+  expect(challengeCoach.warnings.map((item) => item.message).join(' ')).toContain('容易在执行中段中断');
+  expect(JSON.stringify(context)).toBe(mutatedSnapshot);
 });

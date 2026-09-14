@@ -336,6 +336,20 @@
       <ul class="cg-insight-list" id="reportList"></ul>
     </section>
 
+    <!-- 成长轨迹（Phase 19.4）：用户可查看 AI 长期记忆，显式更新 -->
+    <section class="cg-insight stats-insight" id="secMemory" aria-labelledby="memoryTitle">
+      <div class="cg-insight-head">
+        <span class="cg-insight-ico"><i class="fas fa-route"></i></span>
+        <div class="cg-insight-title">
+          <h3 id="memoryTitle">我的成长轨迹</h3>
+          <p id="memoryHint">这些是 AI 基于成长数据记住的长期规律</p>
+        </div>
+      </div>
+      <ul class="cg-insight-list" id="memoryList"></ul>
+      <p class="cg-insight-empty" id="memoryEmpty" hidden>暂时还没有足够的长期记忆。继续记录成长后，这里会显示你的习惯、里程碑和偏好。</p>
+      <button type="button" class="btn btn-sm btn-primary" id="memoryRefreshBtn">更新成长记忆</button>
+    </section>
+
     <!-- 趋势 -->
     <section class="stats-section" id="secTrend" aria-labelledby="trendTitle">
       <div class="section-head">
