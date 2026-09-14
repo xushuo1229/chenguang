@@ -391,6 +391,10 @@ body[data-theme="fusion"].dashboard-shell {
   background-attachment: scroll;
 }
 
+body[data-theme="fusion"].dashboard-shell .main {
+  scrollbar-gutter: stable;
+}
+
 body[data-theme="fusion"].dashboard-shell .sidebar,
 body[data-theme="fusion"].dashboard-shell .main .topbar,
 body[data-theme="fusion"].dashboard-shell .mobile-tabbar {

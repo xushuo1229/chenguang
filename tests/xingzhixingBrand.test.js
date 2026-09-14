@@ -1,0 +1,53 @@
+import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
+import goalsHtml from '../goals.html?raw';
+import aiHtml from '../ai.html?raw';
+import indexHtml from '../index.html?raw';
+import loginHtml from '../login.html?raw';
+import statsHtml from '../stats.html?raw';
+import workbenchHtml from '../workbench.html?raw';
+
+const PAGES = [
+  ['login.html', loginHtml],
+  ['index.html', indexHtml],
+  ['workbench.html', workbenchHtml],
+  ['stats.html', statsHtml],
+  ['goals.html', goalsHtml],
+  ['ai.html', aiHtml],
+];
+
+describe('XINGZHIXING brand integration', () => {
+  it.each(PAGES)('%s activates the shared AI OS design system', (page, html) => {
+    expect(html).toContain('data-brand="xingzhixing"');
+    expect(html).toContain('<link rel="stylesheet" href="/xingzhixing.css">');
+    expect(html).toContain('/brand/favicon.svg');
+    expect(html).not.toMatch(/<link rel="icon" href="assets\/logo\.svg"/);
+  });
+
+  it('uses the XINGZHIXING positioning and icon system', () => {
+    expect(loginHtml).toContain('理解自己，');
+    expect(indexHtml).toContain('XINGZHIXING');
+    expect(indexHtml).toContain('/design/xz-hero.svg');
+    expect(aiHtml).toContain('知行 AI 教练');
+    for (const [, html] of [[null, workbenchHtml], [null, statsHtml], [null, goalsHtml], [null, aiHtml]]) {
+      expect(html).toContain('/brand/logo-icon.svg');
+      expect(html).toContain('AI Personal Growth OS');
+    }
+  });
+
+  it('removes sunrise branding from the current product shell', () => {
+    for (const [, html] of PAGES) {
+      expect(html).not.toContain('class="wb-brand-mark">☀');
+      expect(html).not.toContain('<i class="fas fa-sun"></i>知行');
+      expect(html).not.toContain('晨光自律台');
+    }
+  });
+
+  it('installs the new PWA metadata', () => {
+    const manifest = JSON.parse(readFileSync('manifest.json', 'utf8'));
+    expect(manifest.name).toBe('知行 · AI 个人成长操作系统');
+    expect(manifest.theme_color).toBe('#0B1220');
+    expect(manifest.background_color).toBe('#F8FAFC');
+    expect(manifest.icons[0].src).toBe('/brand/favicon.svg');
+  });
+});

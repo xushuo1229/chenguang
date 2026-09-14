@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" fill="none" role="img" aria-label="AI 成长数据流插画">
+  <defs>
+    <linearGradient id="hero-bg" x1="80" y1="30" x2="640" y2="390" gradientUnits="userSpaceOnUse"><stop stop-color="#E0F2FE"/><stop offset=".55" stop-color="#F8FAFC"/><stop offset="1" stop-color="#EDE9FE"/></linearGradient>
+    <linearGradient id="hero-flow" x1="90" y1="310" x2="620" y2="90" gradientUnits="userSpaceOnUse"><stop stop-color="#38BDF8"/><stop offset=".5" stop-color="#8B5CF6"/><stop offset="1" stop-color="#34D399"/></linearGradient>
+    <linearGradient id="hero-card" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#F8FAFC"/></linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#0F172A" flood-opacity=".08"/></filter>
+  </defs>
+  <rect width="720" height="420" rx="48" fill="url(#hero-bg)"/>
+  <circle cx="590" cy="82" r="92" fill="#38BDF8" opacity=".14"/><circle cx="112" cy="316" r="104" fill="#8B5CF6" opacity=".1"/>
+  <path d="M104 304C197 304 225 145 352 145c100 0 113 105 242 105" stroke="url(#hero-flow)" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="104" cy="304" r="14" fill="#38BDF8"/><circle cx="352" cy="145" r="12" fill="#8B5CF6"/><circle cx="594" cy="250" r="14" fill="#34D399"/>
+  <rect x="120" y="62" width="216" height="112" rx="28" fill="url(#hero-card)" filter="url(#soft)"/>
+  <path d="M145 140l26-25 24 17 29-41" stroke="#38BDF8" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="167" y="88" width="83" height="9" rx="5" fill="#E2E8F0"/><rect x="167" y="105" width="57" height="9" rx="5" fill="#E2E8F0"/>
+  <rect x="402" y="234" width="198" height="118" rx="30" fill="url(#hero-card)" filter="url(#soft)"/>
+  <rect x="431" y="300" width="15" height="26" rx="7" fill="#38BDF8" opacity=".5"/><rect x="464" y="280" width="15" height="46" rx="7" fill="#38BDF8" opacity=".75"/><rect x="497" y="265" width="15" height="61" rx="7" fill="#8B5CF6" opacity=".8"/><rect x="530" y="252" width="15" height="74" rx="7" fill="#34D399"/>
+</svg>

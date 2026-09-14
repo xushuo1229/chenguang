@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import statsHtml from '../stats.html?raw';
 
 const css = readFileSync('assets/calm-dawn-1to1.css', 'utf8');
 const marker = 'Dashboard load stability';
@@ -9,9 +10,15 @@ describe('dashboard render stability', () => {
   it('skips load animations and expensive backdrop sampling for Goals, Stats, and AI', () => {
     expect(rules).toContain('background-attachment: scroll');
     expect(rules).toContain('backdrop-filter: none');
+    expect(rules).toContain('scrollbar-gutter: stable');
     expect(rules).toContain('animation: none !important');
     expect(rules).toContain('.dashboard-shell .main .goal-card');
     expect(rules).toContain('.dashboard-shell .main .stats-section');
     expect(rules).toContain('.dashboard-shell .main .coach-card');
+  });
+
+  it('keeps Stats dashboard hidden until its first complete render', () => {
+    const dashboard = statsHtml.match(/<div class="stats-dashboard" id="statsDashboard"[^>]*>/);
+    expect(dashboard?.[0]).toContain('hidden');
   });
 });

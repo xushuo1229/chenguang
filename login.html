@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>登录 · 知行</title>
-  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0B1220">
+<meta name="description" content="知行 XINGZHIXING · AI Personal Growth OS。理解自己，持续成长。">
+<link rel="icon" href="/brand/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/shared.css">
   <!-- Font Awesome 6 (free) -->
@@ -91,15 +93,16 @@
   <link rel="stylesheet" href="/calm-dawn-pro.css">
   <link rel="stylesheet" href="/calm-dawn-fusion.css">
   <link rel="stylesheet" href="/calm-dawn-1to1.css">
+  <link rel="stylesheet" href="/xingzhixing.css">
 </head>
-<body data-theme="fusion">
+<body data-theme="fusion" data-brand="xingzhixing">
   <div class="login-wrap">
     <!-- 左：品牌面板 -->
     <aside class="brand-pane">
-      <a class="brand-logo" href="index.html"><i class="fas fa-sun"></i>知行</a>
+      <a class="brand-logo" href="index.html"><img src="/brand/favicon.svg" alt=""><strong>知行</strong></a>
       <div class="brand-main">
-        <h1>记录今天，<br><span class="accent">成为更好的自己。</span></h1>
-        <p class="brand-sub">一个安静的地方，记下你的每一次坚持。数据归你，进步可见。</p>
+        <h1>理解自己，<br><span class="accent">持续成长。</span></h1>
+        <p class="brand-sub">知行把学习、行动、目标与长期趋势放进同一个 AI 成长操作系统。</p>
         <div class="cap-list">
           <div class="cap-item">
         <span class="cap-icon ci-amber"><i class="fas fa-check"></i></span>
@@ -119,7 +122,7 @@
           </div>
         </div>
       </div>
-      <div class="brand-illus"><img src="assets/design/login-dawn.svg" alt="日出插画：地平线上的日出"></div>
+      <div class="brand-illus"><img src="/design/xz-login.svg" alt="知行 AI 成长助手视觉：认知节点与行动轨迹"></div>
     </aside>
 
     <!-- 右：表单区 -->
@@ -130,7 +133,7 @@
           <!-- 登录表单 -->
           <div id="loginView">
             <h2>欢迎回来</h2>
-            <p class="auth-desc">登录后继续你的成长记录。</p>
+            <p class="auth-desc">登录后继续你的 AI 个人成长系统。</p>
             <div class="form-row">
               <label for="loginAccount">邮箱<span class="req">*</span></label>
               <input id="loginAccount" type="email" placeholder="例如：you@example.com" autocomplete="username"/>

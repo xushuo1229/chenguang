@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 316 96" width="316" height="96" role="img" aria-label="知行 XINGZHIXING">
+  <defs>
+    <linearGradient id="xz-dark-flow" x1="16" y1="20" x2="76" y2="76" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38BDF8"/><stop offset=".52" stop-color="#8B5CF6"/><stop offset="1" stop-color="#34D399"/>
+    </linearGradient>
+  </defs>
+  <g>
+    <rect x="1" y="1" width="94" height="94" rx="26" fill="#0B1220" stroke="rgba(148,163,184,.28)"/>
+    <path d="M28 68c13 0 12-40 27-40 10 0 13 6 13 12" fill="none" stroke="url(#xz-dark-flow)" stroke-width="7" stroke-linecap="round" opacity=".88"/>
+    <path d="M68 28c-13 0-12 40-27 40-10 0-13-6-13-12" fill="none" stroke="url(#xz-dark-flow)" stroke-width="7" stroke-linecap="round" opacity=".68"/>
+    <circle cx="28" cy="40" r="8" fill="#38BDF8"/><circle cx="68" cy="56" r="7" fill="#34D399"/>
+  </g>
+  <text x="114" y="54" fill="#F8FAFC" font-family="Inter, 'HarmonyOS Sans SC', 'Microsoft YaHei', system-ui, sans-serif" font-size="38" font-weight="800" letter-spacing="2">知行</text>
+  <text x="115" y="78" fill="#94A3B8" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="650" letter-spacing="3.8">XINGZHIXING</text>
+</svg>
