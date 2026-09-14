@@ -147,12 +147,14 @@ self.addEventListener('fetch', (event) => {
  */
 async function networkFirst(request) {
   try {
-    const response = await fetch(request, { cache: 'no-cache' });
+    const response = await fetch(request, { cache: 'reload' });
     if (response.ok) {
       const cache = await caches.open(CACHE_RUNTIME);
       cache.put(request, response.clone());
     }
-    return response;
+    if (response.ok || response.type === 'opaqueredirect') return response;
+    const cached = await caches.match(request);
+    return cached || response;
   } catch (err) {
     const cached = await caches.match(request);
     if (cached) return cached;

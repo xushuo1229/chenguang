@@ -42,6 +42,7 @@ import Analytics from '../js/analytics.js';
 import GrowthIntelligence from '../js/growthIntelligence.js';
 import AIActions from '../js/aiActions.js';
 import CoachMemory from '../js/coachMemory.js';
+import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
 
   // ============================================================
   // IIFE（立即执行函数表达式）— 整个工作台的代码都在这里面
@@ -2107,10 +2108,4 @@ import CoachMemory from '../js/coachMemory.js';
 //   3. 推送通知等
 // navigator.serviceWorker.register() 注册一个 Service Worker 文件
 // 只在 HTTP/HTTPS 协议下生效（file:// 协议不支持）
-if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-  window.addEventListener('load', function () {
-    navigator.serviceWorker.register('/service-worker.js').catch(function (e) {
-      console.warn('[SW] 注册失败:', e);
-    });
-  });
-}
+setupServiceWorker();

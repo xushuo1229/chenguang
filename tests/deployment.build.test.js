@@ -56,7 +56,7 @@ describe('production deployment artifacts', () => {
     expect(urls).toContain('/');
     expect(urls).toContain('/manifest.json');
     expect(urls.some((url) => url.startsWith('/workbench.html'))).toBe(true);
-    expect(urls.some((url) => /^\/assets\/sync-.+\.css$/.test(url))).toBe(true);
+    expect(urls.some((url) => /^\/assets\/(sync|serviceWorkerRegistration)-.+\.css$/.test(url))).toBe(true);
     expect(urls.some((url) => /^\/assets\/workbench-.+\.js$/.test(url))).toBe(true);
     expect(urls).not.toContain('/js/store.js');
     expect(urls).not.toContain('/pages/workbench.js');

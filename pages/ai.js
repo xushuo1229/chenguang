@@ -8,6 +8,7 @@ import Analytics from '../js/analytics.js';
 import CGAIContext from '../js/aiContext.js';
 import GrowthIntelligence from '../js/growthIntelligence.js';
 import CoachMemory from '../js/coachMemory.js';
+import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
 
 // ====================================================================
 // 知行 · AI 教练页 (Phase 13 AI 2.0)
@@ -527,9 +528,4 @@ if (window.visualViewport) {
   applyVVH();
 }
 
-/* 注册 Service Worker（仅 http(s) 环境） */
-if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-  window.addEventListener('load', function () {
-    navigator.serviceWorker.register('/service-worker.js').catch(function (e) { console.warn('[AI] SW register failed:', e); });
-  });
-}
+setupServiceWorker();

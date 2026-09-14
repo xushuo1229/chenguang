@@ -22,6 +22,7 @@ import '../js/apiClient.js';
 import '../js/store.js';
 import '../js/sync.js';
 import Analytics from '../js/analytics.js';
+import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
 
 'use strict';
 
@@ -273,13 +274,7 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 
 // ==================== Service Worker 注册 ====================
 // 注册 Service Worker 用于离线缓存，让用户在网络不好时也能访问页面
-if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-  window.addEventListener('load', function () {
-    navigator.serviceWorker.register('/service-worker.js').catch(function (e) {
-      console.warn('[SW] 注册失败:', e);
-    });
-  });
-}
+setupServiceWorker();
 
 // 登录/注册成功后跳转的目标页面
 window.REDIRECT_AFTER_LOGIN = 'workbench.html';

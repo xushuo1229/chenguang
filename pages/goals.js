@@ -7,6 +7,7 @@ import '../js/store.js';
 import '../js/sync.js';
 import Analytics from '../js/analytics.js';
 import GoalEngine from '../js/goals.js';
+import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
 
 // ====================================================================
 // 知行 · 目标系统 (Goals)
@@ -376,9 +377,4 @@ if (checkAuth()) {
   loadAll();
 }
 
-/* 注册 Service Worker（仅 http(s) 环境） */
-if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-  window.addEventListener('load', function () {
-    navigator.serviceWorker.register('/service-worker.js').catch(function (e) { console.warn('[Goals] SW register failed:', e); });
-  });
-}
+setupServiceWorker();

@@ -14,6 +14,7 @@ import '../js/ui/toast.js';
 import '../js/apiClient.js';
 import '../js/store.js';
 import '../js/sync.js';
+import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
 
 'use strict';
 
@@ -221,10 +222,4 @@ function init() {
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 
 // Service Worker：离线缓存（与首页一致）
-if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-  window.addEventListener('load', function () {
-    navigator.serviceWorker.register('/service-worker.js').catch(function (e) {
-      console.warn('[SW] 注册失败:', e);
-    });
-  });
-}
+setupServiceWorker();
