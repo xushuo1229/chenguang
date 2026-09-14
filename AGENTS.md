@@ -180,13 +180,30 @@ AI 安全规则：
 
 ## 7. 开发流程
 
+所有任务必须优先使用以下已安装 skills：
+
+- `superpowers:using-superpowers`：会话开始时确认适用流程。
+- `superpowers:brainstorming`：创建新功能或变更行为前澄清目标。
+- `superpowers:writing-plans`：将需求转化为可执行开发计划。
+- `superpowers:executing-plans`：按计划逐步执行并保留验证点。
+- `superpowers:test-driven-development`：行为变更必须先明确测试期望。
+- `superpowers:systematic-debugging`：遇到 bug 或非预期行为时定位根因。
+- `superpowers:verification-before-completion`：声明完成前验证证据。
+- `superpowers:requesting-code-review`：完成实现后发起代码审查。
+- `superpowers:receiving-code-review`：处理审查意见前验证其技术正确性。
+- `review` / `review-bugbot`：执行项目代码审查。
+- `review-security`：执行安全审查。
+- `superpowers:subagent-driven-development`：复杂任务拆派给子 Agent 执行。
+- `superpowers:dispatching-parallel-agents`：仅当任务彼此独立时并行拆分。
+- `superpowers:finishing-a-development-branch`：分支交付前做最终检查。
+
 所有任务必须按以下顺序执行：
 
 1. Audit：理解现状、数据流、影响面和风险。
-2. Plan：明确最小修改方案。
-3. Implement：按现有架构实现，不扩大范围。
-4. Test：运行前后端测试和构建。
-5. Review：审查架构、安全、回归和兼容性。
+2. Plan：使用 `superpowers:writing-plans` 明确最小修改方案。
+3. Implement：使用 `superpowers:executing-plans` 按现有架构实现，不扩大范围。
+4. Test：使用 `superpowers:test-driven-development` 与 `superpowers:verification-before-completion` 运行前后端测试和构建。
+5. Review：使用 `superpowers:requesting-code-review`、`review` / `review-bugbot` 和 `review-security` 审查架构、安全、回归和兼容性。
 6. Commit：提交清晰、聚焦的 commit。
 
 禁止跳过审计直接修改。
@@ -216,6 +233,8 @@ npm test
 - AI Context。
 - Coach Memory。
 - 安全边界。
+
+简单文档修改可以只运行 `git diff --check`；业务代码修改必须完整运行本节全部命令。
 
 ## 9. 文件修改规则
 
