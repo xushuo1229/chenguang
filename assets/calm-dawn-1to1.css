@@ -385,6 +385,37 @@ body[data-theme="fusion"].dashboard-shell .main {
   overflow-y: auto;
 }
 
+/* Dashboard load stability: Goals, Stats, and AI use this shell.
+   Skip entrance motion and expensive backdrop sampling so first paint is final layout. */
+body[data-theme="fusion"].dashboard-shell {
+  background-attachment: scroll;
+}
+
+body[data-theme="fusion"].dashboard-shell .sidebar,
+body[data-theme="fusion"].dashboard-shell .main .topbar,
+body[data-theme="fusion"].dashboard-shell .mobile-tabbar {
+  backdrop-filter: none;
+  background: rgba(255, 253, 248, 0.98);
+}
+
+body[data-theme="fusion"].dashboard-shell .sidebar {
+  background: rgba(255, 255, 255, 0.96);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body[data-theme="fusion"].dashboard-shell .main > *,
+  body[data-theme="fusion"].dashboard-shell .main .func-card,
+  body[data-theme="fusion"].dashboard-shell .main .data-section,
+  body[data-theme="fusion"].dashboard-shell .main .goal-card,
+  body[data-theme="fusion"].dashboard-shell .main .stat-card,
+  body[data-theme="fusion"].dashboard-shell .main .stats-section,
+  body[data-theme="fusion"].dashboard-shell .main .coach-card,
+  body[data-theme="fusion"].dashboard-shell .main .empty-state,
+  body[data-theme="fusion"].dashboard-shell .main .state-block {
+    animation: none !important;
+  }
+}
+
 .wb-brand-mark {
   display: grid;
   place-items: center;
