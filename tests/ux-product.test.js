@@ -31,6 +31,7 @@ async function boot() {
   localStorage.setItem('chenguangData', JSON.stringify(seedData()));
   mount(workbenchHtml);
   window.scrollTo = vi.fn();
+  delete window.__cgWbNavBound;
   globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, status: 503, json: async () => ({}) });
   vi.resetModules();
   await import('../pages/workbench.js');
@@ -53,6 +54,17 @@ test('工作台展示基于真实待办的下一步，而不是静态空文案',
   await boot();
   expect(document.getElementById('todayNext').hidden).toBe(false);
   expect(document.getElementById('todayNextText').textContent).toContain('完成高数第三章习题');
+});
+
+test('课程入口切换工作台内课程视图，而不是无响应', async () => {
+  await boot();
+  document.querySelector('.sidebar a[data-nav="course"]').click();
+  await settle();
+
+  expect(document.getElementById('wb-view-home').hidden).toBe(true);
+  expect(document.getElementById('wb-view-course').hidden).toBe(false);
+  expect(document.querySelector('.sidebar a[data-nav="course"]').classList.contains('active')).toBe(true);
+  expect(document.getElementById('wb-view-course').textContent).toContain('课程学习');
 });
 
 test('空态文案给出可执行下一步', () => {

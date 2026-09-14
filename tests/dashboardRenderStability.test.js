@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import statsHtml from '../stats.html?raw';
 
 const css = readFileSync('assets/calm-dawn-1to1.css', 'utf8');
+const sharedCss = readFileSync('css/shared.css', 'utf8');
 const pageShellCss = [
   readFileSync('assets/calm-dawn-pro.css', 'utf8'),
   readFileSync('assets/workbench-pro.css', 'utf8'),
@@ -32,5 +33,11 @@ describe('dashboard render stability', () => {
     expect(pageShellCss).not.toContain('wbProEnter');
     expect(pageShellCss).not.toContain('fd-rise');
     expect(pageShellCss).not.toContain('animation: uiProRise');
+  });
+
+  it('keeps navigation as a stable MPA without route transitions or SPA routers', () => {
+    expect(sharedCss).not.toContain('@view-transition');
+    expect(statsHtml).not.toContain('js/router.js');
+    expect(statsHtml).not.toContain('js/navigation.js');
   });
 });
