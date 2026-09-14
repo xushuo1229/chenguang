@@ -13,6 +13,7 @@
 
   <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
   <!-- Font Awesome 6 (免费) -->
+  <link rel="preload" href="assets/vendor/fontawesome/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/shared.css">
@@ -79,6 +80,7 @@
       background: var(--bg-card);
       border-radius: var(--r-lg);
       padding: 18px 20px 16px;
+      min-height: 111px;
       border: 1px solid var(--border-soft);
       transition: var(--transition-fast);
       position: relative;
@@ -313,11 +315,11 @@
       background: var(--brand-amber);
       border-radius: 5px;
       width: 0%;
-      transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: width 0.18s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .data-bar { height: 10px; background: rgba(232,168,92,0.04); border-radius: 5px; overflow: hidden; }
-    .data-bar-fill { height: 100%; border-radius: 5px; transition: width 1s cubic-bezier(0.22, 1, 0.36, 1); }
+    .data-bar-fill { height: 100%; border-radius: 5px; transition: width 0.18s cubic-bezier(0.22, 1, 0.36, 1); }
 
     /* ===== 空状态优化 ===== */
     .empty-gold {
@@ -348,7 +350,7 @@
       50% { transform: scale(1.2); }
       100% { transform: scale(1); }
     }
-    .num-pop { animation: numberPop 0.3s ease; }
+    .num-pop { animation: numberPop 0.18s ease; }
 
     /* ===== 响应式 ===== */
     @media (max-width: 640px) {
@@ -390,7 +392,7 @@
       max-height: 85vh;
       overflow-y: auto;
       box-shadow: 0 20px 60px rgba(0,0,0,.2);
-      animation: modalIn .25s ease;
+      animation: modalIn .18s ease;
     }
     @keyframes modalIn {
       from { opacity: 0; transform: scale(.95) translateY(8px); }
@@ -489,7 +491,7 @@
     }
     .ic-tab:not(.active) .ic-tag { display: none; }
     .ic-pane { display: none; }
-    .ic-pane.active { display: block; animation: fadeIn .25s ease; }
+    .ic-pane.active { display: block; animation: fadeIn .18s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
     .ic-form-hint {
       margin-top: 10px; font-size: .78rem; line-height: 1.7; color: var(--text-muted);
@@ -543,7 +545,7 @@
     .focus-prog-fill {
       height: 100%; border-radius: 999px;
       background: var(--brand-teal);
-      transition: width .5s ease;
+      transition: width .18s ease;
     }
 
     /* ===== 列表项（课程/书籍/运动） ===== */
@@ -574,7 +576,7 @@
     .item-row .item-bar .item-bar-fill {
       height: 100%; border-radius: 4px;
       background: var(--brand-amber);
-      transition: width .3s;
+      transition: width .18s;
     }
     .item-row .item-btn {
       border: none; background: none; cursor: pointer;
@@ -644,7 +646,7 @@
     .sync-status {
       font-size: .72rem; font-weight: 600; padding: 5px 12px;
       border-radius: 999px; white-space: nowrap;
-      transition: .3s;
+      transition: .18s;
     }
     .sync-status[data-sync-state="syncing"] { background: rgba(232,168,92,0.1); color: var(--primary); }
     .sync-status[data-sync-state="ok"]      { background: rgba(79,195,180,0.1); color: var(--success); }
@@ -670,7 +672,7 @@
     body[data-wb-theme="rose"] {
       background: radial-gradient(circle at 85% 8%, rgba(232,121,111,0.045), transparent 55%), var(--bg-page);
     }
-    .wb-view { animation: viewIn .25s ease; }
+    .wb-view { animation: viewIn .18s ease; }
     @keyframes viewIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
     .view-head {
       display: flex; align-items: center; justify-content: space-between;
@@ -716,7 +718,7 @@
     .cv-item .cv-name { font-weight: 600; color: var(--text-hi); font-size: .92rem; }
     .cv-item .cv-sub { font-size: .75rem; color: var(--text-muted); margin-top: 3px; }
     .cv-item .cv-bar { margin-top: 8px; height: 6px; background: rgba(232,168,92,.15); border-radius: 999px; overflow: hidden; }
-    .cv-item .cv-fill { height: 100%; border-radius: 999px; background: var(--brand-teal); transition: width .4s; }
+    .cv-item .cv-fill { height: 100%; border-radius: 999px; background: var(--brand-teal); transition: width .18s; }
     .cv-item .cv-pct { font-size: 1.05rem; font-weight: 700; color: var(--success); min-width: 52px; text-align: center; }
     .cv-item .cv-pct.done { color: var(--success); }
     .cv-actions { display: flex; gap: 6px; margin-top: 6px; justify-content: flex-end; }
@@ -768,7 +770,7 @@
     /* 课程详情 */
     .cd-progress { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
     .cd-bar { flex:1; height:8px; background:rgba(232,168,92,.15); border-radius:999px; overflow:hidden; }
-    .cd-fill { height:100%; background:var(--brand-teal); border-radius:999px; transition:width .3s; }
+    .cd-fill { height:100%; background:var(--brand-teal); border-radius:999px; transition:width .18s; }
     .cd-pct { font-size:1rem; font-weight:700; color:var(--success); min-width:48px; text-align:right; }
     .cd-info { display:grid; grid-template-columns:repeat(2,1fr); gap:10px 16px; }
     .cd-row { background:var(--bg-soft); border-radius:10px; padding:10px 12px; }

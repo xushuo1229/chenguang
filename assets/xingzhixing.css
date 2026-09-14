@@ -416,6 +416,7 @@ body[data-brand="xingzhixing"].wb-pro { background: transparent; }
 body[data-brand="xingzhixing"] .dashboard-shell .main,
 body[data-brand="xingzhixing"] .dashboard-shell .main .topbar,
 body[data-brand="xingzhixing"].wb-pro .main { overflow: visible; }
+body[data-brand="xingzhixing"].wb-pro .main { overflow-x: clip; }
 
 body[data-brand="xingzhixing"] .dashboard-shell .main .topbar {
   padding: 24px 28px;

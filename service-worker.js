@@ -41,6 +41,9 @@ const CACHE_RUNTIME = `${CACHE_VERSION}-runtime`;
 
 const PRECACHE_URLS = globalThis.__CHENGUANG_PRECACHE_URLS__ || [];
 
+// Vite 产物路径包含内容 hash，可作为不可变资源安全使用 cache-first。
+const HASHED_ASSET_PATTERN = /^\/assets\/[^?]*-[a-zA-Z0-9_-]{8,}\.(?:js|css|png|jpe?g|svg|gif|webp|avif|woff2?|ttf|eot)$/;
+
 // ==================== CDN 域名列表 ====================
 // 来自这些域名的资源使用 Stale-While-Revalidate 策略
 // CDN 资源变化不频繁，可以先返回旧缓存，后台静默更新
@@ -123,6 +126,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  if (
+    url.origin === self.location.origin &&
+    !request.headers.has('range') &&
+    HASHED_ASSET_PATTERN.test(url.pathname)
+  ) {
+    event.respondWith(cacheFirst(request));
+    return;
+  }
+
   // 其他资源（JS/CSS/图片等） → Network-First
   // 确保用户获取最新版本的代码
   event.respondWith(networkFirst(request));
@@ -161,6 +173,24 @@ async function networkFirst(request) {
     // 离线 + 无缓存 → 返回离线占位
     return new Response('离线模式, 资源不可用', { status: 503 });
   }
+}
+
+/**
+ * Cache-First（缓存优先策略）
+ *
+ * 仅用于同源带内容 hash 的静态产物。内容变化时 URL 必然变化，
+ * 因此缓存命中可以跳过网络协商，同时不会让用户拿到旧版本。
+ */
+async function cacheFirst(request) {
+  const cache = await caches.open(CACHE_RUNTIME);
+  const cached = await cache.match(request);
+  if (cached) return cached;
+
+  const response = await fetch(request, { cache: 'no-cache' });
+  if (response.ok && response.type === 'basic') {
+    await cache.put(request, response.clone());
+  }
+  return response;
 }
 
 /**

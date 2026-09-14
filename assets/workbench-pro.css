@@ -320,7 +320,7 @@ body.wb-pro .sidebar .nav-item i {
   border-radius: var(--wb-radius);
   box-shadow: var(--wb-shadow);
   backdrop-filter: blur(22px);
-  transition: transform 220ms var(--ease), box-shadow 220ms var(--ease);
+  transition: transform 180ms var(--ease), box-shadow 180ms var(--ease);
 }
 
 .wb-pro .func-card:hover,
@@ -808,25 +808,6 @@ body.wb-pro .sidebar .nav-item i {
 }
 
 /* Motion */
-@media (prefers-reduced-motion: no-preference) {
-  .wb-pro .main,
-  .wb-pro .sidebar,
-  .wb-pro .ai-rail {
-    animation: wbProEnter 420ms cubic-bezier(.2,.8,.2,1) both;
-  }
-}
-
-@keyframes wbProEnter {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* Responsive */
 @media (max-width: 1360px) {
   .wb-pro .data-grid {
@@ -869,6 +850,8 @@ body.wb-pro .sidebar .nav-item i {
 
   .wb-pro .main {
     padding: 0 0 24px;
+    overflow-x: hidden;
+    overflow-x: clip;
   }
 
   .wb-pro .topbar {

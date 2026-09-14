@@ -558,7 +558,14 @@ function hideStates() { setHidden('statsError', true); setHidden('statsEmpty', t
 function showError() { setHidden('statsError', false); setHidden('statsEmpty', true); var d = $('#statsDashboard'); if (d) d.hidden = true; }
 function showEmpty() { setHidden('statsError', true); setHidden('statsEmpty', false); var d = $('#statsDashboard'); if (d) d.hidden = true; }
 
-function render(vm, snap) {
+var loadToken = 0;
+
+function nextPaint() {
+  return new Promise(function (resolve) { setTimeout(resolve, 0); });
+}
+
+function render(vm, snap, options) {
+  var drawCharts = !options || options.drawCharts !== false;
   var labelText = describeRange(vm.range);
   var accountUser = (() => {
     try { return JSON.parse(localStorage.getItem('cg_user') || 'null') || {}; } catch (_) { return {}; }
@@ -575,31 +582,45 @@ function render(vm, snap) {
 
   renderOverview($('#overviewGrid'), vm);
   renderInsight(snap);
-  renderTrend($('#trendGrid'), vm);
   renderHeatmap($('#heatmapContainer'), $('#heatmapTooltip'), snap);
   renderLearning($('#learningBody'), vm);
   renderExercise($('#exerciseBody'), vm);
   renderFocus($('#focusBody'), vm);
   renderTodo($('#todoBody'), vm);
   renderCourse($('#courseBody'), $('#courseTypes'), vm);
-  renderCourseChart($('#completionChart'), vm);
   renderPersonalBest($('#personalBestBody'), Analytics.getPersonalBest(snap));
+
+  if (drawCharts) {
+    renderTrend($('#trendGrid'), vm);
+    renderCourseChart($('#completionChart'), vm);
+  } else {
+    var trendGrid = $('#trendGrid');
+    if (trendGrid) trendGrid.innerHTML = '';
+  }
 }
 
 /* ====================================================================
    加载调度
    ==================================================================== */
 async function loadAll() {
+  var token = ++loadToken;
   disposeCharts();
+  hideStates();
   try {
+    await nextPaint();
     var snap = Analytics.snapshot();
     if (!hasAnyData(snap)) { showEmpty(); return; }
-    await loadChartJS();
     var range = resolveRange(currentRangeKey);
     if (!range) { toast('请先选择有效的自定义日期范围', 'warn'); return; }
     var vm = buildStatsViewModel(snap, range);
+    if (token !== loadToken) return;
     hideStates();
-    render(vm, snap);
+    render(vm, snap, { drawCharts: false });
+
+    await loadChartJS();
+    if (token !== loadToken) return;
+    renderTrend($('#trendGrid'), vm);
+    renderCourseChart($('#completionChart'), vm);
   } catch (e) {
     showError();
   }

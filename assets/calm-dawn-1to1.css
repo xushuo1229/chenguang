@@ -90,7 +90,7 @@ body[data-theme="fusion"] .state-block {
   border-radius: var(--u1-radius);
   box-shadow: var(--u1-shadow);
   color: var(--u1-ink);
-  transition: transform 220ms var(--u1-ease), box-shadow 220ms var(--u1-ease), border-color 220ms var(--u1-ease);
+  transition: transform 180ms var(--u1-ease), box-shadow 180ms var(--u1-ease), border-color 180ms var(--u1-ease);
 }
 
 body[data-theme="fusion"] .feature-card:hover,
@@ -383,6 +383,7 @@ body[data-theme="fusion"].dashboard-shell .sidebar .nav-item.active::before {
 body[data-theme="fusion"].dashboard-shell .main {
   height: calc(100dvh - clamp(32px, 4vw, 56px));
   overflow-y: auto;
+  overflow-x: clip;
 }
 
 /* Dashboard load stability: Goals, Stats, and AI use this shell.

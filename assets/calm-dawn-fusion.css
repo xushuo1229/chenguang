@@ -75,7 +75,7 @@ body[data-theme="fusion"] .onboard-card {
   border: 1px solid var(--fd-line);
   border-radius: var(--fd-radius-lg);
   box-shadow: var(--fd-shadow-sm);
-  transition: transform 220ms var(--fd-ease), box-shadow 220ms var(--fd-ease), border-color 220ms var(--fd-ease);
+  transition: transform 180ms var(--fd-ease), box-shadow 180ms var(--fd-ease), border-color 180ms var(--fd-ease);
 }
 
 body[data-theme="fusion"] .func-card:hover,
@@ -310,7 +310,7 @@ body[data-theme="fusion"] .feature-card {
   border: 1px solid var(--fd-line);
   border-radius: var(--fd-radius-lg);
   box-shadow: var(--fd-shadow-sm);
-  transition: transform 220ms var(--fd-ease), box-shadow 220ms var(--fd-ease);
+  transition: transform 180ms var(--fd-ease), box-shadow 180ms var(--fd-ease);
 }
 
 body[data-theme="fusion"] .feature-card:hover {
@@ -390,20 +390,6 @@ body[data-theme="fusion"] .mobile-tabbar a {
 
 body[data-theme="fusion"] .mobile-tabbar a.active {
   color: var(--fd-amber-deep);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  body[data-theme="fusion"] .func-card,
-  body[data-theme="fusion"] .feature-card,
-  body[data-theme="fusion"] .stat-card,
-  body[data-theme="fusion"] .goal-card {
-    animation: fd-rise 420ms var(--fd-ease) both;
-  }
-}
-
-@keyframes fd-rise {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ---------- Login page polish ---------- */

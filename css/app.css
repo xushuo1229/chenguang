@@ -399,7 +399,7 @@ label.fl{display:block;font-size:12px;font-weight:600;color:var(--text-3);margin
   padding:10px 16px;border-radius:var(--r-sm);font-size:13px;font-weight:500;
   background:var(--bg-3);border:1px solid var(--line-strong);color:var(--text-1);
   box-shadow:var(--shadow-float);
-  animation:toastIn .3s var(--ease-out-expo);  /* 入场动画：从右侧滑入 */
+  animation:toastIn .18s var(--ease-out-expo);  /* 入场动画：从右侧滑入 */
   pointer-events:auto;display:flex;align-items:center;gap:8px;
 }
 /* 成功 Toast：绿色边框 + ✓ 图标 */
@@ -411,7 +411,7 @@ label.fl{display:block;font-size:12px;font-weight:600;color:var(--text-3);margin
 /* 入场动画：从右侧 20px 位置滑入，同时淡入 */
 @keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
 /* 退场动画类：向右滑出 */
-.toast.out{animation:toastOut .3s var(--ease-out-quart) forwards}
+.toast.out{animation:toastOut .18s var(--ease-out-quart) forwards}
 /* 退场动画：向右侧 20px 滑出，同时淡出 */
 @keyframes toastOut{to{opacity:0;transform:translateX(20px)}}
 
@@ -479,7 +479,7 @@ label.fl{display:block;font-size:12px;font-weight:600;color:var(--text-3);margin
 .feed-item{display:flex;gap:var(--s3);padding:var(--s3) 0;border-bottom:1px solid var(--line)}
 .feed-item:last-child{border-bottom:none}
 /* 新动态入场动画：从左侧滑入 + 背景闪烁 */
-.feed-item-new{animation:feedSlideIn .4s var(--ease-out-expo)}
+.feed-item-new{animation:feedSlideIn .18s var(--ease-out-expo)}
 @keyframes feedSlideIn{from{opacity:0;transform:translateX(-12px);background:rgba(240,178,92,.06)}to{opacity:1;transform:translateX(0);background:transparent}}
 
 /* 动态用户头像 */

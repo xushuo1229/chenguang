@@ -451,17 +451,27 @@ function sendMessage(text) {
    加载流程
    ==================================================================== */
 
+var loadToken = 0;
+
+function afterPaint(callback) {
+  setTimeout(callback, 0);
+}
+
 function loadAll() {
-  showLoading();
-  try {
-    var ctx = buildContext();
-    if (!AIContext.hasEvidence(ctx)) { showEmpty(); return; }
-    renderPanels();
-    showDash();
-  } catch (e) {
-    showError();
-    console.warn('[AI] load failed:', e);
-  }
+  var token = ++loadToken;
+  showDash();
+  afterPaint(function () {
+    if (token !== loadToken) return;
+    try {
+      var ctx = buildContext();
+      if (!AIContext.hasEvidence(ctx)) { showEmpty(); return; }
+      renderPanels();
+      showDash();
+    } catch (e) {
+      showError();
+      console.warn('[AI] load failed:', e);
+    }
+  });
 }
 
 /* ---------- 事件绑定 ---------- */

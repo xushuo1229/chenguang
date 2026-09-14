@@ -172,27 +172,33 @@ function render(progressList, store) {
 }
 
 /* ---------- 加载 ---------- */
+var loadToken = 0;
+
+function afterPaint(callback) {
+  setTimeout(callback, 0);
+}
+
 function loadAll() {
-  showLoading(true);
-  try {
-    var store = Store.get();              // 一次读取
-    showLoading(false);
+  var token = ++loadToken;
+  showDash();
+  afterPaint(function () {
+    if (token !== loadToken) return;
+    try {
+      var store = Store.get();              // 一次读取
+      var hasName = store.user && store.user.name;
+      var nameEl = $('#welcomeName');
+      if (nameEl) nameEl.textContent = hasName ? '· ' + store.user.name : '';
 
-    var hasName = store.user && store.user.name;
-    var nameEl = $('#welcomeName');
-    if (nameEl) nameEl.textContent = hasName ? '· ' + store.user.name : '';
+      var goals = Array.isArray(store.goals) ? store.goals : [];
+      if (!goals.length) { showEmpty(); return; }
 
-    var goals = Array.isArray(store.goals) ? store.goals : [];
-    if (!goals.length) { showEmpty(); return; }
-
-    var progress = GoalEngine.computeGoalsProgress(goals, store); // 全部目标一次算完
-    render(progress, store);
-  } catch (e) {
-    // 计算层已对单条坏数据做隔离；到这里的通常是整体异常，统一进错误态
-    try { showLoading(false); } catch (_) {}
-    showError();
-    console.warn('[Goals] render failed:', e);
-  }
+      var progress = GoalEngine.computeGoalsProgress(goals, store); // 全部目标一次算完
+      render(progress, store);
+    } catch (e) {
+      showError();
+      console.warn('[Goals] render failed:', e);
+    }
+  });
 }
 
 /* ---------- 表单 ---------- */
