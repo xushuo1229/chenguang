@@ -286,3 +286,23 @@ test('Context.coach 提供 AI Coach 洞察，同时保留只读与旧字段', as
   expect(store.getRevision()).toBe(revision);
   expect(JSON.stringify(store.get())).toBe(before);
 });
+
+test('Context.report 提供周报与月报，同时兼容旧字段', async () => {
+  const { store, AIContext } = await boot(seedData());
+  const before = JSON.stringify(store.get());
+  const revision = store.getRevision();
+  const ctx = AIContext.buildContext(store.get(), { today: TODAY });
+
+  expect(ctx.report).toBeTruthy();
+  expect(ctx.report.weekly.period).toBe('weekly');
+  expect(ctx.report.monthly.period).toBe('monthly');
+  expect(ctx.report.weekly.readOnly).toBe(true);
+  expect(ctx.report.monthly.readOnly).toBe(true);
+  expect(ctx.report.weekly.summary).toContain('本周');
+  expect(ctx.report.monthly.summary).toContain('月度');
+  expect(ctx.growth).toBeTruthy();
+  expect(ctx.growthState).toBeTruthy();
+  expect(ctx.coach).toBeTruthy();
+  expect(store.getRevision()).toBe(revision);
+  expect(JSON.stringify(store.get())).toBe(before);
+});

@@ -8,6 +8,7 @@ import Analytics from '../js/analytics.js';
 import CGAIContext from '../js/aiContext.js';
 import GrowthIntelligence from '../js/growthIntelligence.js';
 import CoachMemory from '../js/coachMemory.js';
+import GrowthReport from '../js/growthReport.js';
 import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
 
 // ====================================================================
@@ -394,6 +395,14 @@ function setBusy(on) {
   Array.prototype.forEach.call(qs, function (b) { b.disabled = on; });
 }
 
+function detectReportRequest(text) {
+  var value = String(text || '').toLowerCase();
+  if (/monthly report|这个月|本月|月度/.test(value)) return 'monthly';
+  if (/weekly report|本周|一周/.test(value)) return 'weekly';
+  if (/最近.*(变化|进步)|最近.*哪里/.test(value)) return 'changes';
+  return null;
+}
+
 function sendMessage(text) {
   text = String(text || '').trim();
   if (!text || sending) return;
@@ -406,6 +415,19 @@ function sendMessage(text) {
   setBusy(true);
 
   var historyToSend = chatHistory.slice(-10);   // 先取历史（不含本轮问题，避免重复）
+
+  var reportIntent = detectReportRequest(text);
+  if (reportIntent && currentContext) {
+    var report = currentContext.report && currentContext.report[reportIntent];
+    if (!report) report = GrowthReport.buildReport(currentContext, reportIntent === 'changes' ? 'weekly' : reportIntent);
+    typing.remove();
+    appendMsg('assistant', reportIntent === 'changes'
+      ? (report.summary || '最近暂无足够的成长变化数据。')
+      : GrowthReport.formatReport(report));
+    recordUser();
+    setBusy(false);
+    return;
+  }
 
   function recordUser() {
     chatHistory.push({ role: 'user', content: text });

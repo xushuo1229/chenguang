@@ -121,6 +121,12 @@ function clickRange(key) {
   if (!btn) throw new Error('tab not found: ' + key);
   btn.click();
 }
+
+function clickReport(period) {
+  const btn = document.querySelector(`[data-report="${period}"]`);
+  if (!btn) throw new Error('report tab not found: ' + period);
+  btn.click();
+}
 function setCustom(s, e) {
   document.getElementById('customStart').value = s;
   document.getElementById('customEnd').value = e;
@@ -161,6 +167,19 @@ test('切换「今日」：标签更新、图表重建、概览刷新', async ()
   expect(document.getElementById('rangeLabel').textContent).toContain('今日');
   expect(charts.length).toBeGreaterThan(createdBefore); // 今日构成图（新图）
   expect(overviewText()).toContain('活跃天数');
+});
+
+test('成长报告：默认展示周报，切换月报不重读 Store', async () => {
+  await boot(seedData());
+  const storeGetSpy = vi.spyOn(globalThis.CGStore, 'get');
+  expect(document.getElementById('reportSummary').textContent).toContain('本周');
+
+  clickReport('monthly');
+  await settle();
+
+  expect(document.querySelector('[data-report="monthly"]').classList.contains('is-active')).toBe(true);
+  expect(document.getElementById('reportSummary').textContent).toContain('月度');
+  expect(storeGetSpy).not.toHaveBeenCalled();
 });
 
 test('切换「本周」：刷新不崩，概览为周口径', async () => {

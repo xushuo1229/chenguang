@@ -259,7 +259,7 @@
 
   <!-- 时间范围选择 -->
   <div class="range-tabs-wrap">
-    <div class="range-tabs" role="tablist" aria-label="统计时间范围">
+    <div class="range-tabs" id="rangeTabs" role="tablist" aria-label="统计时间范围">
       <button type="button" class="range-tab" data-range="today" role="tab" aria-selected="false">今日</button>
       <button type="button" class="range-tab is-active" data-range="week" role="tab" aria-selected="true">本周</button>
       <button type="button" class="range-tab" data-range="month" role="tab" aria-selected="false">本月</button>
@@ -317,6 +317,23 @@
       </div>
       <ul class="cg-insight-list" id="insightList"></ul>
       <p class="cg-insight-empty" id="insightEmpty" hidden>暂无趋势 · 数据积累一周后，这里会显示你的变化。</p>
+    </section>
+
+    <!-- 成长报告（Phase 19.3）：复用现有洞察卡和时间切换结构 -->
+    <section class="cg-insight stats-insight" id="secReport" aria-labelledby="reportTitle">
+      <div class="cg-insight-head">
+        <span class="cg-insight-ico"><i class="fas fa-file-lines"></i></span>
+        <div class="cg-insight-title">
+          <h3 id="reportTitle">成长报告</h3>
+          <p id="reportHint">理解自己的成长过程，而不只是看数据</p>
+        </div>
+      </div>
+      <div class="range-tabs" id="reportTabs" role="tablist" aria-label="成长报告周期">
+        <button type="button" class="range-tab is-active" data-report="weekly" role="tab" aria-selected="true">周报告</button>
+        <button type="button" class="range-tab" data-report="monthly" role="tab" aria-selected="false">月报告</button>
+      </div>
+      <p id="reportSummary"></p>
+      <ul class="cg-insight-list" id="reportList"></ul>
     </section>
 
     <!-- 趋势 -->

@@ -16,6 +16,7 @@
 import { test, expect, beforeEach, vi } from 'vitest';
 import aiHtml from '../ai.html?raw';
 import { dateStr, dateOffset } from '../js/utils/date.js';
+import GrowthReport from '../js/growthReport.js';
 
 const TODAY = dateStr(0);
 const day = (n) => dateOffset(TODAY, n);
@@ -110,7 +111,7 @@ test('有数据：仪表盘渲染，今日状态 6 格、快捷问题 5 个、�
   // 快捷问题（成长教练入口，共 5 个）
   const qs = [...document.querySelectorAll('.quick-q')].map((b) => b.getAttribute('data-q'));
   expect(qs).toEqual([
-    '我的成长情况', '最近哪里进步了', '我应该改善什么',
+    '我的成长情况', '生成我的本周成长报告', '我应该改善什么',
     '哪个目标最危险？', '制定下一步计划'
   ]);
   // 目标风险：即将到期 + 进度低 → 有 high 项
@@ -250,6 +251,50 @@ test('性能：刷新与对话复用同一页面快照，不重复读取 Store',
   await settle(); await settle();
 
   expect(getSpy).toHaveBeenCalledTimes(1);
+});
+
+test('AI 报告意图：本周报告基于 Context 本地返回，不调用 Provider', async () => {
+  await boot(seedData());
+  const provider = vi.fn();
+  globalThis.CGAPI.ai.chat = provider;
+
+  document.getElementById('chatInput').value = '生成我的本周成长报告';
+  document.getElementById('chatSend').click();
+  await settle(); await settle();
+
+  expect(provider).not.toHaveBeenCalled();
+  const bubbles = [...document.querySelectorAll('#chatMessages .msg-ai .msg-bubble')];
+  const reply = bubbles[bubbles.length - 1].textContent;
+  expect(reply).toContain('本周成长报告');
+  expect(reply).toContain('成果');
+});
+
+test('AI 报告意图：月度总结基于 Context 本地返回', async () => {
+  await boot(seedData());
+  const provider = vi.fn();
+  globalThis.CGAPI.ai.chat = provider;
+
+  document.getElementById('chatInput').value = '总结我的这个月';
+  document.getElementById('chatSend').click();
+  await settle(); await settle();
+
+  expect(provider).not.toHaveBeenCalled();
+  const bubbles = [...document.querySelectorAll('#chatMessages .msg-ai .msg-bubble')];
+  expect(bubbles[bubbles.length - 1].textContent).toContain('月度成长报告');
+});
+
+test('AI 报告意图：最近变化返回成长摘要', async () => {
+  await boot(seedData());
+  const provider = vi.fn();
+  globalThis.CGAPI.ai.chat = provider;
+
+  document.getElementById('chatInput').value = '我最近有什么变化';
+  document.getElementById('chatSend').click();
+  await settle(); await settle();
+
+  expect(provider).not.toHaveBeenCalled();
+  const bubbles = [...document.querySelectorAll('#chatMessages .msg-ai .msg-bubble')];
+  expect(bubbles[bubbles.length - 1].textContent).toContain('本周');
 });
 
 test('对话历史 memory-first：存 sessionStorage，不写 chenguangData', async () => {

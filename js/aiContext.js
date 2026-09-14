@@ -31,6 +31,7 @@ import Analytics, { isValidDateStr } from './analytics.js';
 import GoalEngine from './goals.js';
 import GrowthIntelligence from './growthIntelligence.js';
 import AICoach from './aiCoach.js';
+import GrowthReport from './growthReport.js';
 import AIRetrieval from './aiDataRetrieval.js';
 import AIToolRunner from './aiToolRunner.js';
 import { todayStr, dateOffset } from './utils/date.js';
@@ -164,6 +165,7 @@ function buildContext(data, opts) {
 
   /* ---- 一次 snapshot 全量统计 ---- */
   var day7 = Analytics.getDateRangeSummary(w7[0], w7[1], snap);
+  var todaySummary = Analytics.getDateRangeSummary(today, today, snap);
   var study7 = Analytics.getStudySummary(w7[0], w7[1], snap);
   var study30 = Analytics.getStudySummary(w30[0], w30[1], snap);
   var focus7 = Analytics.getFocusSummary(w7[0], w7[1], snap);
@@ -273,6 +275,14 @@ function buildContext(data, opts) {
     exercise: exercise,
     english: english,
     focus: focus,
+    daily: {
+      activity: !!(todaySummary && todaySummary.activity && todaySummary.activity.activeDays > 0),
+      studyMinutes: (todaySummary && todaySummary.study && todaySummary.study.minutes) || 0,
+      focusMinutes: (todaySummary && todaySummary.focus && todaySummary.focus.minutes) || 0,
+      exerciseMinutes: (todaySummary && todaySummary.exercise && todaySummary.exercise.minutes) || 0,
+      todosCompleted: (todaySummary && todaySummary.todos && todaySummary.todos.done) || 0,
+      todosTotal: (todaySummary && todaySummary.todos && todaySummary.todos.total) || 0
+    },
     todos: todos,
     courses: courses,
     goals: goals,
@@ -305,6 +315,8 @@ function buildContext(data, opts) {
   };
 
   ctx.coach = AICoach.buildCoachContext(ctx);
+  var reports = GrowthReport.buildReports(ctx);
+  ctx.report = { weekly: reports.weekly, monthly: reports.monthly };
 
   return trimContextToBudget(ctx);
 }
@@ -465,6 +477,21 @@ function trimContextToBudget(ctx, maxTokens) {
   if (!ctx || typeof ctx !== 'object') return ctx || {};
   var out = JSON.parse(JSON.stringify(ctx));
 
+  if (estimateContextTokens(out) <= maxTokens) return out;
+
+  // 0) Report 是派生展示层，超预算时优先收缩，不牺牲原始统计。
+  if (out.report && typeof out.report === 'object') {
+    ['weekly', 'monthly'].forEach(function (period) {
+      var report = out.report[period];
+      if (!report || typeof report !== 'object') return;
+      ['achievements', 'insights', 'challenges', 'recommendations', 'nextSteps'].forEach(function (key) {
+        if (Array.isArray(report[key])) report[key] = report[key].slice(0, 2);
+      });
+    });
+  }
+  if (estimateContextTokens(out) <= maxTokens) return out;
+
+  if (out.report) out.report = null;
   if (estimateContextTokens(out) <= maxTokens) return out;
 
   // 1) 丢弃 30 天趋势（Level B 里的最次要项）

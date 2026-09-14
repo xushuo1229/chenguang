@@ -6,6 +6,8 @@ import '../js/apiClient.js';
 import '../js/store.js';
 import '../js/sync.js';
 import Analytics, { isValidDateStr } from '../js/analytics.js';
+import AIContext from '../js/aiContext.js';
+import GrowthReport from '../js/growthReport.js';
 import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
 
 // ====================================================================
@@ -77,6 +79,8 @@ function gradient(ctx, c1, c2) { try { var g = ctx.createLinearGradient(0, 0, 0,
 
 /* ---------- 当前时间范围状态 ---------- */
 var currentRangeKey = 'week';
+var reportContext = null;
+var reportPeriod = 'weekly';
 
 /* 自定义范围长度硬上限（避免数据口径被 eachDay guard 静默截断而无提示） */
 var MAX_CUSTOM_DAYS = 733;
@@ -560,6 +564,31 @@ function showEmpty() { setHidden('statsError', true); setHidden('statsEmpty', fa
 
 var loadToken = 0;
 
+function renderReport() {
+  var summaryEl = $('#reportSummary');
+  var listEl = $('#reportList');
+  if (!summaryEl || !listEl) return;
+  var report = reportContext && reportContext.report ? reportContext.report[reportPeriod] : null;
+  if (!report && reportContext) report = GrowthReport.buildReport(reportContext, reportPeriod);
+  listEl.innerHTML = '';
+  if (!report) {
+    summaryEl.textContent = '当前数据不足，暂无成长报告。';
+    return;
+  }
+  summaryEl.textContent = report.summary || '暂无成长总结。';
+  [['成果', report.achievements], ['亮点', report.insights], ['挑战', report.challenges], ['建议', report.recommendations], ['下一步', report.nextSteps]]
+    .forEach(function (section) {
+      var items = Array.isArray(section[1]) ? section[1] : [];
+      items.forEach(function (item) {
+        if (!item) return;
+        var line = document.createElement('li');
+        line.textContent = section[0] + '：' + item;
+        listEl.appendChild(line);
+      });
+    });
+  if (!listEl.children.length) listEl.appendChild(document.createElement('li')).textContent = '数据积累后，这里会显示具体成果和建议。';
+}
+
 function nextPaint() {
   return new Promise(function (resolve) {
     requestAnimationFrame(function () { setTimeout(resolve, 0); });
@@ -612,6 +641,8 @@ async function loadAll() {
     await nextPaint();
     var snap = Analytics.snapshot();
     if (!hasAnyData(snap)) { showEmpty(); return; }
+    reportContext = AIContext.buildContext(snap);
+    renderReport();
     var range = resolveRange(currentRangeKey);
     if (!range) { toast('请先选择有效的自定义日期范围', 'warn'); return; }
     var vm = buildStatsViewModel(snap, range);
@@ -675,7 +706,7 @@ function heatOut(e) {
    事件绑定
    ==================================================================== */
 function setActiveTab(key) {
-  $$('.range-tab').forEach(function (btn) {
+  $$('#rangeTabs .range-tab').forEach(function (btn) {
     var active = btn.getAttribute('data-range') === key;
     btn.classList.toggle('is-active', active);
     btn.setAttribute('aria-selected', active ? 'true' : 'false');
@@ -690,17 +721,30 @@ function applyCustomRange() {
 }
 
 function setupEvents() {
-  $$('.range-tab').forEach(function (btn) {
+  $$('#rangeTabs .range-tab').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var key = btn.getAttribute('data-range');
       if (key === 'custom') { setActiveTab('custom'); showCustomRange(true); return; }
       currentRangeKey = key; setActiveTab(key); showCustomRange(false); loadAll();
     });
   });
+  $$('#reportTabs .range-tab').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var key = btn.getAttribute('data-report');
+      if (key !== 'weekly' && key !== 'monthly') return;
+      reportPeriod = key;
+      $$('#reportTabs .range-tab').forEach(function (tab) {
+        var active = tab.getAttribute('data-report') === key;
+        tab.classList.toggle('is-active', active);
+        tab.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      renderReport();
+    });
+  });
   var tabsEl = $('.range-tabs');
   if (tabsEl) tabsEl.addEventListener('keydown', function (e) {
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-    var btns = $$('.range-tab'); var idx = btns.indexOf(document.activeElement);
+    var btns = $$('#rangeTabs .range-tab'); var idx = btns.indexOf(document.activeElement);
     if (idx < 0) return;
     e.preventDefault();
     var ni = (idx + (e.key === 'ArrowRight' ? 1 : -1) + btns.length) % btns.length;
