@@ -1,5 +1,5 @@
 /**
- * 晨光自律台 · AI Context Builder (Phase 13)
+ * 知行 · AI Context Builder (Phase 13)
  * ============================================================
  * 架构落点：
  *
@@ -10,7 +10,7 @@
  *   结构化 AI Context（版本化 JSON，发给后端 → Provider）
  *
  * 【职责】
- *   - 从 CGAnalytics / Goal Engine 聚合出「晨光 AI 教练」需要的结构化上下文。
+ *   - 从 CGAnalytics / Goal Engine 聚合出「知行 AI 教练」需要的结构化上下文。
  *   - 内置确定性洞察层（Insights / Risk Detector）：目标风险、趋势下滑、
  *     强习惯、异常、机会——基础统计由规则引擎做，AI 只负责「解释」和「建议」。
  *   - 应用层 Context 预算控制（estimateTokens / trimContextToBudget），
@@ -387,7 +387,7 @@ function buildInsights(buckets, info) {
 
   /* 强习惯 */
   if (info.currentStreak >= 3) {
-    out.push({ type: 'strong_habit', severity: 'positive', reason: '已连续自律 ' + info.currentStreak + ' 天，习惯坚持得很稳' });
+    out.push({ type: 'strong_habit', severity: 'positive', reason: '已连续成长 ' + info.currentStreak + ' 天，习惯坚持得很稳' });
   } else if (info.longestStreak >= 7 && info.currentStreak > 0) {
     out.push({ type: 'strong_habit', severity: 'positive', reason: '近况不错，正在追回之前 ' + info.longestStreak + ' 天的最长连续记录' });
   }

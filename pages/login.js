@@ -1,5 +1,5 @@
 /**
- * 晨光自律台 · 登录页入口 (ES Module)
+ * 知行 · 登录页入口 (ES Module)
  *
  * 独立登录页（login.html），桌面端左右分栏：左品牌 + 右表单。
  * 与首页弹窗登录共用同一套后端流程（CGAPI.auth.login / register）：
@@ -39,7 +39,7 @@ function showView(mode) {
   var isReg = mode === 'register';
   login.style.display = isReg ? 'none' : '';
   register.style.display = isReg ? '' : 'none';
-  document.title = (isReg ? '注册' : '登录') + ' · 晨光自律台';
+  document.title = (isReg ? '注册' : '登录') + ' · 知行';
   try { history.replaceState(null, '', isReg ? '?mode=register' : location.pathname); } catch (_) {}
 }
 
@@ -152,7 +152,7 @@ async function doRegister() {
       syncUserToStore(username);
     }
     try { if (window.CGSync) await window.CGSync.afterRegister(); } catch (_) {}
-    toast('🎉 注册成功，欢迎加入晨光自律台！正在进入工作台…', 'success');
+    toast('🎉 注册成功，欢迎加入知行！正在进入工作台…', 'success');
     setTimeout(function () { window.location.href = window.REDIRECT_AFTER_LOGIN; }, 650);
   } catch (err) {
     if (err.status === 409 || err.status === 400) {
@@ -195,7 +195,7 @@ function init() {
   var openPrivacy = document.getElementById('openPrivacy');
   if (openTerms) openTerms.addEventListener('click', function (e) {
     e.preventDefault();
-    toast('《服务条款》：本工具仅用于个人自律记录，请勿用于任何违法违规用途。', 'info');
+    toast('《服务条款》：本工具仅用于个人成长记录，请勿用于任何违法违规用途。', 'info');
   });
   if (openPrivacy) openPrivacy.addEventListener('click', function (e) {
     e.preventDefault();

@@ -1,4 +1,4 @@
-# 晨光自律台 · UI Design System「静晨光 Calm Dawn」
+# 知行 · UI Design System「静晨光 Calm Dawn」
 
 > Phase UI-1 冻结版 · 2026-09-12
 > 适用范围：登录页（login.html）、首页 Landing（index.html）。工作台/统计/目标/AI 页沿用同一 token 体系（css/variables.css），逐步对齐。

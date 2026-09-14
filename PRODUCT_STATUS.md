@@ -1,4 +1,4 @@
-# 晨光自律台 · PRODUCT STATUS
+# 知行 · PRODUCT STATUS
 
 > 更新：2026-09-12（晚）· Autonomous CTO 维护
 

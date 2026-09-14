@@ -1,5 +1,5 @@
 /**
- * 晨光自律台 · user_data 整份快照数据访问层 (SQLite)
+ * 知行 · user_data 整份快照数据访问层 (SQLite)
  * ------------------------------------------------------------
  * 整份 chenguangData JSON 的 source of truth
  * 支持整份拉取（GET /api/data）与覆盖回写（PUT /api/data）

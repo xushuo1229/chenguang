@@ -1,8 +1,8 @@
-# 晨光自律台 · 大学生 AI 自律工作台
+# 知行 · AI 个人成长操作系统
 
-> 每天进步一点点，自律让我自由。
+> 认识自己，规划当下，持续成长。
 
-一个面向大学生的全栈自律工作台：每日打卡、课程进度、每日阅读、英语学习、运动记录、待办计划、专注统计，数据全平台打通，支持多设备云端同步。
+一个面向大学生的全栈 AI 个人成长操作系统：每日打卡、课程进度、每日阅读、英语学习、运动记录、待办计划、专注统计，数据全平台打通，支持多设备云端同步。
 
 ## 当前技术架构（2026-09 最新）
 
@@ -19,11 +19,11 @@
 
 | 层级 | 技术 | 说明 |
 |------|------|------|
-| 前端 | 原生 HTML/CSS/JS + Vite 6（多页构建） | index（落地/注册登录）、workbench（工作台）、stats（数据统计）、ai（AI 助手） |
+| 前端 | 原生 HTML/CSS/JS + Vite 6（多页构建） | index（落地/注册登录）、workbench（工作台）、stats（数据统计）、ai（知行 AI 教练） |
 | 数据层 | `js/store.js`（CGStore） | 所有页面共享**单一 key** `chenguangData`，八类数据：user/checkins/sports/readings/courses/english/todos/focus；写入即派发 `chenguang:update` 事件跨页实时刷新 |
 | 同步层 | `js/sync.js`（CGSync） | 登录后「先推后拉」同步云端；本地变更防抖 400ms 回写；离线/无 token 静默走本地 |
 | 后端 | Node.js + Express + SQLite（better-sqlite3）+ JWT | `backend/` 目录，注册/登录/鉴权、按用户隔离、多设备数据一致；提供 **AI 代理**（`/api/ai/chat`）与 **课表导入代理**（`/api/course/import`）；数据以**单张 `user_data` 快照表**为唯一真源（早期 7 张明细表已精简移除） |
-| 智能层 | AI 2.0「晨光 AI 教练」 | 前端 `js/aiContext.js` 从 CGAnalytics/Goal Engine 构建只读结构化 Context（含预算裁剪与确定性洞察），后端持有 System Prompt 并经 Provider Adapter（OpenAI 兼容，默认 DeepSeek）转发 `POST /api/ai/chat`；`API Key` 只存后端 `.env`，浏览器不接触；未配置/离线时展示友好提示（应用离线优先） |
+| 智能层 | AI 2.0「知行 AI 教练」 | 前端 `js/aiContext.js` 从 CGAnalytics/Goal Engine 构建只读结构化 Context（含预算裁剪与确定性洞察），后端持有 System Prompt 并经 Provider Adapter（OpenAI 兼容，默认 DeepSeek）转发 `POST /api/ai/chat`；`API Key` 只存后端 `.env`，浏览器不接触；未配置/离线时展示友好提示（应用离线优先） |
 
 ## 快速开始
 
@@ -56,7 +56,7 @@ npm run dev
 
 ### 核心功能
 - **用户系统**：注册 / 登录（bcrypt 密码加密 + JWT 鉴权）
-- **AI 学习助手**：接入真实大模型对话（OpenAI 兼容国内大模型，默认 DeepSeek），把本地自律数据注入上下文给出个性化建议；未配置/离线自动回退本地模板
+- **知行 AI 教练**：接入真实大模型对话（OpenAI 兼容国内大模型，默认 DeepSeek），把本地成长数据注入上下文给出个性化建议；未配置/离线自动回退本地模板
 - **每日打卡**：一键打卡、连续天数统计
 - **课程进度**：添加课程、编辑总章节/已学章节、进度条实时刷新；支持**课表一键导入** —— 粘贴课表文本（本地解析，无需后端）或填写公开课表网页链接（后端代理抓取 HTML 表格），按课程名自动去重合并
 - **每日阅读**：书架管理（书名/总页数/已读页数）、累计阅读统计
@@ -120,7 +120,7 @@ chenguang-platform/
 - 无令牌（未登录）：纯本地存储，行为与纯前端版一致。
 - 已登录但后端临时不可用：pull/push 静默失败并 `console.warn`，页面继续用本地缓存，恢复后自动重试回写。
 - 注册/登录连不上后端：回退「演示登录」，不影响使用。
-- AI 未配置（后端未设 `AI_API_KEY`）或大模型接口不可用：AI 助手自动回退本地模板回复，应用不中断。
+- AI 未配置（后端未设 `AI_API_KEY`）或大模型接口不可用：知行 AI 教练自动回退本地模板回复，应用不中断。
 
 ## 自动化测试
 

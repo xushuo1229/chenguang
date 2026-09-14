@@ -1,5 +1,5 @@
 /**
- * 晨光自律台 · 统一 Toast 提示 (ES Module)
+ * 知行 · 统一 Toast 提示 (ES Module)
  *
  * 什么是 Toast？
  * Toast 是一种轻量级的消息提示，通常出现在屏幕右上角。

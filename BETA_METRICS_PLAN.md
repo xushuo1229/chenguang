@@ -1,4 +1,4 @@
-# 晨光自律台 · Beta Metrics Plan
+# 知行 · Beta Metrics Plan
 
 > 阶段：REAL-BETA-OPS  
 > 目标：在不新增埋点系统、不改数据库模型的前提下，用现有 SQLite 快照、服务器日志和人工反馈建立最小可观测方案。  
@@ -106,4 +106,3 @@ Beta 环境与生产环境必须使用不同的数据库路径和 `JWT_SECRET`�
 4. AI 调用数与异常数
 5. P0 / P1 问题
 6. 用户主动放弃原因 Top 3
-

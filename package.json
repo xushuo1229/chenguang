@@ -2,7 +2,7 @@
   "name": "chenguang-platform-frontend",
   "version": "1.0.0",
   "private": true,
-  "description": "晨光自律台前端 (Vite)",
+  "description": "知行前端 (Vite)",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

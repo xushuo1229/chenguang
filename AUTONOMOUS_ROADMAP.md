@@ -1,4 +1,4 @@
-# 晨光自律台 · AUTONOMOUS ROADMAP
+# 知行 · AUTONOMOUS ROADMAP
 
 > 自主开发路线图（Autonomous CTO 维护）。只记录「有用户价值」的阶段，不堆功能数量。
 > 基线：`7fdd6c6` fix: harden product experience before Phase 14

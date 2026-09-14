@@ -1,5 +1,5 @@
 /**
- * 晨光自律台 · Phase 9 课程系统 2.0 测试
+ * 知行 · Phase 9 课程系统 2.0 测试
  * ============================================================
  * 覆盖：
  *   1. 周次系统（js/utils/date.js）：semesterWeekOf / weeksContain / weekdayCN /

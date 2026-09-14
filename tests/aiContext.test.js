@@ -206,7 +206,7 @@ test('课程裁剪：最多保留 20 门', async () => {
 test('estimateTokens：中文与英文消耗不同，空串为 0', async () => {
   const { AIContext } = await boot(seedData());
   expect(AIContext.estimateTokens('')).toBe(0);
-  const cjk = AIContext.estimateTokens('晨光自律台'.repeat(100));   // 500 个汉字
+  const cjk = AIContext.estimateTokens('知行'.repeat(250));   // 500 个汉字
   const ascii = AIContext.estimateTokens('a'.repeat(2000));
   expect(cjk).toBeGreaterThan(200);      // ~333
   expect(ascii).toBe(500);               // 2000/4

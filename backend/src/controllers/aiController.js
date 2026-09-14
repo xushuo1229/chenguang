@@ -1,5 +1,5 @@
 /**
- * 晨光自律台 · AI Coach 控制器（Phase 13 AI 2.0）
+ * 知行 · AI Coach 控制器（Phase 13 AI 2.0）
  * ============================================================
  * 【职责】
  * 从请求中提取 { message, history, context, contextVersion }，

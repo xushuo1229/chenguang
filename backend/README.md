@@ -1,4 +1,4 @@
-# 晨光自律台 · 后端服务 + 云端同步方案
+# 知行 · 后端服务 + 云端同步方案
 
 把原有「纯 localStorage 本地存储」升级为「**后端数据库（SQLite）+ JWT 鉴权**」，
 实现 **同一账号跨浏览器 / 跨设备数据完全一致**。
@@ -83,7 +83,7 @@ npm start
 # 或自定义端口 / JWT 密钥 / 库路径：
 # PORT=3000 JWT_SECRET=你的密钥 DB_PATH=./chenguang.db npm start
 ```
-看到 `✅ 晨光自律台后端已启动: http://localhost:3000` 即成功。
+看到 `✅ 知行后端已启动: http://localhost:3000` 即成功。
 首次启动会自动执行 `schema.sql` 建表并生成 `chenguang.db`。
 
 ### 3. 启动前端（Vite 开发服务器）

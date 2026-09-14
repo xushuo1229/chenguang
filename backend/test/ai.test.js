@@ -1,5 +1,5 @@
 /**
- * 晨光自律台 · Phase 13 AI 2.0 后端测试
+ * 知行 · Phase 13 AI 2.0 后端测试
  * ============================================================
  * 覆盖：
  *  1. validateContext：格式 / 版本 / 超长 / 敏感键剥离
@@ -120,7 +120,7 @@ describe('validateHistory', () => {
 describe('promptBuilder', () => {
   test('System Prompt 含教练人设、事实边界、注入防护、只读声明', () => {
     const p = promptBuilder.buildSystemPrompt({ today: '2026-09-12' });
-    for (const kw of ['晨光 AI 教练', '长期成长教练', '2026-09-12', '数据事实边界', '不可信数据', '只读铁律', '不能创建/修改/删除']) {
+    for (const kw of ['知行 AI 教练', '长期成长教练', '2026-09-12', '数据事实边界', '不可信数据', '只读铁律', '不能创建/修改/删除']) {
       assert.ok(p.includes(kw), 'System Prompt 应包含：' + kw);
     }
   });
@@ -170,7 +170,7 @@ describe('coachChat', () => {
     // 消息组装：第一条是 system（人设），第二条是 <context> 数据块，最后一条是本轮问题
     const sent = JSON.parse(lastFetch.opts.body).messages;
     assert.equal(sent[0].role, 'system');
-    assert.ok(sent[0].content.includes('晨光 AI 教练'));
+    assert.ok(sent[0].content.includes('知行 AI 教练'));
     assert.ok(sent[1].content.startsWith('<context'));
     assert.equal(sent[sent.length - 1].role, 'user');
     assert.equal(sent[sent.length - 1].content, '我今天应该做什么？');

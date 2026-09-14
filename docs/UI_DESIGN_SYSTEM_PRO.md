@@ -1,4 +1,4 @@
-# 晨光自律台 · UI Design System PRO「Calm Dawn Pro」
+# 知行 · UI Design System PRO「Calm Dawn Pro」
 
 > Phase UI-PRO 视觉升级版
 > 适用页面：`login.html` / `index.html` / `workbench.html` / `stats.html` / `goals.html` / `ai.html`

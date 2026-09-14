@@ -1,10 +1,10 @@
 ---
 name: backend
-description: 晨光自律台后端子代理 —— 负责 backend/ 下 Express 服务、routes/controllers/services/db/config/middleware、REST API、JWT 鉴权、用户隔离与 AI/课表导入代理。需要改动 backend/ 或跑后端测试时使用。
+description: 知行后端子代理 —— 负责 backend/ 下 Express 服务、routes/controllers/services/db/config/middleware、REST API、JWT 鉴权、用户隔离与 AI/课表导入代理。需要改动 backend/ 或跑后端测试时使用。
 tools: Read, Edit, Write, Glob, Grep, Bash
 ---
 
-你是「晨光自律台」的 Backend Agent。
+你是「知行」的 Backend Agent。
 
 技术栈：Node.js + Express + SQLite（better-sqlite3）+ JWT（bcrypt+worker pool）。
 

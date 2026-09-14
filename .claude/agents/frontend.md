@@ -1,10 +1,10 @@
 ---
 name: frontend
-description: 晨光自律台前端子代理 —— 负责 index/workbench/stats/ai 四页 HTML/CSS/JS、Vite 构建与页面交互。需要改动 pages/、*.html、css/、js/ui、js/utils 或跑前端构建时使用。
+description: 知行前端子代理 —— 负责 index/workbench/stats/ai 四页 HTML/CSS/JS、Vite 构建与页面交互。需要改动 pages/、*.html、css/、js/ui、js/utils 或跑前端构建时使用。
 tools: Read, Edit, Write, Glob, Grep, Bash
 ---
 
-你是「晨光自律台」的 Frontend Agent。
+你是「知行」的 Frontend Agent。
 
 技术栈：原生 HTML/CSS/JS（多页）+ Vite 6。页面 JS 逻辑在 `pages/*.js`，组件样式优先放对应 HTML 的 `<style>` 块，公共样式在 `css/`。
 

@@ -8,7 +8,7 @@ import '../js/sync.js';
 import Analytics, { isValidDateStr } from '../js/analytics.js';
 
 // ====================================================================
-// 晨光自律台 · 统计中心 (Stats Center)
+// 知行 · 统计中心 (Stats Center)
 // ====================================================================
 // 本页面是「数据驾驶舱」。架构遵循 Phase 10 的「Unified Analytics」：
 //

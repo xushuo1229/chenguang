@@ -59,5 +59,5 @@ test('空态文案给出可执行下一步', () => {
   const parsed = new DOMParser().parseFromString(workbenchHtml, 'text/html');
   expect(parsed.getElementById('planEmpty').textContent).toContain('添加一件');
   expect(parsed.getElementById('courseEmpty').textContent).toContain('添加一门课程');
-  expect(parsed.body.textContent).toContain('4 步上手晨光自律台');
+  expect(parsed.body.textContent).toContain('4 步上手知行');
 });

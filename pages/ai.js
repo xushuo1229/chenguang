@@ -10,7 +10,7 @@ import GrowthIntelligence from '../js/growthIntelligence.js';
 import CoachMemory from '../js/coachMemory.js';
 
 // ====================================================================
-// 晨光自律台 · AI 教练页 (Phase 13 AI 2.0)
+// 知行 · AI 教练页 (Phase 13 AI 2.0)
 // ====================================================================
 // 架构（Phase 13 冻结）：
 //
@@ -99,7 +99,7 @@ function renderToday() {
     { icon: 'fas fa-book-open', label: '学习', value: fmtNum((study && study.minutes) || 0), unit: 'min' },
     { icon: 'fas fa-dumbbell', label: '运动', value: fmtNum((ex && ex.minutes) || 0), unit: 'min' },
     { icon: 'fas fa-list-check', label: '待办完成', value: fmtNum((todos && todos.done) || 0) + '/' + fmtNum((todos && todos.total) || 0), unit: '' },
-    { icon: 'fas fa-fire', label: '连续自律', value: fmtNum((streaks && streaks.currentStreak) || 0), unit: '天' }
+    { icon: 'fas fa-fire', label: '连续成长', value: fmtNum((streaks && streaks.currentStreak) || 0), unit: '天' }
   ];
 
   stats.forEach(function (s) {
