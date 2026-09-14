@@ -125,7 +125,6 @@ function init() {
     try {
       var res = await CGAPI.auth.login(account, pwd);
       if ($('#rememberMe').checked) localStorage.setItem('cg_remember', '1'); else localStorage.removeItem('cg_remember');
-      try { if (window.CGSync) await window.CGSync.afterLogin(); } catch (_) {}
       var displayName = (res.user && (res.user.nickname || res.user.email)) || account;
       try {
         if (window.CGStore && !CGStore.getUser().name) {

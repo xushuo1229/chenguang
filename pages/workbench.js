@@ -2065,10 +2065,13 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
     function init() {
       if (window.CGSync && CGStore.getToken && CGStore.getToken()) {
         try {
+          var revisionBefore = CGStore.getRevision();
           window.CGSync.afterLogin().then(function () {
-            updateUI();
-            maybeShowOnboard();
-          }).catch(updateUI);
+            if (revisionBefore !== CGStore.getRevision()) {
+              updateUI();
+              maybeShowOnboard();
+            }
+          }).catch(function () {});
         } catch (_) {}
       }
       var wd0 = $('#welcomeDate'); if (wd0) wd0.textContent = fmtDate(new Date());

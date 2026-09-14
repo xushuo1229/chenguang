@@ -69,8 +69,8 @@ function showDash() { hideAll(); if (dashEl) dashEl.hidden = false; }
 var currentContext = null;
 var currentCoachContext = null;
 
-function buildContext() {
-  var store = Store.get();
+function buildContext(store) {
+  store = (store && typeof store === 'object') ? store : Store.get();
   currentContext = AIContext.buildContext(store);
   CoachMemory.observeOutcomes(store);
   currentCoachContext = CoachMemory.getCoachContext(store);
@@ -81,18 +81,29 @@ function buildContext() {
    左列：今日状态 / 今日发现 / 目标风险 / AI 建议
    ==================================================================== */
 
-function renderToday() {
+function buildTodayStats(snap) {
+  var today = todayStr();
+  return {
+    today: today,
+    day: Analytics.getDateRangeSummary(today, today, snap),
+    study: Analytics.getStudySummary(today, today, snap),
+    exercise: Analytics.getExerciseSummary(today, today, snap),
+    todos: Analytics.getTodoSummary(today, today, snap, today),
+    streaks: Analytics.getStreaks(snap, { today: today })
+  };
+}
+
+function renderToday(todayStats) {
   var grid = $('#todayGrid');
   if (!grid) return;
   grid.innerHTML = '';                         // 容器清空，条目全部 textContent 构建
 
-  var today = todayStr();
-  var snap = Store.get();
-  var day = Analytics.getDateRangeSummary(today, today, snap);
-  var study = Analytics.getStudySummary(today, today, snap);
-  var ex = Analytics.getExerciseSummary(today, today, snap);
-  var todos = Analytics.getTodoSummary(today, today, snap, today);
-  var streaks = Analytics.getStreaks(snap, { today: today });
+  var today = todayStats.today;
+  var day = todayStats.day;
+  var study = todayStats.study;
+  var ex = todayStats.exercise;
+  var todos = todayStats.todos;
+  var streaks = todayStats.streaks;
 
   var stats = [
     { icon: 'fas fa-calendar-check', label: '今日打卡', value: (streaks && streaks.todayDone) ? '✓' : '未', unit: '' },
@@ -149,13 +160,13 @@ function renderInsightList(container, insights, emptyText) {
   });
 }
 
-function renderPanels() {
+function renderPanels(snap, todayStats) {
   var ctx = currentContext || {};
   var insights = Array.isArray(ctx.insights) ? ctx.insights : [];
-  var growth = GrowthIntelligence.computeGrowthState(Store.get());
-  var weekly = GrowthIntelligence.buildWeeklyReview(Store.get(), {}, currentCoachContext);
+  var growth = GrowthIntelligence.computeGrowthState(snap);
+  var weekly = GrowthIntelligence.buildWeeklyReview(snap, {}, currentCoachContext);
 
-  renderToday();
+  renderToday(todayStats);
 
   // 今日发现：非目标风险的确定性洞察
   renderInsightList(
@@ -463,9 +474,10 @@ function loadAll() {
   afterPaint(function () {
     if (token !== loadToken) return;
     try {
-      var ctx = buildContext();
+      var snap = Store.get();
+      var ctx = buildContext(snap);
       if (!AIContext.hasEvidence(ctx)) { showEmpty(); return; }
-      renderPanels();
+      renderPanels(snap, buildTodayStats(snap));
       showDash();
     } catch (e) {
       showError();

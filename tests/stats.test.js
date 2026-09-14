@@ -96,8 +96,8 @@ function seedEmpty() {
   };
 }
 
-/* 期望渲染完成后，刷新几次微任务 */
-const settle = () => new Promise((r) => setTimeout(r, 25));
+/* 期望渲染完成后，等待 requestAnimationFrame + 任务队列刷新 */
+const settle = () => new Promise((r) => setTimeout(r, 60));
 
 async function boot(data, token = 'test-token') {
   localStorage.clear();

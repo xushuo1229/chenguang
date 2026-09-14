@@ -11,7 +11,7 @@
  *
  * 说明：真实浏览器自动化不可用，仅 jsdom 烟雾验证。
  */
-import { test, expect, beforeEach, vi } from 'vitest';
+import { test, expect, beforeEach, afterEach, vi } from 'vitest';
 import goalsHtml from '../goals.html?raw';
 import { dateStr, dateOffset } from '../js/utils/date.js';
 
@@ -75,7 +75,7 @@ function seedEmpty() {
 
 const settle = () => new Promise((r) => setTimeout(r, 30));
 
-async function boot(data, token = 'test-token') {
+async function boot(data, token = 'test-token', { wait = true } = {}) {
   localStorage.clear();
   localStorage.setItem('cg_token', token);
   localStorage.setItem('chenguangData', JSON.stringify(data));
@@ -83,7 +83,7 @@ async function boot(data, token = 'test-token') {
   stubHeadAppend();
   vi.resetModules();
   const page = await import('../pages/goals.js');
-  await settle();
+  if (wait) await settle();
   return page;
 }
 
@@ -94,6 +94,12 @@ function cardCount(gridId) {
 
 beforeEach(() => {
   globalThis.CGStore?.flushPersist?.();
+  localStorage.clear();
+});
+
+afterEach(async () => {
+  globalThis.CGStore?.flushPersist?.();
+  await settle();
   localStorage.clear();
 });
 
@@ -120,6 +126,28 @@ test('默认加载：4 区块渲染，进行中包含 active/completed，进度�
   expect(document.querySelector('#activeGrid .goal-title').textContent).toBe('本周专注 10 小时');
   // 单位显示
   expect(document.querySelector('#activeGrid .goal-current').textContent.replace(/\s/g, '')).toContain('120/600min');
+});
+
+test('初始化：先显示结构，下一帧填充目标数据', async () => {
+  await boot(seedData(), 'test-token', { wait: false });
+
+  expect(document.getElementById('goalsDashboard').hidden).toBe(false);
+  expect(document.getElementById('goalsError').hidden).toBe(true);
+  expect(cardCount('activeGrid')).toBe(0);
+
+  await settle();
+  expect(cardCount('activeGrid')).toBe(1);
+});
+
+test('初始化：连续刷新保持只读且结果稳定', async () => {
+  await boot(seedData());
+  const revisionBefore = globalThis.CGStore.getRevision();
+  document.getElementById('goalsRetry').click();
+  document.getElementById('goalsRetry').click();
+  await settle();
+
+  expect(cardCount('activeGrid')).toBe(1);
+  expect(globalThis.CGStore.getRevision()).toBe(revisionBefore);
 });
 
 test('V2 修复回归：昨天创建的每日目标显示在「进行中」并标注「每日重算」', async () => {

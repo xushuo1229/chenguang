@@ -561,7 +561,9 @@ function showEmpty() { setHidden('statsError', true); setHidden('statsEmpty', fa
 var loadToken = 0;
 
 function nextPaint() {
-  return new Promise(function (resolve) { setTimeout(resolve, 0); });
+  return new Promise(function (resolve) {
+    requestAnimationFrame(function () { setTimeout(resolve, 0); });
+  });
 }
 
 function render(vm, snap, options) {

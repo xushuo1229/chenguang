@@ -3,7 +3,7 @@
  *
  * 独立登录页（login.html），桌面端左右分栏：左品牌 + 右表单。
  * 与首页弹窗登录共用同一套后端流程（CGAPI.auth.login / register）：
- *   - 登录：校验 → 后端登录 → CGSync.afterLogin() → 跳转工作台
+ *   - 登录：校验 → 后端登录 → 跳转工作台（由工作台统一拉取云端数据）
  *   - 注册：校验（与后端规则一致）→ 后端注册 → 初始化本地数据 → 跳转工作台
  *   - 已持有 cg_token 时自动进入工作台
  * 后端不可达时明确报错，绝不伪造本地登录态。
@@ -71,7 +71,6 @@ async function doLogin() {
   try {
     var res = await CGAPI.auth.login(account, pwd);
     if ($('#rememberMe').checked) localStorage.setItem('cg_remember', '1'); else localStorage.removeItem('cg_remember');
-    try { if (window.CGSync) await window.CGSync.afterLogin(); } catch (_) {}
     var displayName = (res.user && (res.user.nickname || res.user.email)) || account;
     try {
       if (window.CGStore && !CGStore.getUser().name) {
