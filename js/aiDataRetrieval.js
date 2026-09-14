@@ -9,7 +9,7 @@ var VERSION = '1.0';
 var QUERIES = [
   'getTodaySummary', 'getWeekSummary', 'getRecentTrends', 'getCourseProgress',
   'getEnglishHistory', 'getFocusHistory', 'getExerciseHistory', 'getReadingHistory',
-  'getTodoStatus', 'getGoalProgress', 'getGrowthState'
+  'getTodoStatus', 'getGoalProgress', 'getGrowthState', 'getGrowthProfile', 'getLearningHistory'
 ];
 var INTENTS = {
   today: ['今天', '今日', '现在', '下一步', '做什么', '安排'],
@@ -54,10 +54,32 @@ function getWeekSummary(data, opts) {
 function getRecentTrends(data, opts) {
   var snap = requireSnapshot(data);
   var state = GrowthIntelligence.computeGrowthState(snap, opts);
+  function compactTrends(window) {
+    var out = {};
+    Object.keys(window || {}).forEach(function (metric) {
+      var trend = window[metric];
+      out[metric] = {
+        metric: trend.metric,
+        label: trend.label,
+        span: trend.span,
+        current: trend.current,
+        previous: trend.previous,
+        delta: trend.delta,
+        status: trend.status,
+        volatility: trend.volatility,
+        insufficientData: trend.insufficientData
+      };
+    });
+    return out;
+  }
   return {
     scope: 'trends',
     data: {
-      windows: { days7: state.trendState.windows['7d'], days14: state.trendState.windows['14d'], days30: state.trendState.windows['30d'] },
+      windows: {
+        days7: compactTrends(state.trendState.windows['7d']),
+        days14: compactTrends(state.trendState.windows['14d']),
+        days30: compactTrends(state.trendState.windows['30d'])
+      },
       importantChanges: state.trendState.importantChanges
     },
     insufficientData: state.overall === 'insufficient_data'
@@ -158,7 +180,52 @@ function getGoalProgress(data, opts) {
 
 function getGrowthState(data, opts) {
   var snap = requireSnapshot(data);
-  return { scope: 'growthState', data: GrowthIntelligence.computeGrowthState(snap, opts), insufficientData: false };
+  var state = GrowthIntelligence.computeGrowthState(snap, opts);
+  return {
+    scope: 'growthState',
+    data: {
+      overall: state.overall,
+      learningState: state.learningState,
+      executionState: state.executionState,
+      focusState: state.focusState,
+      englishState: state.englishState,
+      readingState: state.readingState,
+      exerciseState: state.exerciseState,
+      courseState: state.courseState,
+      goalState: state.goalState,
+      workloadState: state.workloadState,
+      consistencyState: state.consistencyState,
+      importantChanges: state.trendState.importantChanges,
+      riskSignals: state.riskSignals,
+      positiveSignals: state.positiveSignals,
+      recommendedFocus: state.recommendedFocus,
+      actionProposals: state.actionProposals,
+      dataSufficiency: state.dataSufficiency
+    },
+    insufficientData: false
+  };
+}
+
+function getGrowthProfile(data, opts) {
+  var snap = requireSnapshot(data);
+  return { scope: 'growthProfile', data: GrowthIntelligence.buildGrowthProfile(snap, opts), insufficientData: false };
+}
+
+function getLearningHistory(data, opts) {
+  var snap = requireSnapshot(data);
+  var range = rangeEnd(Math.max(7, Math.min(30, num(opts && opts.days) || 30)), (opts && opts.today) || todayStr());
+  var data30 = Analytics.getDateRangeSummary(range[0], range[1], snap);
+  return {
+    scope: 'learningHistory',
+    data: {
+      range: { start: range[0], end: range[1] },
+      englishMinutes: data30 ? data30.study.englishMinutes : 0,
+      focusMinutes: data30 ? data30.focus.minutes : 0,
+      totalMinutes: data30 ? data30.study.minutes : 0,
+      activeDays: data30 ? data30.activity.activeDays : 0
+    },
+    insufficientData: !data30 || data30.activity.activeDays === 0
+  };
 }
 
 var HANDLERS = {
@@ -172,7 +239,9 @@ var HANDLERS = {
   getReadingHistory: getReadingHistory,
   getTodoStatus: getTodoStatus,
   getGoalProgress: getGoalProgress,
-  getGrowthState: getGrowthState
+  getGrowthState: getGrowthState,
+  getGrowthProfile: getGrowthProfile,
+  getLearningHistory: getLearningHistory
 };
 
 function detectIntents(message) {
@@ -196,7 +265,8 @@ function query(message, data, opts) {
     exercise: ['getExerciseHistory'],
     reading: ['getReadingHistory'],
     todo: ['getTodoStatus'],
-    goal: ['getGoalProgress']
+    goal: ['getGoalProgress'],
+    learning: ['getLearningHistory']
   };
   var requested = [];
   intents.forEach(function (intent) {
@@ -219,10 +289,37 @@ function query(message, data, opts) {
   };
 }
 
+function planTools(message) {
+  var intents = detectIntents(message);
+  var mapping = {
+    today: ['today_summary', 'todo_status'],
+    week: ['recent_trends'],
+    trend: ['recent_trends', 'focus_history'],
+    course: ['course_progress'],
+    english: ['english_history'],
+    focus: ['focus_history'],
+    exercise: ['exercise_history'],
+    reading: ['reading_history'],
+    todo: ['todo_status'],
+    goal: ['goal_progress'],
+    learning: ['learning_history']
+  };
+  var requested = [];
+  intents.forEach(function (intent) {
+    (mapping[intent] || []).forEach(function (tool) {
+      if (requested.indexOf(tool) < 0) requested.push(tool);
+    });
+  });
+  if (!requested.length) requested = ['growth_state'];
+  if (requested.length > 4) requested = requested.slice(0, 4);
+  return requested.concat('growth_state');
+}
+
 var AIRetrieval = {
   VERSION: VERSION,
   QUERIES: QUERIES,
   query: query,
+  planTools: planTools,
   getTodaySummary: getTodaySummary,
   getWeekSummary: getWeekSummary,
   getRecentTrends: getRecentTrends,
@@ -233,9 +330,11 @@ var AIRetrieval = {
   getReadingHistory: getReadingHistory,
   getTodoStatus: getTodoStatus,
   getGoalProgress: getGoalProgress,
-  getGrowthState: getGrowthState
+  getGrowthState: getGrowthState,
+  getGrowthProfile: getGrowthProfile,
+  getLearningHistory: getLearningHistory
 };
 
 globalThis.CGAIRetrieval = AIRetrieval;
 export default AIRetrieval;
-export { query, QUERIES };
+export { query, planTools, QUERIES };

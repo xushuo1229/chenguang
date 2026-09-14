@@ -41,6 +41,7 @@ import CourseSchedule from '../js/courseSchedule.js';
 import Analytics from '../js/analytics.js';
 import GrowthIntelligence from '../js/growthIntelligence.js';
 import AIActions from '../js/aiActions.js';
+import CoachMemory from '../js/coachMemory.js';
 
   // ============================================================
   // IIFE（立即执行函数表达式）— 整个工作台的代码都在这里面
@@ -658,6 +659,7 @@ import AIActions from '../js/aiActions.js';
       var container = document.getElementById('growthBrief');
       if (!container) return;
       var brief = GrowthIntelligence.buildDailyInsight(Store.get());
+      AIActions.observeOutcome(Store);
       var statusEl = document.getElementById('growthBriefStatus');
       var dateEl = document.getElementById('growthBriefDate');
       var changesEl = document.getElementById('growthBriefChanges');
@@ -699,6 +701,7 @@ import AIActions from '../js/aiActions.js';
         });
         if (!proposals.length && !outcomes.length) actionsEl.appendChild(elBriefLine('当前数据不足，暂无可靠建议。'));
         proposals.forEach(function (proposal) {
+          CoachMemory.addRecommendation(proposal);
           var row = document.createElement('div');
           row.className = 'growth-brief-action';
           var copy = document.createElement('div');
@@ -716,6 +719,7 @@ import AIActions from '../js/aiActions.js';
           dismiss.className = 'btn-wb ghost';
           dismiss.textContent = '忽略';
           dismiss.addEventListener('click', function () {
+            AIActions.rejectProposal(proposal);
             dismissedProposals.push(proposal.id);
             renderGrowthBrief();
           });

@@ -7,6 +7,7 @@ import '../js/sync.js';
 import Analytics from '../js/analytics.js';
 import CGAIContext from '../js/aiContext.js';
 import GrowthIntelligence from '../js/growthIntelligence.js';
+import CoachMemory from '../js/coachMemory.js';
 
 // ====================================================================
 // 晨光自律台 · AI 教练页 (Phase 13 AI 2.0)
@@ -65,10 +66,13 @@ function showDash() { hideAll(); if (dashEl) dashEl.hidden = false; }
    ==================================================================== */
 
 var currentContext = null;
+var currentCoachContext = null;
 
 function buildContext() {
-  var store = Store.get();                     // 只读一次
+  var store = Store.get();
   currentContext = AIContext.buildContext(store);
+  CoachMemory.observeOutcomes(store);
+  currentCoachContext = CoachMemory.getCoachContext(store);
   return currentContext;
 }
 
@@ -148,6 +152,7 @@ function renderPanels() {
   var ctx = currentContext || {};
   var insights = Array.isArray(ctx.insights) ? ctx.insights : [];
   var growth = GrowthIntelligence.computeGrowthState(Store.get());
+  var weekly = GrowthIntelligence.buildWeeklyReview(Store.get(), {}, currentCoachContext);
 
   renderToday();
 
@@ -177,8 +182,11 @@ function renderPanels() {
   );
 
   renderAdvice(growth.actionProposals.map(function (proposal) {
+    CoachMemory.addRecommendation(proposal);
     return { severity: 'high', text: proposal.title + '：' + proposal.why };
   }));
+  renderCoachMemory();
+  renderWeeklyReview(weekly);
 }
 
 var lastSuggestions = [];
@@ -189,6 +197,34 @@ function renderAdvice(suggestions) {
     return { type: 'opportunity', severity: s.severity || 'low', reason: s.text || s.reason || '' };
   });
   renderInsightList($('#adviceList'), items, '和教练聊聊，这里会显示针对你的建议。');
+}
+
+function renderCoachMemory() {
+  var coach = currentCoachContext || CoachMemory.getCoachContext(Store.get());
+  renderInsightList($('#memoryList'), coach.facts.map(function (fact) {
+    return { type: 'opportunity', severity: 'positive', reason: fact.statement };
+  }), '暂无已验证的长期策略经验。连续采纳并完成建议后，这里会积累 Coach Memory。');
+}
+
+function renderWeeklyReview(review) {
+  var container = $('#weeklyReview');
+  if (!container) return;
+  container.innerHTML = '';
+  container.appendChild(el('div', 'insight-item sev-' + (review.dataSufficient ? 'positive' : 'low'), review.dataSufficient
+    ? review.range.start + ' 至 ' + review.range.end + '：本周 ' + review.performance.activeDays + ' 天活跃，' + review.performance.studyMinutes + ' 分钟学习。'
+    : '本周活跃数据不足，暂时无法做完整复盘。'));
+  if (review.biggestProgress) {
+    container.appendChild(el('div', 'insight-item sev-positive', '最大进步：' + review.biggestProgress.label + '环比 +' + review.biggestProgress.delta + '%'));
+  }
+  if (review.mainProblem) {
+    container.appendChild(el('div', 'insight-item sev-medium', '主要问题：' + review.mainProblem.reason));
+  }
+  review.possibleCauses.forEach(function (cause) {
+    container.appendChild(el('div', 'insight-item', cause));
+  });
+  review.nextFocus.forEach(function (focus) {
+    container.appendChild(el('div', 'insight-item sev-low', '下周重点：' + focus.reason));
+  });
 }
 
 /* ====================================================================
@@ -368,7 +404,7 @@ function sendMessage(text) {
     call = globalThis.CGAPI.ai.chat({
       message: text,
       history: historyToSend,
-      context: AIContext.buildQueryContext(Store.get(), text, { baseContext: currentContext }),
+      context: AIContext.buildQueryContext(Store.get(), text, { baseContext: currentContext, coachContext: currentCoachContext }),
       contextVersion: AIContext.VERSION
     });
   } catch (e) {

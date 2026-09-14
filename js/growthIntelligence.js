@@ -330,13 +330,59 @@ function buildGrowthProfile(data, opts) {
   };
 }
 
+function buildWeeklyReview(data, opts, coachContext) {
+  opts = opts || {};
+  var today = opts.today || todayStr();
+  var snap = normalizeSnapshot((data && typeof data === 'object') ? data : (CGStore.get ? CGStore.get() : {}));
+  var currentRange = Analytics.thisWeek(today);
+  var previousRange = [dateOffset(currentRange[0], -7), dateOffset(currentRange[0], -1)];
+  var current = Analytics.getDateRangeSummary(currentRange[0], currentRange[1], snap) || {};
+  var previous = Analytics.getDateRangeSummary(previousRange[0], previousRange[1], snap) || {};
+  var state = computeGrowthState(snap, { today: today });
+  var trends = state.trendState.windows['7d'];
+  var changes = ['study', 'focus', 'english', 'exercise', 'reading', 'activity'].map(function (key) { return trends[key]; }).filter(Boolean);
+  var positive = changes.filter(function (trend) { return trend.status === 'rising'; }).sort(function (a, b) { return b.delta - a.delta; })[0] || null;
+  var concern = state.riskSignals[0] || null;
+  var possibleCauses = [];
+  if (concern && concern.type === 'todo_backlog') possibleCauses.push('今日待办数量与完成率变化可能与任务负荷相关。');
+  if (concern && concern.type === 'focus_declining') possibleCauses.push('专注时长趋势下降，可能与连续执行节奏相关。');
+  if (concern && concern.type === 'course_progress_low') possibleCauses.push('低进度课程数量较多，可能与投入分布相关。');
+  if (!possibleCauses.length && !state.dataSufficiency.overall) possibleCauses.push('数据不足，不能判断原因。');
+  var dataSufficient = state.dataSufficiency.overall && (current.activity ? current.activity.activeDays > 0 : false);
+  return {
+    version: VERSION,
+    generatedAt: new Date().toISOString(),
+    range: { start: currentRange[0], end: currentRange[1] },
+    dataSufficient: dataSufficient,
+    performance: {
+      activeDays: current.activity ? current.activity.activeDays : 0,
+      previousActiveDays: previous.activity ? previous.activity.activeDays : 0,
+      studyMinutes: current.study ? current.study.minutes : 0,
+      focusMinutes: current.focus ? current.focus.minutes : 0,
+      todosCompleted: current.todos ? current.todos.done : 0,
+      todosTotal: current.todos ? current.todos.total : 0
+    },
+    importantChanges: changes.filter(function (trend) { return !trend.insufficientData && Math.abs(trend.delta) >= 20; }).slice(0, 4),
+    biggestProgress: positive,
+    mainProblem: concern,
+    possibleCauses: possibleCauses,
+    goals: state.goalState.summary,
+    recommendations: state.actionProposals,
+    nextFocus: state.recommendedFocus,
+    feedbackSummary: (coachContext && coachContext.feedbackSummary) || [],
+    memoryFacts: (coachContext && coachContext.facts) || [],
+    evidenceSources: ['Analytics.getDateRangeSummary', 'GrowthIntelligence.computeGrowthState', 'GoalEngine.computeGoalsProgress', 'CoachMemory']
+  };
+}
+
 var GrowthIntelligence = {
   VERSION: VERSION,
   computeGrowthState: computeGrowthState,
   buildDailyInsight: buildDailyInsight,
-  buildGrowthProfile: buildGrowthProfile
+  buildGrowthProfile: buildGrowthProfile,
+  buildWeeklyReview: buildWeeklyReview
 };
 
 globalThis.CGGrowthIntelligence = GrowthIntelligence;
 export default GrowthIntelligence;
-export { computeGrowthState, buildDailyInsight, buildGrowthProfile };
+export { computeGrowthState, buildDailyInsight, buildGrowthProfile, buildWeeklyReview };

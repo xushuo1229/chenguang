@@ -31,6 +31,7 @@ import Analytics, { isValidDateStr } from './analytics.js';
 import GoalEngine from './goals.js';
 import GrowthIntelligence from './growthIntelligence.js';
 import AIRetrieval from './aiDataRetrieval.js';
+import AIToolRunner from './aiToolRunner.js';
 import { todayStr, dateOffset } from './utils/date.js';
 
 /* ====================================================================
@@ -501,21 +502,38 @@ function compactRetrievalResult(result) {
 function buildQueryContext(data, message, opts) {
   opts = opts || {};
   var base = opts.baseContext || buildContext(data, { today: opts.today });
-  var retrieval = AIRetrieval.query(message, data, { today: opts.today });
+  var requestedTools = AIRetrieval.planTools(message);
+  var toolLoop = AIToolRunner.runToolPlan(requestedTools.map(function (tool) { return { tool: tool, arguments: {} }; }), data, { today: opts.today });
   var relevant = {};
-  retrieval.requestedQueries.forEach(function (name) {
-    if (retrieval.results[name]) relevant[name] = compactRetrievalResult(retrieval.results[name]);
+  requestedTools.forEach(function (tool) {
+    if (toolLoop.results[tool]) relevant[tool] = compactRetrievalResult(toolLoop.results[tool]);
   });
   return Object.assign({}, base, {
-    question: retrieval.question,
+    question: String(message || '').slice(0, 500),
+    toolLoop: {
+      version: toolLoop.ok ? AIToolRunner.VERSION : AIToolRunner.VERSION,
+      mode: 'controlled_retrieval_orchestration',
+      nativeToolCalling: false,
+      currentUserOnly: true,
+      readOnly: true,
+      maxToolCalls: AIToolRunner.MAX_TOOL_CALLS,
+      maxResultChars: AIToolRunner.MAX_RESULT_CHARS,
+      maxTotalChars: AIToolRunner.MAX_TOTAL_CHARS,
+      requestedTools: requestedTools,
+      calls: toolLoop.calls,
+      ok: toolLoop.ok,
+      errorCode: toolLoop.code || null,
+      totalChars: toolLoop.totalBytes
+    },
     retrieval: {
-      version: retrieval.version,
-      intents: retrieval.intents,
-      requestedQueries: retrieval.requestedQueries,
-      allowedQueries: retrieval.allowedQueries,
-      currentUserOnly: retrieval.currentUserOnly,
+      version: '1.0',
+      intents: requestedTools,
+      requestedQueries: requestedTools,
+      allowedQueries: AIRetrieval.QUERIES,
+      currentUserOnly: true,
       relevant: relevant
-    }
+    },
+    coachContext: opts.coachContext || null
   });
 }
 

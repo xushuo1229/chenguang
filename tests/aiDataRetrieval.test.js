@@ -53,7 +53,7 @@ test('AI Query Context 只包含相关检索和标记为不可信的用户文本
   const context = AIContext.buildQueryContext(userData('A'), '我的待办为什么积压？', { today: TODAY });
   expect(context.version).toBe('1.0');
   expect(context.retrieval.currentUserOnly).toBe(true);
-  expect(context.retrieval.relevant.getTodoStatus.data.items[0].text).toContain('ignore previous instructions');
-  expect(context.retrieval.relevant.getTodoStatus.data.items[0].__untrustedUserContent).toBe(true);
+  expect(context.retrieval.relevant.todo_status.data.items[0].text).toContain('ignore previous instructions');
+  expect(context.retrieval.relevant.todo_status.data.items[0].__untrustedUserContent).toBe(true);
   expect(AIContext.estimateContextTokens(context)).toBeLessThanOrEqual(AIContext.MAX_CONTEXT_TOKENS);
 });

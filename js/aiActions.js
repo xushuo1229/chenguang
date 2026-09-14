@@ -1,5 +1,7 @@
 'use strict';
 
+import CoachMemory from './coachMemory.js';
+
 var HANDLERS = {
   add_todo: function (store, proposal) {
     if (typeof store.addTodo !== 'function') return null;
@@ -51,13 +53,14 @@ function applyProposal(store, proposal) {
     acceptedAt: new Date().toISOString(),
     outcome: clean.type === 'add_todo' ? 'created' : 'opened'
   });
-  return { accepted: true, before: before, result: result, feedback: feedbackLog[feedbackLog.length - 1] };
+  var persisted = CoachMemory.acceptProposal(proposal);
+  return { accepted: true, before: before, result: result, feedback: feedbackLog[feedbackLog.length - 1], memory: persisted };
 }
 
 function observeOutcome(store, sinceDate) {
   var snap = store && store.get ? store.get() : {};
   var todos = Array.isArray(snap.todos) ? snap.todos : [];
-  return feedbackLog.map(function (item) {
+  var sessionOutcomes = feedbackLog.map(function (item) {
     var matched = todos.filter(function (todo) {
       return todo && todo.__aiProposalId === item.id;
     });
@@ -69,13 +72,23 @@ function observeOutcome(store, sinceDate) {
       observedAt: new Date().toISOString()
     };
   }).filter(function (item) { return !sinceDate || item.observedAt >= sinceDate; });
+  var persistentOutcomes = CoachMemory.observeOutcomes(snap).outcomes || [];
+  return sessionOutcomes.concat(persistentOutcomes.filter(function (persistent) {
+    return !sessionOutcomes.some(function (session) { return session.id === persistent.recommendationId; });
+  })).filter(function (item) { return !sinceDate || (item.observedAt || item.acceptedAt) >= sinceDate; });
+}
+
+function rejectProposal(proposal) {
+  var clean = validateProposal(proposal);
+  if (!clean) return { rejected: false, reason: 'unsupported_or_unconfirmed' };
+  return CoachMemory.rejectProposal(proposal);
 }
 
 function clearFeedback() {
   feedbackLog = [];
 }
 
-var AIActions = { applyProposal: applyProposal, observeOutcome: observeOutcome, clearFeedback: clearFeedback };
+var AIActions = { applyProposal: applyProposal, observeOutcome: observeOutcome, rejectProposal: rejectProposal, clearFeedback: clearFeedback };
 globalThis.CGAIActions = AIActions;
 export default AIActions;
-export { applyProposal, observeOutcome, clearFeedback };
+export { applyProposal, observeOutcome, rejectProposal, clearFeedback };
