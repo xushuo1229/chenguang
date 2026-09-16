@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="app-booting">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,6 +7,7 @@
   <meta name="theme-color" content="#0B1220">
   <meta name="description" content="知行 XINGZHIXING 成长分析中心：Growth Score、一致性、学习趋势与习惯进化。">
   <link rel="icon" href="/brand/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/vendor/fontawesome/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="css/variables.css" as="style">
   <link rel="preload" href="css/shared.css" as="style">
 
@@ -210,6 +211,7 @@
   <link rel="stylesheet" href="/calm-dawn-fusion.css">
   <link rel="stylesheet" href="/calm-dawn-1to1.css">
   <link rel="stylesheet" href="/xingzhixing.css">
+  <script type="module" src="js/shellBootstrap.js"></script>
   </head>
   <body class="dashboard-shell" data-theme="fusion" data-brand="xingzhixing">
 
@@ -232,9 +234,9 @@
     <a href="workbench.html?view=manage" class="nav-item" data-nav="manage"><i class="fas fa-cog"></i>管理</a>
     <a href="workbench.html?view=profile" class="nav-item" data-nav="profile"><i class="fas fa-user"></i>我的</a>
     <div class="wb-user">
-      <div class="wb-user-avatar" id="sidebarUserAvatar">同</div>
+      <div class="wb-user-avatar" id="sidebarUserAvatar"></div>
       <div class="wb-user-copy">
-        <strong id="sidebarUserName">同学</strong>
+        <strong id="sidebarUserName"></strong>
         <span>成长记录</span>
       </div>
     </div>
@@ -249,7 +251,7 @@
   <div class="topbar">
     <div class="greeting">
       <h2>个人成长分析中心 <span id="welcomeName"></span></h2>
-      <div class="date" id="rangeLabel">…</div>
+      <div class="date" id="rangeLabel"></div>
     </div>
     <div class="actions">
       <button class="btn-refresh" id="refreshBtn" aria-label="刷新统计数据"><i class="fas fa-sync-alt"></i> 刷新</button>

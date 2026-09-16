@@ -11,6 +11,9 @@ const pageShellCss = [
 ].join('\n');
 const marker = 'Dashboard load stability';
 const rules = css.slice(css.indexOf(marker));
+const bootPages = ['workbench.html', 'goals.html', 'ai.html'].map(function (file) {
+  return readFileSync(file, 'utf8');
+});
 
 describe('dashboard render stability', () => {
   it('skips load animations and expensive backdrop sampling for Goals, Stats, and AI', () => {
@@ -39,5 +42,42 @@ describe('dashboard render stability', () => {
     expect(sharedCss).not.toContain('@view-transition');
     expect(statsHtml).not.toContain('js/router.js');
     expect(statsHtml).not.toContain('js/navigation.js');
+  });
+
+  it('keeps a stable boot shell without route animations', () => {
+    for (const html of [...bootPages, statsHtml]) {
+      expect(html).toContain('class="app-booting"');
+      expect(html).toContain('<script type="module" src="js/shellBootstrap.js"></script>');
+      expect(html).not.toContain('@view-transition');
+    }
+  });
+
+  it('preloads the sidebar icon font on non-workbench pages', () => {
+    const preload = 'fa-solid-900.woff2';
+    expect(statsHtml).toContain(preload);
+    expect(bootPages[0]).toContain(preload);
+    expect(bootPages[1]).toContain(preload);
+  });
+
+  it('only hides unstable chrome and removes boot state after user render', () => {
+    expect(sharedCss).toContain('html.app-booting .sidebar .nav-item i');
+    expect(sharedCss).toContain('html.app-booting .sidebar .wb-user');
+
+    const script = readFileSync('js/userChrome.js', 'utf8');
+    expect(script).toContain("classList.remove('app-booting')");
+    expect(script).toContain('document.fonts.load');
+    expect(script).toContain("nameEl.textContent !== name");
+  });
+
+  it('bootstraps final shell values without visible default placeholders', () => {
+    const shell = readFileSync('js/shellBootstrap.js', 'utf8');
+    expect(shell).toContain("localStorage.getItem('cg_user')");
+    expect(shell).not.toContain('chenguangData');
+    expect(shell).not.toContain('fetch(');
+    expect(shell).toContain('weekLabel()');
+    expect(statsHtml).toContain('<strong id="sidebarUserName"></strong>');
+    expect(statsHtml).toContain('<div class="date" id="rangeLabel"></div>');
+    expect(bootPages[0]).toContain('<strong id="sidebarUserName"></strong>');
+    expect(bootPages[1]).toContain('<strong id="sidebarUserName"></strong>');
   });
 });
