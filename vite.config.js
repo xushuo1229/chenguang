@@ -97,6 +97,20 @@ function chenguangManifestLink() {
   };
 }
 
+function chenguangShellBootstrapAsset() {
+  return {
+    name: 'chenguang-shell-bootstrap-asset',
+    apply: 'build',
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'js/shellBootstrap.js',
+        source: readFileSync(resolve(__dirname, 'js/shellBootstrap.js'), 'utf8'),
+      });
+    },
+  };
+}
+
 // 导出 Vite 配置对象；生产构建不注入 localhost 开发地址
 export default defineConfig(({ mode }) => ({
   // root: 项目根目录，'.' 表示当前目录（F:\chenguang-platform）
@@ -131,6 +145,7 @@ export default defineConfig(({ mode }) => ({
         main: resolve(__dirname, 'index.html'),         // 首页（落地页）
         login: resolve(__dirname, 'login.html'),        // 登录页（独立左右分栏）
         workbench: resolve(__dirname, 'workbench.html'), // 工作台
+        today: resolve(__dirname, 'today.html'),         // 今日计划
         stats: resolve(__dirname, 'stats.html'),         // 统计数据页
         ai: resolve(__dirname, 'ai.html'),               // AI 助手
         goals: resolve(__dirname, 'goals.html'),         // 目标系统
@@ -165,5 +180,5 @@ export default defineConfig(({ mode }) => ({
   },
 
   // 构建后注入 manifest 与真实资源清单
-  plugins: [chenguangDeploymentAssets(), chenguangManifestLink()],
+  plugins: [chenguangDeploymentAssets(), chenguangManifestLink(), chenguangShellBootstrapAsset()],
 }));

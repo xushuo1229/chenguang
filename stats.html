@@ -224,6 +224,7 @@
   <link rel="stylesheet" href="/calm-dawn-fusion.css">
   <link rel="stylesheet" href="/calm-dawn-1to1.css">
   <link rel="stylesheet" href="/xingzhixing.css">
+  <script src="js/shellBootstrap.js"></script>
   </head>
   <body class="dashboard-shell" data-theme="fusion" data-brand="xingzhixing">
 
@@ -255,8 +256,7 @@
     <div class="wb-motto">知而后行<br>行而致远</div>
   </div>
 </aside>
-<script src="js/shellBootstrap.js"></script>
-
+<script>cgShellBootstrap.render();</script>
 <!-- ===== 主内容 ===== -->
 <main class="main">
 
@@ -310,7 +310,7 @@
   </div>
 
   <!-- 数据驾驶舱 -->
-  <div class="stats-dashboard" id="statsDashboard" hidden>
+  <div class="stats-dashboard" id="statsDashboard">
 
     <!-- 概览 -->
     <section class="stats-section" id="secOverview" aria-labelledby="ovTitle">
@@ -318,7 +318,13 @@
         <h3 id="ovTitle"><i class="fas fa-chart-simple"></i> 数据总览</h3>
         <span class="range-hint" id="ovHint"></span>
       </div>
-      <div class="stat-grid" id="overviewGrid"></div>
+      <div class="stat-grid" id="overviewGrid">
+        <div class="stat-card"><div class="stat-value">0 / 7<span class="unit">天</span></div><div class="stat-label">活跃天数</div><div class="stat-sub">有记录的天数</div></div>
+        <div class="stat-card"><div class="stat-value">0<span class="unit">%</span></div><div class="stat-label">完成率</div><div class="stat-sub">待办完成率</div></div>
+        <div class="stat-card"><div class="stat-value">0<span class="unit">天</span></div><div class="stat-label">当前连续</div><div class="stat-sub">连续打卡</div></div>
+        <div class="stat-card"><div class="stat-value">0<span class="unit">分钟</span></div><div class="stat-label">总专注</div><div class="stat-sub">专注时间</div></div>
+        <div class="stat-card"><div class="stat-value">0<span class="unit">分钟</span></div><div class="stat-label">学习量</div><div class="stat-sub">英语 + 专注</div></div>
+      </div>
     </section>
 
     <!-- 趋势解读（UI-2：本周 vs 上周的真实对比，无趋势时诚实显示「暂无趋势」） -->

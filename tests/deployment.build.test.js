@@ -56,8 +56,9 @@ describe('production deployment artifacts', () => {
     expect(urls).toContain('/');
     expect(urls).toContain('/manifest.json');
     expect(urls.some((url) => url.startsWith('/workbench.html'))).toBe(true);
-    expect(urls.some((url) => /^\/assets\/(sync|serviceWorkerRegistration)-.+\.css$/.test(url))).toBe(true);
+    expect(urls.some((url) => /^\/assets\/.+\.css$/.test(url))).toBe(true);
     expect(urls.some((url) => /^\/assets\/workbench-.+\.js$/.test(url))).toBe(true);
+    expect(urls).toContain('/today.html');
     expect(urls).not.toContain('/js/store.js');
     expect(urls).not.toContain('/pages/workbench.js');
   });
@@ -71,7 +72,7 @@ describe('production deployment artifacts', () => {
   });
 
   test('manifest is linked from application pages', () => {
-    for (const page of ['index.html', 'login.html', 'workbench.html', 'stats.html', 'ai.html', 'goals.html']) {
+    for (const page of ['index.html', 'login.html', 'workbench.html', 'today.html', 'stats.html', 'ai.html', 'goals.html']) {
       const html = readFileSync(join(buildOutput, page), 'utf8');
       expect(html).toContain('<link rel="manifest" href="/manifest.json">');
     }

@@ -11,9 +11,10 @@ const pageShellCss = [
 ].join('\n');
 const marker = 'Dashboard load stability';
 const rules = css.slice(css.indexOf(marker));
-const bootPages = ['workbench.html', 'goals.html', 'ai.html'].map(function (file) {
+const dashboardPages = ['today.html', 'stats.html', 'goals.html', 'workbench.html', 'ai.html'].map(function (file) {
   return readFileSync(file, 'utf8');
 });
+const viteConfig = readFileSync('vite.config.js', 'utf8');
 
 describe('dashboard render stability', () => {
   it('skips load animations and expensive backdrop sampling for Goals, Stats, and AI', () => {
@@ -26,9 +27,11 @@ describe('dashboard render stability', () => {
     expect(rules).toContain('.dashboard-shell .main .coach-card');
   });
 
-  it('keeps Stats dashboard hidden until its first complete render', () => {
+  it('starts Stats dashboard and overview shell before page JS paint', () => {
     const dashboard = statsHtml.match(/<div class="stats-dashboard" id="statsDashboard"[^>]*>/);
-    expect(dashboard?.[0]).toContain('hidden');
+    expect(dashboard?.[0]).not.toContain('hidden');
+    expect(statsHtml).toContain('<div class="stat-value">0 / 7<span class="unit">天</span>');
+    expect(readFileSync('pages/stats.js', 'utf8')).not.toContain('await nextPaint()');
   });
 
   it('removes page shell and first-load card entrance animations', () => {
@@ -44,19 +47,35 @@ describe('dashboard render stability', () => {
     expect(statsHtml).not.toContain('js/navigation.js');
   });
 
-  it('uses synchronous shell bootstrap without app-booting', () => {
-    for (const html of [...bootPages, statsHtml]) {
+  it('loads shell before sidebar and never blocks between sidebar and main', () => {
+    for (const html of dashboardPages) {
       expect(html).not.toContain('app-booting');
-      expect(html).toContain('<script src="js/shellBootstrap.js"></script>');
+      const headEnd = html.indexOf('</head>');
+      const bodyStart = html.indexOf('<body');
+      const body = html.slice(bodyStart);
+      expect(html.slice(0, headEnd)).toContain('<script src="js/shellBootstrap.js"></script>');
+      expect(body).not.toContain('<script src="js/shellBootstrap.js"></script>');
+      expect(body.indexOf('<aside class="sidebar">')).toBeGreaterThanOrEqual(0);
+      expect(body.indexOf('<script>cgShellBootstrap.render();</script>'))
+        .toBeGreaterThan(body.indexOf('<aside class="sidebar">'));
+      expect(body.indexOf('<main class="main">'))
+        .toBeGreaterThan(body.indexOf('<script>cgShellBootstrap.render();</script>'));
       expect(html).not.toContain('@view-transition');
     }
+  });
+
+  it('registers dashboard pages and bootstrap script in the production MPA build', () => {
+    for (const file of ['today.html', 'stats.html', 'goals.html', 'workbench.html', 'ai.html']) {
+      expect(viteConfig).toContain(`${file.replace('.html', '')}: resolve(__dirname, '${file}')`);
+    }
+    expect(viteConfig).toContain("fileName: 'js/shellBootstrap.js'");
   });
 
   it('preloads the sidebar icon font on non-workbench pages', () => {
     const preload = 'fa-solid-900.woff2';
     expect(statsHtml).toContain(preload);
-    expect(bootPages[0]).toContain(preload);
-    expect(bootPages[1]).toContain(preload);
+    expect(dashboardPages[1]).toContain(preload);
+    expect(dashboardPages[2]).toContain(preload);
   });
 
   it('does not use app-booting visual hiding', () => {
@@ -76,7 +95,7 @@ describe('dashboard render stability', () => {
     expect(shell).toContain('weekLabel()');
     expect(statsHtml).toContain('<strong id="sidebarUserName"></strong>');
     expect(statsHtml).toContain('<div class="date" id="rangeLabel"></div>');
-    expect(bootPages[0]).toContain('<strong id="sidebarUserName"></strong>');
-    expect(bootPages[1]).toContain('<strong id="sidebarUserName"></strong>');
+    expect(dashboardPages[0]).toContain('<strong id="sidebarUserName"></strong>');
+    expect(dashboardPages[3]).toContain('<strong id="sidebarUserName"></strong>');
   });
 });

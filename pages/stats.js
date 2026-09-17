@@ -55,7 +55,7 @@ function loadChartJS() {
   if (chartLoaded && window.Chart) return Promise.resolve();
   return new Promise(function (resolve, reject) {
     var s = document.createElement('script');
-    s.src = 'assets/vendor/chart.umd.min.js';
+    s.src = '/vendor/chart.umd.min.js';
     s.onload = function () { chartLoaded = true; setupDefaults(); resolve(); };
     s.onerror = function () { reject(new Error('Chart.js load failed')); };
     document.head.appendChild(s);
@@ -759,7 +759,6 @@ async function loadAll() {
   disposeCharts();
   hideStates();
   try {
-    await nextPaint();
     var snap = Analytics.snapshot();
     if (!hasAnyData(snap)) { showEmpty(); return; }
     reportContext = AIContext.buildContext(snap);
