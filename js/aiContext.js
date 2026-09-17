@@ -33,6 +33,8 @@ import GrowthIntelligence from './growthIntelligence.js';
 import AICoach from './aiCoach.js';
 import GrowthReport from './growthReport.js';
 import GrowthMemory from './growthMemory.js';
+import GrowthContext from './growthContext.js';
+import { buildDailyFeedback } from './dailyFeedback.js';
 import AIRetrieval from './aiDataRetrieval.js';
 import AIToolRunner from './aiToolRunner.js';
 import { todayStr, dateOffset } from './utils/date.js';
@@ -312,18 +314,46 @@ function buildContext(data, opts) {
       actionProposals: growthState.actionProposals,
       dataSufficiency: growthState.dataSufficiency
     },
-    insights: insights
+    insights: insights,
+    growthContext: GrowthContext.buildGrowthContext(snap, { today: today })
   };
 
+  var candidateSource = {
+    overview: overview,
+    growth: {
+      strengths: growthState.positiveSignals,
+      risks: growthState.riskSignals
+    },
+    growthState: {
+      goalState: growthState.goalState
+    }
+  };
   var mergedMemory = GrowthMemory.mergeMemory(
     snap.user && snap.user.memory,
-    GrowthMemory.buildMemory(ctx, { today: today }),
+    {
+      candidates: GrowthMemory.generateCandidates(candidateSource, { today: today })
+    },
     { today: today }
   );
-  ctx.memory = GrowthMemory.buildContextMemory(mergedMemory);
+  ctx.memory = GrowthMemory.buildContextMemory(mergedMemory, {
+    today: today,
+    growth: candidateSource.growth,
+    goals: goals
+  });
   ctx.coach = AICoach.buildCoachContext(ctx);
   var reports = GrowthReport.buildReports(ctx);
   ctx.report = { weekly: reports.weekly, monthly: reports.monthly };
+  var dailyFeedback = buildDailyFeedback(snap, {
+    today: today,
+    todaySummary: todaySummary,
+    growthState: growthState
+  });
+  ctx.dailyFeedback = {
+    summary: dailyFeedback.summary,
+    highlights: dailyFeedback.highlights,
+    changes: dailyFeedback.changes,
+    nextActions: dailyFeedback.nextActions
+  };
 
   return trimContextToBudget(ctx);
 }
@@ -486,9 +516,12 @@ function trimContextToBudget(ctx, maxTokens) {
 
   if (estimateContextTokens(out) <= maxTokens) return out;
 
+  if (out.dailyFeedback) out.dailyFeedback = null;
+  if (estimateContextTokens(out) <= maxTokens) return out;
+
   // 0) Memory/Report 是派生展示层，超预算时优先收缩，不牺牲原始统计。
   if (out.memory && typeof out.memory === 'object') {
-    ['patterns', 'milestones', 'preferences', 'insights'].forEach(function (key) {
+    ['insights', 'relations', 'candidates', 'confirmed'].forEach(function (key) {
       if (Array.isArray(out.memory[key])) out.memory[key] = out.memory[key].slice(0, 2);
     });
   }
@@ -509,6 +542,24 @@ function trimContextToBudget(ctx, maxTokens) {
   if (estimateContextTokens(out) <= maxTokens) return out;
 
   if (out.memory) out.memory = null;
+  if (estimateContextTokens(out) <= maxTokens) return out;
+
+  // 0.5) GrowthContext 超预算时逐级收缩
+  if (out.growthContext && typeof out.growthContext === 'object') {
+    if (Array.isArray(out.growthContext.suggestions)) out.growthContext.suggestions = out.growthContext.suggestions.slice(0, 1);
+    if (out.growthContext.signals) {
+      if (Array.isArray(out.growthContext.signals.positive)) out.growthContext.signals.positive = out.growthContext.signals.positive.slice(0, 1);
+      if (Array.isArray(out.growthContext.signals.risks)) out.growthContext.signals.risks = out.growthContext.signals.risks.slice(0, 1);
+    }
+  }
+  if (estimateContextTokens(out) <= maxTokens) return out;
+  if (out.growthContext) {
+    out.growthContext.signals = null;
+    out.growthContext.suggestions = null;
+    out.growthContext.goals = null;
+  }
+  if (estimateContextTokens(out) <= maxTokens) return out;
+  if (out.growthContext) out.growthContext = null;
   if (estimateContextTokens(out) <= maxTokens) return out;
 
   // 1) 丢弃 30 天趋势（Level B 里的最次要项）
