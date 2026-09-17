@@ -22,6 +22,11 @@
     if (avatarEl && avatarEl.textContent !== avatarText) avatarEl.textContent = avatarText;
   }
 
+  function isTodayPage() {
+    var page = String(location.pathname || '').split('/').pop() || '';
+    return page.toLowerCase() === 'today.html';
+  }
+
   function revealChrome() {
     document.documentElement.classList.remove('app-booting');
   }
@@ -36,6 +41,13 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     render();
+    if (isTodayPage()) {
+      import('./aiReflectionUI.js')
+        .then(function (module) { module.mountTodayReflection(); })
+        .catch(function (error) {
+          console.warn('[TodayReflection] mount failed:', error && error.message ? error.message : error);
+        });
+    }
     revealAfterChromeIsReady();
   });
   globalThis.addEventListener('chenguang:update', render);

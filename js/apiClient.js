@@ -454,6 +454,17 @@ var CGAPI = {
           context: p.context || null,
           contextVersion: p.contextVersion || '1.0'
         }, { timeoutMs: p.timeoutMs || 35000 });
+      },
+
+      /**
+       * reflection(payload) —— 生成 AI Daily Reflection
+       * 【返回值】Promise，resolve 时返回 { data: { reflection }, meta: {...} }
+       */
+      reflection: function (payload) {
+        var p = payload || {};
+        return request('POST', '/ai/reflection', {
+          context: p.context || {}
+        }, { timeoutMs: p.timeoutMs || 35000 });
       }
     },
 
