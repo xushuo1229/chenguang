@@ -17,6 +17,7 @@
  */
 const router = require('express').Router();
 const ctrl = require('../controllers/aiController');
+const aiService = require('../services/aiService');
 const { aiLimiter } = require('../middleware/rateLimit');
 const { authRequired } = require('../middleware/auth');
 
@@ -24,5 +25,21 @@ const { authRequired } = require('../middleware/auth');
 // 请求体：{ messages: [{ role, content }, ...] }
 // 响应体：{ data: { reply, model } }
 router.post('/chat', authRequired, aiLimiter, ctrl.chat);
+
+// POST /api/ai/reflection → AI Daily Reflection
+// 请求体：{ context: GrowthContext | AIContext }
+// 响应体：{ data: { reflection }, meta: { contextVersion, model } }
+router.post('/reflection', authRequired, aiLimiter, async (req, res, next) => {
+  try {
+    const context = req.body && req.body.context;
+    const result = await aiService.dailyReflection({ growthContext: context });
+    res.success({ reflection: result.reflection }, {
+      contextVersion: result.contextVersion,
+      model: result.model,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 
 module.exports = router;

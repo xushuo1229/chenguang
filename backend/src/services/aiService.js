@@ -35,6 +35,99 @@ const ALLOWED_ROLES = ['user', 'assistant'];
 // Context 中绝对不允许出现的字段名（纵深防御：即使前端被绕过也拦下）
 const FORBIDDEN_KEY_RE = /^(api[-_]?key|token|password|secret|authorization)$/i;
 
+function emptyGrowthContext() {
+  return {
+    version: '1.0',
+    today: '未知',
+    taskSummary: {},
+    focusSummary: {},
+    streaks: {},
+    goals: {},
+    signals: { positive: [], risks: [] },
+    suggestions: [],
+  };
+}
+
+function normalizeGrowthContext(input) {
+  let context = input;
+  if (context && typeof context === 'object' && !Array.isArray(context) && context.growthContext) {
+    context = context.growthContext;
+  }
+  if (context == null) context = {};
+  if (typeof context !== 'object' || Array.isArray(context)) {
+    throw ApiError.badRequest('INVALID_CONTEXT', 'GrowthContext 格式不正确');
+  }
+
+  const clean = stripForbiddenKeys(context);
+  if (JSON.stringify(clean).length > config.aiMaxContextChars) {
+    throw ApiError.badRequest('CONTEXT_TOO_LARGE', 'Context 数据过大');
+  }
+
+  return Object.assign(emptyGrowthContext(), clean, {
+    version: typeof clean.version === 'string' && clean.version ? clean.version : '1.0',
+    today: typeof clean.today === 'string' && clean.today ? clean.today.slice(0, 10) : '未知',
+    signals: {
+      positive: Array.isArray(clean.signals && clean.signals.positive) ? clean.signals.positive : [],
+      risks: Array.isArray(clean.signals && clean.signals.risks) ? clean.signals.risks : [],
+    },
+  });
+}
+
+function buildPerformance(growthContext) {
+  const tasks = growthContext.taskSummary || {};
+  const focus = growthContext.focusSummary || {};
+  return {
+    tasks: {
+      total: Number(tasks.total) || 0,
+      completed: Number(tasks.completed) || 0,
+      pending: Number(tasks.pending) || 0,
+      completionRate: Number(tasks.completionRate) || 0,
+      yesterdayPending: Number(tasks.yesterdayPending) || 0,
+    },
+    focus: {
+      minutes: Number(focus.minutes) || 0,
+      activeToday: Boolean(focus.activeToday),
+    },
+    learning: {
+      studyMinutes: Number(focus.studyMinutes) || 0,
+      exerciseMinutes: Number(focus.exerciseMinutes) || 0,
+    },
+  };
+}
+
+function parseReflectionJson(reply) {
+  const text = String(reply || '').trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+  try {
+    return JSON.parse(text);
+  } catch (_) {
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start >= 0 && end > start) {
+      try {
+        return JSON.parse(text.slice(start, end + 1));
+      } catch (_) { /* fall through */ }
+    }
+    console.warn('[AI] Daily Reflection response was not valid JSON');
+    throw ApiError.internal('AI_INVALID_RESPONSE', 'AI 复盘暂时不可用，请稍后再试');
+  }
+}
+
+function normalizeReflection(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw ApiError.internal('AI_INVALID_RESPONSE', 'AI 复盘暂时不可用，请稍后再试');
+  }
+  const summary = value.summary && typeof value.summary === 'object' ? value.summary : {};
+  const asArray = (input) => Array.isArray(input) ? input.slice(0, 5) : [];
+  return {
+    summary: {
+      title: typeof summary.title === 'string' ? summary.title : '',
+      overview: typeof summary.overview === 'string' ? summary.overview : '',
+    },
+    insights: asArray(value.insights).filter((item) => item && typeof item === 'object'),
+    suggestions: asArray(value.suggestions).filter((item) => item && typeof item === 'object'),
+  };
+}
+
 /**
  * 校验并规整前端传入的历史消息（只允许 user / assistant 两种角色）
  *
@@ -158,8 +251,38 @@ async function coachChat(p) {
   };
 }
 
+/**
+ * AI Daily Reflection 入口：GrowthContext → Reflection Prompt → Provider → Structured JSON。
+ * performance 由后端从 GrowthContext 确定性生成，AI 无法伪造行为数字。
+ */
+async function dailyReflection(p) {
+  p = p || {};
+  const provider = getProvider(config.aiProvider);
+  if (!provider) {
+    throw ApiError.internal('AI_NOT_CONFIGURED', 'AI 服务未配置，请稍后再试');
+  }
+
+  const growthContext = normalizeGrowthContext(p.growthContext);
+  const result = await provider.chatCompletion({
+    messages: promptBuilder.buildReflectionPrompt(growthContext),
+    baseUrl: config.aiBaseUrl,
+    apiKey: config.aiApiKey,
+    model: config.aiModel,
+    timeoutMs: config.aiTimeoutMs,
+  });
+
+  const reflection = normalizeReflection(parseReflectionJson(result.reply));
+  reflection.performance = buildPerformance(growthContext);
+  return {
+    reflection,
+    contextVersion: growthContext.version,
+    model: result.model,
+  };
+}
+
 module.exports = {
   coachChat,
+  dailyReflection,
   validateHistory,
   validateContext,
   stripForbiddenKeys,
