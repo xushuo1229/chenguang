@@ -10,11 +10,23 @@ function createCourseSpaceExtractionService(options) {
         client.courseSpace.snapshot(courseId || ''),
         client.courseSpace.listExtractionJobs({ courseId: courseId || '', limit: 20 }),
         client.courseSpace.listCandidates({ courseId: courseId || '', status: 'pending', limit: 20 })
-      ]).then(([snapshot, jobs, candidates]) => ({
-        snapshot: snapshot && snapshot.data,
-        jobs: jobs && jobs.data ? jobs.data.jobs : [],
-        candidates: candidates && candidates.data ? candidates.data.candidates : []
-      }));
+      ]).then(async ([snapshot, jobs, candidates]) => {
+        const candidateItems = candidates && candidates.data ? candidates.data.candidates : [];
+        const evidence = await Promise.all(candidateItems.map((candidate) =>
+          client.courseSpace.listCandidateEvidence(candidate.id)
+            .then((response) => (response && response.data ? response.data.evidence : []))
+            .catch(() => [])
+        ));
+        return {
+          snapshot: snapshot && snapshot.data,
+          jobs: jobs && jobs.data ? jobs.data.jobs : [],
+          candidates: candidateItems,
+          evidenceById: candidateItems.reduce((result, candidate, index) => {
+            result[candidate.id] = evidence[index];
+            return result;
+          }, {})
+        };
+      });
     },
     createJob(payload) {
       return client.courseSpace.createExtractionJob(payload);

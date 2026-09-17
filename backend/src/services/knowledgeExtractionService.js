@@ -99,9 +99,21 @@ function toEvidence(row) {
     nodeId: row.node_id,
     quote: row.quote,
     locator: row.locator,
+    verificationStatus: row.verification_status,
     version: row.version,
     createdAt: row.created_at,
   };
+}
+
+function normalizeEvidenceText(value) {
+  return String(value || '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+function strictConfidence(value) {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1) {
+    throw ApiError.internal('AI_INVALID_RESPONSE', 'AI 提取结果不可用，请稍后再试');
+  }
+  return value;
 }
 
 function sha256(value) {
@@ -128,8 +140,8 @@ async function runJob({ userId, job, document, requestedProvider }) {
       if (!item || typeof item !== 'object' || Array.isArray(item)) {
         throw ApiError.internal('AI_INVALID_RESPONSE', 'AI 提取结果不可用，请稍后再试');
       }
-      const confidence = Number(item.confidence);
-      if (!CANDIDATE_TYPES.has(String(item.type || '')) || !Number.isFinite(confidence) || confidence < 0 || confidence > 1) {
+      const confidence = strictConfidence(item.confidence);
+      if (!CANDIDATE_TYPES.has(String(item.type || ''))) {
         throw ApiError.internal('AI_INVALID_RESPONSE', 'AI 提取结果不可用，请稍后再试');
       }
       const title = String(item.title || '').trim();
@@ -148,6 +160,9 @@ async function runJob({ userId, job, document, requestedProvider }) {
       };
     });
 
+    const candidateRows = [];
+    const evidenceRows = [];
+    const normalizedDocument = normalizeEvidenceText(document.content);
     for (const item of normalized) {
       const candidateId = crypto.randomUUID();
       const evidenceId = crypto.randomUUID();
@@ -168,6 +183,10 @@ async function runJob({ userId, job, document, requestedProvider }) {
         reviewed_title: '',
         reviewed_content: '',
       };
+      const normalizedQuote = normalizeEvidenceText(item.excerpt);
+      const verificationStatus = normalizedQuote && normalizedDocument.includes(normalizedQuote)
+        ? 'verified'
+        : 'unverified';
       const evidence = {
         id: evidenceId,
         user_id: userId,
@@ -177,13 +196,13 @@ async function runJob({ userId, job, document, requestedProvider }) {
         candidate_id: candidateId,
         quote: item.excerpt,
         locator: item.locator,
+        verification_status: verificationStatus,
         version: job.document_version,
       };
-      await model.insertCandidate(candidate);
-      await model.insertEvidence(evidence);
+      candidateRows.push(candidate);
+      evidenceRows.push(evidence);
     }
-    const completedAt = new Date().toISOString();
-    await model.setJobStatus({ userId, jobId: job.id, status: 'completed', completedAt, error: '' });
+    model.persistExtractionOutput({ job, candidates: candidateRows, evidence: evidenceRows });
   } catch (err) {
     const code = err && err.name === 'ApiError' && err.code ? err.code : 'AI_EXTRACTION_FAILED';
     const message = err && err.name === 'ApiError' ? err.message : 'AI 提取服务暂时不可用，请稍后再试';
@@ -314,7 +333,7 @@ async function reviewCandidate({ userId, candidateId, body }) {
   const title = requiredText(input.title == null ? row.original_title : input.title, 'title', MAX_CANDIDATE_TITLE);
   const content = requiredText(input.content == null ? row.original_content : input.content, 'content', MAX_CANDIDATE_CONTENT);
   const nodeId = crypto.randomUUID();
-  await model.insertNode({
+  const node = {
     id: nodeId,
     user_id: userId,
     course_id: row.course_id,
@@ -325,17 +344,27 @@ async function reviewCandidate({ userId, candidateId, body }) {
     confidence: row.confidence >= 0.8 ? 'high' : row.confidence >= 0.5 ? 'medium' : 'low',
     version: row.document_version,
     source_candidate_id: row.id,
-  });
-  await model.linkEvidenceToNode({ userId, candidateId: row.id, nodeId });
-  await model.reviewCandidate({ userId, candidateId: row.id, status: 'accepted', reviewedTitle: title, reviewedContent: content });
+  };
+  try {
+    model.materializeAcceptedCandidate(node);
+  } catch (error) {
+    if (error && error.code === 'CANDIDATE_REVIEWED') {
+      throw ApiError.conflict('CANDIDATE_REVIEWED', '知识候选已经审核');
+    }
+    throw error;
+  }
   return toCandidate(await model.findCandidate({ userId, candidateId: row.id }));
 }
 
 async function listCandidateEvidence({ userId, candidateId }) {
   const row = await model.findCandidate({ userId, candidateId: requiredText(candidateId, 'candidateId', 100) });
   if (!row) throw ApiError.notFound('CANDIDATE_NOT_FOUND', '知识候选不存在');
-  const result = await require('../db/courseSpaceModel').listEvidence(userId, row.course_id);
-  return { evidence: result.filter((item) => item.candidate_id === row.id).map(toEvidence) };
+  const result = await model.listEvidenceByCandidate({
+    userId,
+    candidateId: row.id,
+    limit: PAGE_SIZE_MAX,
+  });
+  return { evidence: result.map(toEvidence) };
 }
 
 module.exports = {

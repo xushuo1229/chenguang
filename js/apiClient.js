@@ -549,6 +549,9 @@ var CGAPI = {
       },
       reviewCandidate: function (candidateId, payload) {
         return request('POST', `/course-space/extraction/candidates/${encodeURIComponent(candidateId)}/review`, payload);
+      },
+      listCandidateEvidence: function (candidateId) {
+        return request('GET', `/course-space/extraction/candidates/${encodeURIComponent(candidateId)}/evidence`);
       }
     }
   };

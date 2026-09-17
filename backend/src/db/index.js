@@ -113,6 +113,8 @@ async function initDatabase() {
   try { db.exec("ALTER TABLE user_data ADD COLUMN device_id TEXT NOT NULL DEFAULT ''"); } catch (_) {}
   try { db.exec("ALTER TABLE course_space_nodes ADD COLUMN source_candidate_id TEXT NOT NULL DEFAULT ''"); } catch (_) {}
   try { db.exec("ALTER TABLE course_space_evidence ADD COLUMN candidate_id TEXT NOT NULL DEFAULT ''"); } catch (_) {}
+  try { db.exec("ALTER TABLE course_space_evidence ADD COLUMN verification_status TEXT NOT NULL DEFAULT 'unverified'"); } catch (_) {}
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS uq_course_space_nodes_source_candidate ON course_space_nodes(source_candidate_id) WHERE source_candidate_id <> ''");
 
   console.log('[DB] SQLite 表结构初始化完成 → ' + config.dbPath);
 }

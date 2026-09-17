@@ -1,6 +1,7 @@
 'use strict';
 
 const { query } = require('./index');
+const { db } = require('./index');
 
 async function insertJob(job) {
   return query(
@@ -77,11 +78,11 @@ async function insertCandidate(candidate) {
 async function insertEvidence(evidence) {
   return query(
     `INSERT INTO course_space_evidence
-       (id, user_id, course_id, document_id, node_id, candidate_id, quote, locator, version)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+       (id, user_id, course_id, document_id, node_id, candidate_id, quote, locator, verification_status, version)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
     [evidence.id, evidence.user_id, evidence.course_id, evidence.document_id,
       evidence.node_id, evidence.candidate_id, evidence.quote, evidence.locator,
-      evidence.version]
+      evidence.verification_status, evidence.version]
   );
 }
 
@@ -135,6 +136,96 @@ async function linkEvidenceToNode({ userId, candidateId, nodeId }) {
   );
 }
 
+function claimCandidateForAcceptance({ userId, candidateId, reviewedTitle, reviewedContent }) {
+  const statement = db.prepare(
+    `UPDATE course_space_knowledge_candidates
+       SET status = 'accepted', reviewed_title = @reviewedTitle, reviewed_content = @reviewedContent,
+           updated_at = CURRENT_TIMESTAMP
+     WHERE user_id = @userId AND id = @candidateId AND status = 'pending'`,
+  );
+  return statement.run({ userId, candidateId, reviewedTitle, reviewedContent }).changes === 1;
+}
+
+function materializeAcceptedCandidate(node) {
+  const materialize = db.transaction(() => {
+    const claimed = claimCandidateForAcceptance({
+      userId: node.user_id,
+      candidateId: node.source_candidate_id,
+      reviewedTitle: node.title,
+      reviewedContent: node.definition,
+    });
+    if (!claimed) {
+      const error = new Error('CANDIDATE_REVIEWED');
+      error.code = 'CANDIDATE_REVIEWED';
+      throw error;
+    }
+    query(
+      `INSERT INTO course_space_nodes
+         (id, user_id, course_id, title, kind, definition, status, confidence, version, source_candidate_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [node.id, node.user_id, node.course_id, node.title, node.kind, node.definition,
+        node.status, node.confidence, node.version, node.source_candidate_id],
+    );
+    query(
+      `UPDATE course_space_evidence
+         SET node_id = $3
+       WHERE user_id = $1 AND candidate_id = $2 AND node_id = ''`,
+      [node.user_id, node.source_candidate_id, node.id],
+    );
+  });
+  materialize();
+}
+
+function persistExtractionOutput({ job, candidates, evidence }) {
+  const persist = db.transaction(() => {
+    for (const candidate of candidates) model_insertCandidate(candidate);
+    for (const item of evidence) model_insertEvidence(item);
+    query(
+      `UPDATE course_space_extraction_jobs
+         SET status = 'completed', completed_at = $1, updated_at = CURRENT_TIMESTAMP
+       WHERE user_id = $2 AND id = $3`,
+      [new Date().toISOString(), job.user_id, job.id],
+    );
+  });
+  persist();
+}
+
+function model_insertCandidate(candidate) {
+  return query(
+    `INSERT INTO course_space_knowledge_candidates
+       (id, user_id, course_id, document_id, document_version, extraction_job_id,
+        type, title, content, confidence, status, original_title, original_content,
+        reviewed_title, reviewed_content)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+    [candidate.id, candidate.user_id, candidate.course_id, candidate.document_id,
+      candidate.document_version, candidate.extraction_job_id, candidate.type,
+      candidate.title, candidate.content, candidate.confidence, candidate.status,
+      candidate.original_title, candidate.original_content,
+      candidate.reviewed_title, candidate.reviewed_content],
+  );
+}
+
+function model_insertEvidence(evidence) {
+  return query(
+    `INSERT INTO course_space_evidence
+       (id, user_id, course_id, document_id, node_id, candidate_id, quote, locator, verification_status, version)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+    [evidence.id, evidence.user_id, evidence.course_id, evidence.document_id,
+      evidence.node_id, evidence.candidate_id, evidence.quote, evidence.locator,
+      evidence.verification_status, evidence.version],
+  );
+}
+
+async function listEvidenceByCandidate({ userId, candidateId, limit }) {
+  const result = await query(
+    `SELECT * FROM course_space_evidence
+      WHERE user_id = $1 AND candidate_id = $2
+      ORDER BY created_at DESC, id LIMIT $3`,
+    [userId, candidateId, limit],
+  );
+  return result.rows;
+}
+
 module.exports = {
   findCandidate,
   findJob,
@@ -144,8 +235,11 @@ module.exports = {
   insertJob,
   insertNode,
   linkEvidenceToNode,
+  listEvidenceByCandidate,
   listCandidates,
   listJobs,
+  materializeAcceptedCandidate,
+  persistExtractionOutput,
   reviewCandidate,
   setJobStatus,
 };

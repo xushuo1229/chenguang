@@ -75,6 +75,7 @@ function createCourseSpaceExtractionUI(options) {
 
   function renderDocuments(items) {
     const selected = selectedDocumentId();
+    documents = Array.isArray(items) ? items : [];
     documentSelect.textContent = '';
     (Array.isArray(items) ? items : []).forEach((item) => {
       if (!item || !item.id) return;
@@ -96,14 +97,52 @@ function createCourseSpaceExtractionUI(options) {
     return article;
   }
 
-  function renderReview(candidates) {
+  function truncate(value, max = 300) {
+    const text = String(value || '');
+    return text.length > max ? `${text.slice(0, max)}...` : text;
+  }
+
+  function documentTitle(documentId) {
+    const documentItem = (documents || []).find((item) => item && item.id === documentId);
+    return documentItem ? String(documentItem.title || documentItem.id) : String(documentId || '-');
+  }
+
+  function renderReview(candidates, evidenceById) {
     clear(reviewList);
     if (!candidates.length) {
       reviewList.appendChild(createElement('p', 'course-space-empty', '没有待审核的知识候选。'));
       return;
     }
     candidates.forEach((candidate) => {
-      const article = item(candidate.title || '未命名候选', `${candidate.type || 'concept'} · 置信度 ${Math.round((candidate.confidence || 0) * 100)}%`, candidate.content || '');
+      const evidenceItems = (evidenceById && evidenceById[candidate.id]) || [];
+      const article = createElement('article', 'course-space-item');
+      article.appendChild(createElement('p', 'course-space-item-title', candidate.title || '未命名候选'));
+      article.appendChild(createElement('p', 'course-space-item-meta', `${candidate.type || 'concept'} · 置信度 ${Math.round((candidate.confidence || 0) * 100)}%`));
+      article.appendChild(createElement('p', 'course-space-item-meta', `来源文档：${documentTitle(candidate.documentId)} · 版本：${candidate.documentVersion || '-'}`));
+      if (evidenceItems.length) {
+        evidenceItems.forEach((evidence) => {
+          article.appendChild(createElement('p', 'course-space-item-meta', `定位：${evidence.locator || '未提供'}`));
+          article.appendChild(createElement('p', 'course-space-item-meta', `证据：${truncate(evidence.quote)}`));
+          article.appendChild(createElement('p', 'course-space-item-meta', `证据状态：${evidence.verificationStatus === 'verified' ? '已验证' : '未验证'}`));
+        });
+      } else {
+        article.appendChild(createElement('p', 'course-space-item-meta', '暂无证据。'));
+      }
+      const titleLabel = createElement('label', 'course-space-item-meta', '标题');
+      const titleInput = documentRef.createElement('input');
+      titleInput.className = 'course-space-input';
+      titleInput.maxLength = 200;
+      titleInput.value = candidate.title || '';
+      titleLabel.appendChild(titleInput);
+      const contentLabel = createElement('label', 'course-space-item-meta', '内容');
+      const contentInput = documentRef.createElement('textarea');
+      contentInput.className = 'course-space-input';
+      contentInput.rows = 3;
+      contentInput.maxLength = 5000;
+      contentInput.value = candidate.content || '';
+      contentLabel.appendChild(contentInput);
+      article.append(titleLabel, contentLabel);
+      article.appendChild(createElement('p', 'course-space-item-meta', candidate.content || ''));
       const actions = createElement('div', 'course-space-toolbar');
       const accept = documentRef.createElement('button');
       accept.type = 'button';
@@ -113,7 +152,7 @@ function createCourseSpaceExtractionUI(options) {
         if (busy) return;
         setBusy(true, '正在保存审核结果...');
         try {
-          await service.reviewCandidate(candidate.id, { action: 'accept', title: candidate.title, content: candidate.content });
+          await service.reviewCandidate(candidate.id, { action: 'accept', title: titleInput.value, content: contentInput.value });
           await load(true);
         } catch (_) {
           renderStatus('审核暂时失败，请稍后再试。', true);
@@ -178,7 +217,7 @@ function createCourseSpaceExtractionUI(options) {
       const data = await service.load({ courseId: selectedCourseId() });
       renderCourses(data.snapshot && data.snapshot.courses);
       renderDocuments(data.snapshot && data.snapshot.documents);
-      renderReview(data.candidates);
+      renderReview(data.candidates, data.evidenceById);
       renderJobs(data.jobs);
       renderStatus('');
     } catch (_) {

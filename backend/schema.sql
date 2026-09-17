@@ -96,9 +96,14 @@ CREATE TABLE IF NOT EXISTS course_space_evidence (
   candidate_id TEXT NOT NULL DEFAULT '',
   quote       TEXT NOT NULL,
   locator     TEXT NOT NULL DEFAULT '',
+  verification_status TEXT NOT NULL DEFAULT 'unverified',
   version     INTEGER NOT NULL DEFAULT 1,
   created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_course_space_nodes_source_candidate
+  ON course_space_nodes(source_candidate_id)
+  WHERE source_candidate_id <> '';
 
 CREATE TABLE IF NOT EXISTS course_space_extraction_jobs (
   id                TEXT PRIMARY KEY,

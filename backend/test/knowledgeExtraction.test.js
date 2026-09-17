@@ -10,6 +10,7 @@ const syncService = require('../src/services/syncService');
 const courseSpaceService = require('../src/services/courseSpaceService');
 const extractionService = require('../src/services/knowledgeExtractionService');
 const courseSpaceModel = require('../src/db/courseSpaceModel');
+const extractionModel = require('../src/db/knowledgeExtractionModel');
 
 function fakeProvider(payload) {
   let calls = 0;
@@ -77,6 +78,9 @@ describe('knowledge extraction pipeline', () => {
     assert.equal(nodes.length, 0);
     const evidence = await extractionService.listCandidateEvidence({ userId, candidateId: candidate.id });
     assert.equal(evidence.evidence[0].nodeId, '');
+    assert.equal(evidence.evidence[0].verificationStatus, 'verified');
+    assert.equal(evidence.evidence[0].locator, 'section 1.2');
+    assert.equal(evidence.evidence[0].version, 1);
 
     const accepted = await extractionService.reviewCandidate({
       userId,
@@ -92,6 +96,29 @@ describe('knowledge extraction pipeline', () => {
     assert.equal(nodes[0].source_candidate_id, candidate.id);
     const linkedEvidence = await extractionService.listCandidateEvidence({ userId, candidateId: candidate.id });
     assert.equal(linkedEvidence.evidence[0].nodeId, nodes[0].id);
+
+    await assert.rejects(
+      () => extractionService.reviewCandidate({
+        userId,
+        candidateId: candidate.id,
+        body: { action: 'accept', title: 'Second', content: 'Second acceptance.' },
+      }),
+      /知识候选已经审核/,
+    );
+    const claimedNode = {
+      id: 'duplicate-node',
+      user_id: userId,
+      course_id: candidate.courseId,
+      title: 'Duplicate',
+      kind: 'definition',
+      definition: 'Duplicate acceptance.',
+      status: 'validated',
+      confidence: 'high',
+      version: 1,
+      source_candidate_id: candidate.id,
+    };
+    await assert.rejects(async () => extractionModel.materializeAcceptedCandidate(claimedNode), /CANDIDATE_REVIEWED/);
+    assert.equal((await courseSpaceModel.listNodes(userId, 'course-1')).length, 1);
   });
 
   test('is idempotent for the same document version and content', async () => {
@@ -141,6 +168,9 @@ describe('knowledge extraction pipeline', () => {
       { candidates: 'not-array' },
       { candidates: [{ type: 'made-up', title: 'Bad', content: 'Bad', confidence: 0.5, evidence: { locator: '', excerpt: 'Bad' } }] },
       { candidates: [{ type: 'concept', title: 'Bad', content: 'Bad', confidence: 1.5, evidence: { locator: '', excerpt: 'Bad' } }] },
+      { candidates: [{ type: 'concept', title: 'Bad', content: 'Bad', confidence: null, evidence: { locator: '', excerpt: 'Bad' } }] },
+      { candidates: [{ type: 'concept', title: 'Bad', content: 'Bad', confidence: '0.5', evidence: { locator: '', excerpt: 'Bad' } }] },
+      { candidates: [{ type: 'concept', title: 'Bad', content: 'Bad', evidence: { locator: '', excerpt: 'Bad' } }] },
       { candidates: Array.from({ length: 11 }, () => ({ type: 'concept', title: 'Bad', content: 'Bad', confidence: 0.5, evidence: { locator: '', excerpt: 'Bad' } })) },
     ];
     for (let index = 0; index < invalidPayloads.length; index += 1) {
@@ -165,5 +195,87 @@ describe('knowledge extraction pipeline', () => {
     assert.equal(jobs.jobs[0].status, 'failed');
     assert.equal(jobs.jobs[0].error, 'AI_EXTRACTION_FAILED');
     assert.ok(!JSON.stringify(jobs).includes('sk-secret'));
+  });
+
+  test('marks quotes outside the source as unverified', async () => {
+    const { userId, document } = await prepareDocument('extract-unverified@example.com');
+    const provider = fakeProvider({
+      candidates: [{
+        type: 'concept',
+        title: 'Unverified',
+        content: 'Not present in the source.',
+        confidence: 0.4,
+        evidence: { locator: 'section 9.9', excerpt: 'This sentence is not in the source.' },
+      }],
+    });
+    await extractionService.createJob({ userId, body: { courseId: 'course-1', documentId: document.id }, provider });
+    const candidates = await extractionService.listCandidates({ userId, query: { jobId: (await extractionService.listJobs({ userId, query: {} })).jobs[0].id } });
+    const evidence = await extractionService.listCandidateEvidence({ userId, candidateId: candidates.candidates[0].id });
+    assert.equal(evidence.evidence[0].verificationStatus, 'unverified');
+  });
+
+  test('persists candidates, evidence, and job state atomically', async () => {
+    const { userId, document } = await prepareDocument('extract-atomic@example.com');
+    const provider = fakeProvider({ candidates: [] });
+    const job = await extractionService.createJob({ userId, body: { courseId: 'course-1', documentId: document.id }, provider });
+    const jobId = (await extractionService.listJobs({ userId, query: {} })).jobs[0].id;
+    const candidate = {
+      id: 'atomic-candidate',
+      user_id: userId,
+      course_id: 'course-1',
+      document_id: document.id,
+      document_version: 1,
+      extraction_job_id: jobId,
+      type: 'concept',
+      title: 'Atomic',
+      content: 'Atomic persistence.',
+      confidence: 0.5,
+      status: 'pending',
+      original_title: 'Atomic',
+      original_content: 'Atomic persistence.',
+      reviewed_title: '',
+      reviewed_content: '',
+    };
+    const evidence = {
+      id: 'atomic-evidence',
+      user_id: userId,
+      course_id: 'course-1',
+      document_id: document.id,
+      node_id: '',
+      candidate_id: 'atomic-candidate',
+      quote: 'Atomic persistence.',
+      locator: 'section 1',
+      version: 1,
+    };
+    await assert.rejects(
+      async () => extractionModel.persistExtractionOutput({ job, candidates: [candidate], evidence: [evidence] }),
+      /NOT NULL constraint failed/,
+    );
+    assert.equal((await extractionService.listCandidates({ userId, query: { jobId } })).candidates.length, 0);
+    assert.equal(await extractionModel.listEvidenceByCandidate({ userId, candidateId: 'atomic-candidate', limit: 10 }).then((rows) => rows.length), 0);
+    const storedJob = await extractionService.getJob({ userId, jobId });
+    assert.equal(storedJob.status, 'completed');
+  });
+
+  test('filters candidate evidence by owner and applies a database limit', async () => {
+    const { userId, document } = await prepareDocument('extract-evidence@example.com');
+    const provider = fakeProvider({
+      candidates: [{
+        type: 'concept',
+        title: 'Evidence',
+        content: 'Evidence isolation.',
+        confidence: 0.5,
+        evidence: { locator: 'section 1', excerpt: 'A closure keeps access to its outer scope.' },
+      }],
+    });
+    await extractionService.createJob({ userId, body: { courseId: 'course-1', documentId: document.id }, provider });
+    const job = await extractionService.listJobs({ userId, query: {} });
+    const candidates = await extractionService.listCandidates({ userId, query: { jobId: job.jobs[0].id } });
+    const candidate = candidates.candidates[0];
+    const otherUserId = await prepareUser('extract-evidence-other@example.com');
+    const scoped = await extractionModel.listEvidenceByCandidate({ userId, candidateId: candidate.id, limit: 1 });
+    const isolated = await extractionModel.listEvidenceByCandidate({ userId: otherUserId, candidateId: candidate.id, limit: 1 });
+    assert.equal(scoped.length, 1);
+    assert.equal(isolated.length, 0);
   });
 });
