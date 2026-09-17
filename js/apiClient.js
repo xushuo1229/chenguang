@@ -499,6 +499,34 @@ var CGAPI = {
       importFromUrl: function (url) {
         return request('POST', '/course/import', { url: url });
       }
+    },
+
+    /* ===== Course Space / Knowledge Base ===== */
+    courseSpace: {
+      snapshot: function (courseId) {
+        const query = courseId ? `?courseId=${encodeURIComponent(courseId)}` : '';
+        return request('GET', `/course-space${query}`);
+      },
+      search: function (payload) {
+        const p = payload || {};
+        const params = new URLSearchParams();
+        params.set('q', p.query || '');
+        if (p.courseId) params.set('courseId', p.courseId);
+        params.set('limit', String(p.limit || 10));
+        return request('GET', `/course-space/search?${params.toString()}`);
+      },
+      createDocument: function (payload) {
+        return request('POST', '/course-space/documents', payload);
+      },
+      createNode: function (payload) {
+        return request('POST', '/course-space/nodes', payload);
+      },
+      createRelation: function (payload) {
+        return request('POST', '/course-space/relations', payload);
+      },
+      createEvidence: function (payload) {
+        return request('POST', '/course-space/evidence', payload);
+      }
     }
   };
 

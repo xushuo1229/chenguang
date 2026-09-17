@@ -46,6 +46,7 @@ import CoachMemory from '../js/coachMemory.js';
 import { buildDailyFeedback } from '../js/dailyFeedback.js';
 import RetentionContext from '../js/retentionContext.js';
 import GrowthMemory from '../js/growthMemory.js';
+import { mountCourseSpace } from '../js/courseSpaceUI.js';
 import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
 
   // ============================================================
@@ -2255,6 +2256,8 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
         setText('wbManageUser', (cu && (cu.nickname || cu.email)) || '本地模式');
       } catch (_) {}
       updateUI();
+      var courseSpace = mountCourseSpace();
+      courseSpace.loadSnapshot();
       // 支持从其它页面直达：workbench.html?view=course / manage / profile
       var wantView = new URLSearchParams(location.search).get('view');
       if (WB_VIEWS.indexOf(wantView) === -1) wantView = 'home';

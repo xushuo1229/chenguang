@@ -46,3 +46,54 @@ CREATE TABLE IF NOT EXISTS ai_reflection_feedback (
   created_at    TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(user_id, reflection_id)
 );
+
+-- ---------- Course Space / Knowledge Base Foundation ----------
+-- Course Knowledge 与 Course System 分离；用户所有权通过 user_id 强制隔离。
+CREATE TABLE IF NOT EXISTS course_space_documents (
+  id          TEXT PRIMARY KEY,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  course_id   TEXT NOT NULL,
+  title       TEXT NOT NULL,
+  content     TEXT NOT NULL DEFAULT '',
+  source_url  TEXT NOT NULL DEFAULT '',
+  version     INTEGER NOT NULL DEFAULT 1,
+  created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS course_space_nodes (
+  id          TEXT PRIMARY KEY,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  course_id   TEXT NOT NULL,
+  title       TEXT NOT NULL,
+  kind        TEXT NOT NULL DEFAULT 'concept',
+  definition  TEXT NOT NULL DEFAULT '',
+  status      TEXT NOT NULL DEFAULT 'validated',
+  confidence  TEXT NOT NULL DEFAULT 'medium',
+  version     INTEGER NOT NULL DEFAULT 1,
+  created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS course_space_relations (
+  id             TEXT PRIMARY KEY,
+  user_id        INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  course_id      TEXT NOT NULL,
+  source_node_id TEXT NOT NULL,
+  target_node_id TEXT NOT NULL,
+  relation_type  TEXT NOT NULL,
+  version        INTEGER NOT NULL DEFAULT 1,
+  created_at     TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS course_space_evidence (
+  id          TEXT PRIMARY KEY,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  course_id   TEXT NOT NULL,
+  document_id TEXT NOT NULL,
+  node_id     TEXT NOT NULL,
+  quote       TEXT NOT NULL,
+  locator     TEXT NOT NULL DEFAULT '',
+  version     INTEGER NOT NULL DEFAULT 1,
+  created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
