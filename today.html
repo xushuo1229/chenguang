@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>今日计划 · 知行</title>
+  <meta name="theme-color" content="#0B1220">
+  <meta name="description" content="知行 XINGZHIXING 今日计划：专注今天的每一件事。">
+  <link rel="icon" href="/brand/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/vendor/fontawesome/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="css/variables.css" as="style">
+  <link rel="preload" href="css/shared.css" as="style">
+  <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/shared.css">
+  <link rel="stylesheet" href="css/components.css">
+  <style>
+    body { display: flex; min-height: 100vh; }
+    .main {
+      flex: 1;
+      padding: 20px 28px 48px;
+      max-width: 1080px;
+      overflow-y: auto;
+      width: 100%;
+    }
+    .tp-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+    .tp-header h2 { font-size: 1.4rem; font-weight: 700; }
+    .tp-header .tp-date { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+    .tp-actions { display: flex; gap: 10px; }
+    .tp-actions a {
+      background: var(--bg-card); padding: 8px 18px; border-radius: 40px;
+      text-decoration: none; color: var(--text-dark); font-size: 0.85rem;
+      font-weight: 500; border: 1px solid var(--border-soft); transition: 0.2s;
+    }
+    .tp-actions a:hover { border-color: var(--primary); background: var(--bg-hover); }
+    .tp-actions a i { margin-right: 4px; }
+
+    .tp-stats {
+      display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;
+    }
+    .tp-stat-card {
+      flex: 1; min-width: 140px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--r-lg);
+      padding: 18px 20px;
+      text-align: center;
+    }
+    .tp-stat-card .tp-num {
+      font-size: 2rem; font-weight: 700; line-height: 1.2;
+      color: var(--text-hi);
+    }
+    .tp-stat-card.done .tp-num { color: var(--brand-teal); }
+    .tp-stat-card.pending .tp-num { color: var(--brand-amber); }
+    .tp-stat-card.rate .tp-num { color: var(--brand-sky); }
+    .tp-stat-card .tp-label {
+      font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;
+    }
+
+    .tp-progress-bar {
+      width: 100%; height: 8px;
+      background: var(--bg-elev);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .tp-progress-fill {
+      height: 100%;
+      background: var(--brand-teal);
+      border-radius: 999px;
+      transition: width 0.3s var(--ease);
+    }
+
+    .tp-add-bar {
+      display: flex; gap: 10px; margin-bottom: 20px;
+    }
+    .tp-add-bar input[type="text"] {
+      flex: 1;
+      background: var(--bg-input);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--r-md);
+      padding: 10px 14px;
+      color: var(--text-hi);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .tp-add-bar input[type="text"]:focus {
+      border-color: var(--brand-amber);
+    }
+    .tp-add-bar input[type="time"] {
+      background: var(--bg-input);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--r-md);
+      padding: 10px 12px;
+      color: var(--text-hi);
+      font-size: 0.9rem;
+      outline: none;
+      width: 120px;
+    }
+    .tp-add-bar .tp-add-btn {
+      background: var(--brand-amber);
+      color: var(--text-on-accent);
+      border: none;
+      border-radius: var(--r-md);
+      padding: 10px 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .tp-add-bar .tp-add-btn:hover { background: var(--brand-amber-strong); }
+
+    .tp-task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .tp-task-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--r-md);
+      padding: 14px 16px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .tp-task-row:hover { border-color: var(--border-strong); }
+    .tp-task-row.done {
+      opacity: 0.55;
+    }
+    .tp-task-row.done .tp-task-text {
+      text-decoration: line-through;
+    }
+    .tp-task-check {
+      width: 24px; height: 24px;
+      border: 2px solid var(--border-strong);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      font-size: 0.8rem;
+      color: var(--brand-teal);
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .tp-task-check.checked {
+      background: var(--brand-teal);
+      border-color: var(--brand-teal);
+      color: #0f1114;
+    }
+    .tp-task-body {
+      flex: 1; min-width: 0;
+    }
+    .tp-task-text {
+      font-size: 0.92rem;
+      color: var(--text-hi);
+      line-height: 1.4;
+    }
+    .tp-task-meta {
+      font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;
+      display: flex; gap: 12px; flex-wrap: wrap;
+    }
+    .tp-task-meta .tp-tag {
+      background: var(--bg-elev);
+      border-radius: 999px;
+      padding: 1px 8px;
+    }
+    .tp-task-actions {
+      display: flex; gap: 6px; flex-shrink: 0;
+    }
+    .tp-task-actions button {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 4px 6px;
+      color: var(--text-muted);
+      border-radius: var(--r-sm);
+      transition: color 0.2s, background 0.2s;
+    }
+    .tp-task-actions button:hover { color: var(--text-hi); background: var(--bg-hover); }
+    .tp-task-actions button.del:hover { color: var(--brand-rose); }
+
+    .tp-empty {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-muted);
+    }
+    .tp-empty i {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+      opacity: 0.3;
+    }
+    .tp-empty p { font-size: 0.92rem; margin-top: 8px; }
+
+    .tp-back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 0.85rem; color: var(--text-muted);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: var(--r-sm);
+      transition: color 0.2s, background 0.2s;
+    }
+    .tp-back-link:hover { color: var(--text-hi); background: var(--bg-hover); }
+
+    @media (max-width: 640px) {
+      .main { padding: 16px 16px 48px; }
+      .tp-header { flex-direction: column; gap: 12px; }
+      .tp-stats { gap: 10px; }
+      .tp-stat-card { min-width: 100px; padding: 12px 14px; }
+      .tp-stat-card .tp-num { font-size: 1.5rem; }
+      .tp-add-bar { flex-wrap: wrap; }
+      .tp-add-bar input[type="text"] { min-width: 0; }
+    }
+  </style>
+  <link rel="stylesheet" href="/calm-dawn-pro.css">
+  <link rel="stylesheet" href="/calm-dawn-fusion.css">
+  <link rel="stylesheet" href="/calm-dawn-1to1.css">
+  <link rel="stylesheet" href="/xingzhixing.css">
+</head>
+<body class="dashboard-shell" data-theme="fusion" data-brand="xingzhixing">
+
+<!-- ===== 左侧导航 ===== -->
+<aside class="sidebar">
+  <div class="wb-brand">
+    <div class="wb-brand-mark"><img src="/brand/logo-icon.svg" alt="知行品牌图标"></div>
+    <div class="wb-brand-copy">
+      <strong>知行</strong>
+      <span>AI Personal Growth OS</span>
+    </div>
+  </div>
+  <a href="workbench.html" class="nav-item" data-nav="home"><i class="fas fa-home"></i>首页</a>
+  <a href="today.html" class="nav-item active"><i class="fas fa-list-check"></i>今日计划</a>
+  <a href="workbench.html?view=course" class="nav-item" data-nav="course"><i class="fas fa-graduation-cap"></i>课程</a>
+  <a href="goals.html" class="nav-item" data-nav="goals"><i class="fas fa-bullseye"></i>目标</a>
+  <a href="stats.html" class="nav-item" data-nav="stats"><i class="fas fa-chart-line"></i>统计</a>
+  <a href="ai.html" class="nav-item" data-nav="ai"><i class="fas fa-compass"></i>AI 教练</a>
+  <div class="nav-bottom">
+    <a href="workbench.html?view=manage" class="nav-item" data-nav="manage"><i class="fas fa-cog"></i>管理</a>
+    <a href="workbench.html?view=profile" class="nav-item" data-nav="profile"><i class="fas fa-user"></i>我的</a>
+    <div class="wb-user">
+      <div class="wb-user-avatar" id="sidebarUserAvatar"></div>
+      <div class="wb-user-copy">
+        <strong id="sidebarUserName"></strong>
+        <span>成长记录</span>
+      </div>
+    </div>
+    <div class="wb-motto">知而后行<br>行而致远</div>
+  </div>
+</aside>
+<script src="js/shellBootstrap.js"></script>
+
+<!-- ===== 主内容 ===== -->
+<main class="main">
+  <div class="tp-header">
+    <div>
+      <h2>今日计划</h2>
+      <div class="tp-date" id="todayDate"></div>
+    </div>
+    <div class="tp-actions">
+      <a href="workbench.html" class="tp-back-link"><i class="fas fa-arrow-left"></i> 返回首页</a>
+    </div>
+  </div>
+
+  <div class="tp-stats">
+    <div class="tp-stat-card"><div class="tp-num" id="statTotal">0</div><div class="tp-label">总计划</div></div>
+    <div class="tp-stat-card done"><div class="tp-num" id="statDone">0</div><div class="tp-label">已完成</div></div>
+    <div class="tp-stat-card pending"><div class="tp-num" id="statPending">0</div><div class="tp-label">未完成</div></div>
+    <div class="tp-stat-card rate"><div class="tp-num" id="statRate">0%</div><div class="tp-label">完成率</div></div>
+  </div>
+
+  <div class="tp-progress-bar">
+    <div class="tp-progress-fill" id="progressFill" style="width:0%"></div>
+  </div>
+
+  <div class="tp-add-bar">
+    <input type="text" id="newTaskText" placeholder="添加一个今日计划…" aria-label="新任务内容" />
+    <input type="time" id="newTaskTime" aria-label="计划时间" />
+    <button class="tp-add-btn" id="addTaskBtn"><i class="fas fa-plus"></i> 添加计划</button>
+  </div>
+
+  <div class="tp-task-list" id="taskList">
+    <div class="tp-empty">
+      <i class="fas fa-clipboard-list"></i>
+      <p>今天还没有计划。添加一件小事，让今天有方向。</p>
+    </div>
+  </div>
+</main>
+
+<script type="module" src="js/userChrome.js"></script>
+<script type="module" src="pages/today.js"></script>
+</body>
+</html>

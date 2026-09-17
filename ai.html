@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="app-booting">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -224,6 +224,29 @@
     .insight-item.sev-medium .ii-icon { background: rgba(217, 152, 58, 0.16); color: #b07a1e; }
     .insight-item.sev-high .ii-icon { background: var(--danger-light); color: var(--danger); }
     .insight-item .ii-text { flex: 1; min-width: 0; word-break: break-word; }
+    .memory-subtitle {
+      margin: 10px 0 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+    .activation-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .activation-item {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg-soft);
+    }
+    .activation-title { margin: 0 0 4px; font-size: 13px; font-weight: 600; }
+    .activation-semantic { margin: 0 0 4px; font-size: 11px; color: var(--text-muted); }
+    .activation-evidence { margin: 0 0 8px; font-size: 11px; color: var(--text-muted); }
+    .activation-actions { display: flex; gap: 8px; }
 
     .mini-empty {
       font-size: 12px;
@@ -482,7 +505,6 @@
   <link rel="stylesheet" href="/calm-dawn-fusion.css">
   <link rel="stylesheet" href="/calm-dawn-1to1.css">
   <link rel="stylesheet" href="/xingzhixing.css">
-  <script type="module" src="js/shellBootstrap.js"></script>
   </head>
   <body class="dashboard-shell" data-theme="fusion" data-brand="xingzhixing">
 
@@ -496,7 +518,7 @@
     </div>
   </div>
   <a href="workbench.html" class="nav-item" data-nav="home"><i class="fas fa-home"></i>首页</a>
-  <a href="workbench.html" class="nav-item"><i class="fas fa-list-check"></i>今日计划</a>
+  <a href="today.html" class="nav-item"><i class="fas fa-list-check"></i>今日计划</a>
   <a href="workbench.html?view=course" class="nav-item" data-nav="course"><i class="fas fa-graduation-cap"></i>课程</a>
   <a href="goals.html" class="nav-item" data-nav="goals"><i class="fas fa-bullseye"></i>目标</a>
   <a href="stats.html" class="nav-item" data-nav="stats"><i class="fas fa-chart-line"></i>统计</a>
@@ -514,6 +536,7 @@
     <div class="wb-motto">知而后行<br>行而致远</div>
   </div>
 </aside>
+<script src="js/shellBootstrap.js"></script>
 
 <!-- ===== 主内容 ===== -->
 <main class="main">
@@ -597,8 +620,16 @@
         <div class="insight-list" id="adviceList"><!-- JS 渲染 --></div>
       </div>
 
+      <div class="coach-card" id="cardMemoryActivation" hidden>
+        <div class="coach-card-head"><i class="fas fa-seedling"></i><h3>AI发现可能的成长规律</h3></div>
+        <ul class="activation-list" id="memoryActivationList"></ul>
+      </div>
+
       <div class="coach-card" id="cardMemory">
-        <div class="coach-card-head"><i class="fas fa-brain"></i><h3>Coach Memory</h3></div>
+        <div class="coach-card-head"><i class="fas fa-brain"></i><h3>成长记忆</h3></div>
+        <p class="memory-subtitle">长期规律</p>
+        <div class="insight-list" id="confirmedMemoryList"></div>
+        <p class="memory-subtitle">短期洞察</p>
         <div class="insight-list" id="memoryList"><!-- JS 渲染 --></div>
       </div>
 

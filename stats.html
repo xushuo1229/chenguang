@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="app-booting">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -114,6 +114,19 @@
     /* ------ 趋势 ------ */
     .trend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
     .trend-cell { min-width: 0; }
+
+    /* ------ 成长叙事 ------ */
+    .timeline-narrative {
+      display: grid; gap: 8px; margin-bottom: 14px;
+    }
+    .timeline-stage {
+      display: flex; flex-direction: column; gap: 3px;
+      padding: 10px 12px; border: 1px solid var(--border-soft);
+      border-radius: var(--radius-md); background: rgba(255, 255, 255, .03);
+    }
+    .timeline-stage strong { font-size: .85rem; color: var(--text-hi); }
+    .timeline-stage span { font-size: .78rem; color: var(--text-muted); }
+    .timeline-stage-summary { font-size: .78rem; color: var(--text-muted); }
     .trend-cell .trend-title { font-size: 0.82rem; font-weight: 600; color: var(--text-mid); margin-bottom: 8px; }
     .trend-cell.wide { grid-column: 1 / -1; }
     .trend-chart { position: relative; width: 100%; height: 210px; }
@@ -211,7 +224,6 @@
   <link rel="stylesheet" href="/calm-dawn-fusion.css">
   <link rel="stylesheet" href="/calm-dawn-1to1.css">
   <link rel="stylesheet" href="/xingzhixing.css">
-  <script type="module" src="js/shellBootstrap.js"></script>
   </head>
   <body class="dashboard-shell" data-theme="fusion" data-brand="xingzhixing">
 
@@ -225,7 +237,7 @@
     </div>
   </div>
   <a href="workbench.html" class="nav-item" data-nav="home"><i class="fas fa-home"></i>首页</a>
-  <a href="workbench.html" class="nav-item"><i class="fas fa-list-check"></i>今日计划</a>
+  <a href="today.html" class="nav-item"><i class="fas fa-list-check"></i>今日计划</a>
   <a href="workbench.html?view=course" class="nav-item" data-nav="course"><i class="fas fa-graduation-cap"></i>课程</a>
   <a href="goals.html" class="nav-item" data-nav="goals"><i class="fas fa-bullseye"></i>目标</a>
   <a href="stats.html" class="nav-item active" data-nav="stats"><i class="fas fa-chart-line"></i>统计</a>
@@ -243,6 +255,7 @@
     <div class="wb-motto">知而后行<br>行而致远</div>
   </div>
 </aside>
+<script src="js/shellBootstrap.js"></script>
 
 <!-- ===== 主内容 ===== -->
 <main class="main">
@@ -338,6 +351,20 @@
       <ul class="cg-insight-list" id="reportList"></ul>
     </section>
 
+    <!-- 成长时间线（Phase 21.3）：runtime projection，只读展示 -->
+    <section class="cg-insight stats-insight" id="secTimeline" aria-labelledby="timelineTitle">
+      <div class="cg-insight-head">
+        <span class="cg-insight-ico"><i class="fas fa-road"></i></span>
+        <div class="cg-insight-title">
+          <h3 id="timelineTitle">成长轨迹</h3>
+          <p id="timelineHint">你已经走过的成长节点</p>
+        </div>
+      </div>
+      <div id="timelineNarrative" class="timeline-narrative" aria-label="成长阶段"></div>
+      <ul class="cg-insight-list" id="timelineList"></ul>
+      <p class="cg-insight-empty" id="timelineEmpty" hidden>完成更多记录后，这里会展示你的成长轨迹</p>
+    </section>
+
     <!-- 成长轨迹（Phase 19.4）：用户可查看 AI 长期记忆，显式更新 -->
     <section class="cg-insight stats-insight" id="secMemory" aria-labelledby="memoryTitle">
       <div class="cg-insight-head">
@@ -347,9 +374,13 @@
           <p id="memoryHint">这些是 AI 基于成长数据记住的长期规律</p>
         </div>
       </div>
+      <div id="memoryCandidates" hidden>
+        <p class="cg-insight-empty">AI发现可能的成长模式</p>
+        <ul class="cg-insight-list" id="memoryCandidateList"></ul>
+      </div>
       <ul class="cg-insight-list" id="memoryList"></ul>
       <p class="cg-insight-empty" id="memoryEmpty" hidden>暂时还没有足够的长期记忆。继续记录成长后，这里会显示你的习惯、里程碑和偏好。</p>
-      <button type="button" class="btn btn-sm btn-primary" id="memoryRefreshBtn">更新成长记忆</button>
+      <button type="button" class="btn btn-sm btn-primary" id="memoryRefreshBtn">扫描成长候选</button>
     </section>
 
     <!-- 趋势 -->
