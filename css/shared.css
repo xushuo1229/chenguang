@@ -40,14 +40,6 @@ body::before {
 a { color: var(--brand-amber); }
 a:hover { color: var(--brand-amber-strong); }
 
-/* 启动期只隐藏依赖字体或 JS 用户数据的页壳，避免 MPA 首帧跳变。 */
-html.app-booting .sidebar .nav-item i,
-html.app-booting .sidebar .wb-user,
-html.app-booting #welcomeName,
-html.app-booting #rangeLabel {
-  visibility: hidden;
-}
-
 /* ===== 按钮系统 ===== */
 .btn {
   display: inline-flex;

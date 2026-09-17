@@ -114,7 +114,7 @@ test('Stats 在真实首帧后再计算统计', () => {
 
 test('侧边栏用户信息在页面主逻辑前初始化', () => {
   [aiHtml, goalsHtml, statsHtml, workbenchHtml].forEach((html) => {
-    const bootstrapIndex = html.indexOf('<script type="module" src="js/shellBootstrap.js"></script>');
+    const bootstrapIndex = html.indexOf('<script src="js/shellBootstrap.js"></script>');
     const chromeIndex = html.indexOf('<script type="module" src="js/userChrome.js"></script>');
     const pageIndex = html.search(/<script type="module" src="pages\/(workbench|goals|stats|ai)\.js"><\/script>/);
     expect(bootstrapIndex).toBeGreaterThan(-1);

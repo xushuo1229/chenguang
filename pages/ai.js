@@ -7,8 +7,10 @@ import '../js/sync.js';
 import Analytics from '../js/analytics.js';
 import CGAIContext from '../js/aiContext.js';
 import GrowthIntelligence from '../js/growthIntelligence.js';
+import GrowthMemory from '../js/growthMemory.js';
 import CoachMemory from '../js/coachMemory.js';
 import GrowthReport from '../js/growthReport.js';
+import { formatEvidence, formatLifecycle, formatMemoryType } from '../js/ui/memoryCopy.js';
 import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
 
 // ====================================================================
@@ -70,6 +72,7 @@ function showDash() { hideAll(); if (dashEl) dashEl.hidden = false; }
 var currentContext = null;
 var currentSnapshot = null;
 var currentCoachContext = null;
+var suppressNextMemoryUpdate = false;
 
 function buildContext(store) {
   store = (store && typeof store === 'object') ? store : Store.get();
@@ -201,6 +204,8 @@ function renderPanels(snap, todayStats) {
     return { severity: 'high', text: proposal.title + '：' + proposal.why };
   }));
   renderCoachMemory();
+  renderGrowthMemory();
+  renderMemoryActivation();
   renderWeeklyReview(weekly);
 }
 
@@ -219,6 +224,59 @@ function renderCoachMemory() {
   renderInsightList($('#memoryList'), coach.facts.map(function (fact) {
     return { type: 'opportunity', severity: 'positive', reason: fact.statement };
   }), '暂无已验证的长期策略经验。连续采纳并完成建议后，这里会积累 Coach Memory。');
+}
+
+function renderGrowthMemory() {
+  var confirmed = currentContext && currentContext.memory && currentContext.memory.confirmed;
+  renderInsightList($('#confirmedMemoryList'), (confirmed || []).map(function (item) {
+    var lifecycle = formatLifecycle(item.lifecycle);
+    return { type: 'strong_habit', severity: 'positive', reason: formatMemoryType(item.type) + '：' + item.content + (lifecycle ? ' · ' + lifecycle : '') };
+  }), '暂无确认的长期规律。确认候选后，这里会显示你保留的成长规律。');
+}
+
+function evidenceText(candidate) {
+  return formatEvidence(candidate && candidate.evidence);
+}
+
+function renderMemoryActivation() {
+  var card = $('#cardMemoryActivation');
+  var list = $('#memoryActivationList');
+  if (!card || !list) return;
+  var candidates = currentContext && currentContext.memory &&
+    Array.isArray(currentContext.memory.candidates) ? currentContext.memory.candidates.slice(0, 2) : [];
+  card.hidden = !candidates.length;
+  list.innerHTML = '';
+
+  candidates.forEach(function (candidate) {
+    var item = el('li', 'activation-item');
+    item.appendChild(el('p', 'activation-title', candidate.content));
+    item.appendChild(el('p', 'activation-semantic', formatMemoryType(candidate.type) + '：数据显示可能趋势，尚未确认。'));
+    if (candidate.evidence && candidate.evidence.length) {
+      item.appendChild(el('p', 'activation-evidence', '依据：' + evidenceText(candidate)));
+    }
+    var actions = el('div', 'activation-actions');
+    var confirm = el('button', 'btn btn-sm', '确认');
+    confirm.type = 'button';
+    confirm.setAttribute('data-memory-action', 'confirm');
+    confirm.setAttribute('data-memory-id', candidate.id);
+    var reject = el('button', 'btn btn-sm', '先不确认');
+    reject.type = 'button';
+    reject.setAttribute('data-memory-action', 'reject');
+    reject.setAttribute('data-memory-id', candidate.id);
+    actions.appendChild(confirm);
+    actions.appendChild(reject);
+    item.appendChild(actions);
+    list.appendChild(item);
+  });
+}
+
+function refreshMemoryProjection(memory) {
+  if (!currentContext || !memory) return;
+  currentContext.memory = GrowthMemory.buildContextMemory(memory, {
+    today: currentContext.today || todayStr()
+  });
+  renderGrowthMemory();
+  renderMemoryActivation();
 }
 
 function renderWeeklyReview(review) {
@@ -534,6 +592,25 @@ function setupEvents() {
   var retry = $('#aiRetry'); if (retry) retry.addEventListener('click', loadAll);
   var go = $('#aiGoWorkbench'); if (go) go.addEventListener('click', function () { window.location.href = 'workbench.html'; });
 
+  var activationList = $('#memoryActivationList');
+  if (activationList) activationList.addEventListener('click', function (event) {
+    var button = event.target.closest('[data-memory-action]');
+    if (!button || !currentContext) return;
+    var action = button.getAttribute('data-memory-action');
+    var id = button.getAttribute('data-memory-id');
+    var transition = action === 'confirm' ? GrowthMemory.confirmCandidate : GrowthMemory.rejectCandidate;
+    var memory = transition(Store, id, { today: currentContext.today || todayStr() });
+    if (!memory) {
+      toast('这次没有保存成功，可以稍后再试。', 'error');
+      return;
+    }
+    var persisted = (memory.candidates || []).find(function (item) { return item.id === id; });
+    suppressNextMemoryUpdate = !!persisted &&
+      persisted.status === (action === 'confirm' ? 'confirmed' : 'rejected');
+    refreshMemoryProjection(memory);
+    toast(action === 'confirm' ? '已记录这条成长规律。之后我会结合它提供建议。' : '已暂不记录。它不会进入长期规律。', 'success');
+  });
+
   // 移动端侧边栏开关
   var mBtn = $('#mobileMenuBtn');
   if (mBtn) mBtn.addEventListener('click', function () { document.body.classList.toggle('sidebar-open'); });
@@ -551,6 +628,10 @@ function setupEvents() {
   });
 
   window.addEventListener('chenguang:update', function () {
+    if (suppressNextMemoryUpdate) {
+      suppressNextMemoryUpdate = false;
+      return;
+    }
     // 数据同步后刷新画像（保持只读，不影响 revision）
     loadAll();
   });

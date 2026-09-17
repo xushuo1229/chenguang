@@ -9,6 +9,8 @@ import Analytics, { isValidDateStr } from '../js/analytics.js';
 import AIContext from '../js/aiContext.js';
 import GrowthReport from '../js/growthReport.js';
 import GrowthMemory from '../js/growthMemory.js';
+import GrowthTimeline from '../js/growthTimeline.js';
+import { formatConfidence, formatEvidence, formatLifecycle, formatMemoryType } from '../js/ui/memoryCopy.js';
 import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
 
 // ====================================================================
@@ -491,6 +493,62 @@ function addPB(body, label, valueHtml, sub) {
   body.appendChild(el);
 }
 
+function renderTimeline(vm, personalBest) {
+  var list = $('#timelineList');
+  var empty = $('#timelineEmpty');
+  var narrativeBox = $('#timelineNarrative');
+  if (!list || !empty || !narrativeBox) return;
+
+  var projection = GrowthTimeline.buildTimeline({
+    today: reportContext && reportContext.today,
+    growthState: reportContext && reportContext.growthState,
+    personalBest: personalBest,
+    courseSummary: vm && vm.course
+  });
+
+  list.innerHTML = '';
+  projection.timeline.forEach(function (item) {
+    var row = document.createElement('li');
+    row.className = 'dot-teal';
+    row.setAttribute('data-source', item.source);
+
+    var title = document.createElement('strong');
+    title.textContent = item.title;
+    var description = document.createElement('span');
+    description.textContent = item.description;
+    var time = document.createElement('small');
+    time.textContent = '截至 ' + item.asOf;
+
+    row.appendChild(title);
+    row.appendChild(description);
+    row.appendChild(time);
+    list.appendChild(row);
+  });
+  var narrative = GrowthTimeline.buildNarrative(projection);
+  narrativeBox.innerHTML = '';
+  narrative.stages.forEach(function (stage) {
+    var stageEl = document.createElement('div');
+    stageEl.className = 'timeline-stage';
+    stageEl.setAttribute('data-stage', stage.id);
+
+    var label = document.createElement('strong');
+    label.textContent = stage.label;
+    var meaning = document.createElement('span');
+    meaning.textContent = stage.meaning;
+
+    stageEl.appendChild(label);
+    stageEl.appendChild(meaning);
+    narrativeBox.appendChild(stageEl);
+  });
+  if (narrative.summary) {
+    var summary = document.createElement('p');
+    summary.className = 'timeline-stage-summary';
+    summary.textContent = narrative.summary;
+    narrativeBox.appendChild(summary);
+  }
+  empty.hidden = list.children.length > 0;
+}
+
 /* ====================================================================
    热力图（年度 · GitHub 风格）
    ==================================================================== */
@@ -593,25 +651,61 @@ function renderReport() {
 function renderMemory(memory) {
   var listEl = $('#memoryList');
   var emptyEl = $('#memoryEmpty');
-  if (!listEl || !emptyEl) return;
+  var candidateBox = $('#memoryCandidates');
+  var candidateList = $('#memoryCandidateList');
+  if (!listEl || !emptyEl || !candidateBox || !candidateList) return;
   var source = memory || (reportContext && reportContext.memory) || {};
   var groups = [
-    ['优势', source.insights],
-    ['习惯', source.patterns],
-    ['里程碑', source.milestones],
-    ['偏好', source.preferences]
+    [formatMemoryType('Habit'), source.confirmed],
   ];
   listEl.innerHTML = '';
   groups.forEach(function (group) {
     var items = Array.isArray(group[1]) ? group[1] : [];
     items.forEach(function (item) {
-      if (!item || !item.statement) return;
+      if (!item || !item.content) return;
       var line = document.createElement('li');
-      line.textContent = group[0] + '：' + item.statement;
+      var lifecycle = formatLifecycle(item.lifecycle);
+      line.textContent = formatMemoryType(item.type) + '：' + item.content + (lifecycle ? ' · ' + lifecycle : '');
       listEl.appendChild(line);
     });
   });
   emptyEl.hidden = listEl.children.length > 0;
+
+  candidateList.innerHTML = '';
+  var candidates = Array.isArray(source.candidates) ? source.candidates : [];
+  candidates.forEach(function (candidate) {
+    if (!candidate || !candidate.content) return;
+    var line = document.createElement('li');
+    var text = document.createElement('div');
+    text.textContent = candidate.content;
+    line.appendChild(text);
+
+    var evidence = Array.isArray(candidate.evidence) ? candidate.evidence : [];
+    if (evidence.length) {
+      var basis = document.createElement('div');
+      basis.textContent = '依据：' + formatEvidence(evidence) + ' · ' + formatConfidence(candidate);
+      line.appendChild(basis);
+    }
+
+    var actions = document.createElement('div');
+    var confirm = document.createElement('button');
+    confirm.type = 'button';
+    confirm.className = 'btn btn-sm';
+    confirm.textContent = '确认';
+    confirm.setAttribute('data-memory-action', 'confirm');
+    confirm.setAttribute('data-memory-id', candidate.id);
+    var reject = document.createElement('button');
+    reject.type = 'button';
+    reject.className = 'btn btn-sm';
+    reject.textContent = '忽略';
+    reject.setAttribute('data-memory-action', 'reject');
+    reject.setAttribute('data-memory-id', candidate.id);
+    actions.appendChild(confirm);
+    actions.appendChild(reject);
+    line.appendChild(actions);
+    candidateList.appendChild(line);
+  });
+  candidateBox.hidden = candidateList.children.length === 0;
 }
 
 function nextPaint() {
@@ -644,7 +738,9 @@ function render(vm, snap, options) {
   renderFocus($('#focusBody'), vm);
   renderTodo($('#todoBody'), vm);
   renderCourse($('#courseBody'), $('#courseTypes'), vm);
-  renderPersonalBest($('#personalBestBody'), Analytics.getPersonalBest(snap));
+  var personalBest = Analytics.getPersonalBest(snap);
+  renderPersonalBest($('#personalBestBody'), personalBest);
+  renderTimeline(vm, personalBest);
 
   if (drawCharts) {
     renderTrend($('#trendGrid'), vm);
@@ -770,7 +866,36 @@ function setupEvents() {
   var memoryRefresh = $('#memoryRefreshBtn');
   if (memoryRefresh) memoryRefresh.addEventListener('click', function () {
     if (!reportContext) return;
-    renderMemory(GrowthMemory.updateMemory(Store, reportContext, { today: reportContext.today }));
+    var candidateSource = {
+      overview: reportContext.overview,
+      growth: reportContext.growth,
+      growthState: { goalState: reportContext.growthState && reportContext.growthState.goalState }
+    };
+    var memory = GrowthMemory.updateMemory(Store, candidateSource, { today: reportContext.today });
+    renderMemory(GrowthMemory.buildContextMemory(memory));
+  });
+  var candidateList = $('#memoryCandidateList');
+  if (candidateList) candidateList.addEventListener('click', function (event) {
+    var button = event.target.closest('[data-memory-action]');
+    if (!button || !reportContext) return;
+    var action = button.getAttribute('data-memory-action');
+    var id = button.getAttribute('data-memory-id');
+    var transition = action === 'confirm' ? GrowthMemory.confirmCandidate : GrowthMemory.rejectCandidate;
+    var revisionBefore = Store.getRevision();
+    var memory;
+    try {
+      memory = transition(Store, id, { today: reportContext.today });
+    } catch (error) {
+      memory = null;
+    }
+    if (memory && Store.getRevision() > revisionBefore) {
+      renderMemory(GrowthMemory.buildContextMemory(memory));
+      toast(action === 'confirm'
+        ? '已记录这条成长规律。之后我会结合它提供建议。'
+        : '已暂不记录。它不会进入长期规律。', 'success');
+    } else {
+      toast('这次没有保存成功，可以稍后再试。', 'error');
+    }
   });
   var tabsEl = $('.range-tabs');
   if (tabsEl) tabsEl.addEventListener('keydown', function (e) {

@@ -323,12 +323,90 @@ test('Context.memory 注入长期记忆，同时保留旧字段且只读', async
   const ctx = AIContext.buildContext(data, { today: TODAY });
 
   expect(ctx.memory).toBeTruthy();
-  expect(ctx.memory.patterns.some((item) => item.id === 'pattern:test')).toBe(true);
+  expect(ctx.memory.confirmed.some((item) => item.id === 'pattern:test')).toBe(true);
+  expect(Array.isArray(ctx.memory.insights)).toBe(true);
+  expect(Array.isArray(ctx.memory.relations)).toBe(true);
+  expect(ctx.memory.insights.some((item) => item.sourceIds && item.sourceIds.includes('pattern:test'))).toBe(true);
   expect(ctx.growth).toBeTruthy();
   expect(ctx.growthState).toBeTruthy();
   expect(ctx.coach).toBeTruthy();
   expect(ctx.report).toBeTruthy();
-  expect(ctx.memory.patterns[0]).not.toHaveProperty('weight');
+  expect(ctx.memory.confirmed[0]).not.toHaveProperty('weight');
   expect(store.getRevision()).toBe(revision);
+  expect(JSON.stringify(store.get())).toBe(before);
+});
+
+test('Context.dailyFeedback 是 runtime-only 短期反馈且超预算时优先裁剪', async () => {
+  const { store, AIContext } = await boot(seedData());
+  const before = JSON.stringify(store.get());
+  const revision = store.getRevision();
+  const ctx = AIContext.buildContext(store.get(), { today: TODAY });
+
+  expect(ctx.dailyFeedback).toBeTruthy();
+  expect(typeof ctx.dailyFeedback.summary).toBe('string');
+  expect(Array.isArray(ctx.dailyFeedback.highlights)).toBe(true);
+  expect(Array.isArray(ctx.dailyFeedback.changes)).toBe(true);
+  expect(Array.isArray(ctx.dailyFeedback.nextActions)).toBe(true);
+  expect(JSON.stringify(store.get())).toBe(before);
+  expect(store.getRevision()).toBe(revision);
+
+  const trimmed = AIContext.trimContextToBudget(ctx, 100);
+  expect(trimmed.dailyFeedback).toBeNull();
+  expect(trimmed.today).toBe(TODAY);
+});
+
+test('Context.memory 区分 confirmed 与 pending candidate，并过滤 rejected', async () => {
+  const { store, AIContext } = await boot(seedData());
+  const data = store.get();
+  data.user.memory = {
+    version: '2.1',
+    updatedAt: TODAY,
+    patterns: [],
+    milestones: [],
+    preferences: [],
+    insights: [],
+    candidates: [
+      {
+        id: 'candidate:pending',
+        type: 'Habit',
+        content: '近期专注节奏可能正在形成。',
+        confidence: 0.5,
+        status: 'pending',
+        evidence: [{ source: 'GrowthIntelligence', metric: 'focus', value: 32, timestamp: TODAY }],
+        createdAt: TODAY,
+        updatedAt: TODAY,
+        expiresAt: dateStr(30)
+      },
+      {
+        id: 'candidate:expired',
+        type: 'Habit',
+        content: '过期趋势不应进入 Context。',
+        confidence: 0.5,
+        status: 'pending',
+        evidence: [{ source: 'Analytics', metric: 'focus', value: 1, timestamp: dateStr(-90) }],
+        createdAt: dateStr(-90),
+        updatedAt: dateStr(-90),
+        expiresAt: dateStr(30)
+      },
+      {
+        id: 'candidate:rejected',
+        type: 'Risk',
+        content: '近期学习节奏可能下降。',
+        confidence: 0.5,
+        status: 'rejected',
+        evidence: [{ source: 'GrowthIntelligence', metric: 'study', value: -20, timestamp: TODAY }],
+        createdAt: TODAY,
+        updatedAt: TODAY,
+        expiresAt: dateStr(30)
+      }
+    ]
+  };
+  const before = JSON.stringify(store.get());
+  const ctx = AIContext.buildContext(data, { today: TODAY });
+
+  expect(Array.isArray(ctx.memory.confirmed)).toBe(true);
+  expect(ctx.memory.candidates.some((item) => item.id === 'candidate:pending' && item.status === 'pending')).toBe(true);
+  expect(ctx.memory.candidates.some((item) => item.id === 'candidate:expired')).toBe(false);
+  expect(JSON.stringify(ctx.memory)).not.toContain('candidate:rejected');
   expect(JSON.stringify(store.get())).toBe(before);
 });

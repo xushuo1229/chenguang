@@ -44,10 +44,10 @@ describe('dashboard render stability', () => {
     expect(statsHtml).not.toContain('js/navigation.js');
   });
 
-  it('keeps a stable boot shell without route animations', () => {
+  it('uses synchronous shell bootstrap without app-booting', () => {
     for (const html of [...bootPages, statsHtml]) {
-      expect(html).toContain('class="app-booting"');
-      expect(html).toContain('<script type="module" src="js/shellBootstrap.js"></script>');
+      expect(html).not.toContain('app-booting');
+      expect(html).toContain('<script src="js/shellBootstrap.js"></script>');
       expect(html).not.toContain('@view-transition');
     }
   });
@@ -59,13 +59,12 @@ describe('dashboard render stability', () => {
     expect(bootPages[1]).toContain(preload);
   });
 
-  it('only hides unstable chrome and removes boot state after user render', () => {
-    expect(sharedCss).toContain('html.app-booting .sidebar .nav-item i');
-    expect(sharedCss).toContain('html.app-booting .sidebar .wb-user');
+  it('does not use app-booting visual hiding', () => {
+    expect(sharedCss).not.toContain('app-booting');
 
     const script = readFileSync('js/userChrome.js', 'utf8');
-    expect(script).toContain("classList.remove('app-booting')");
-    expect(script).toContain('document.fonts.load');
+    expect(script).not.toContain("classList.remove('app-booting')");
+    expect(script).not.toContain('document.fonts.load');
     expect(script).toContain("nameEl.textContent !== name");
   });
 

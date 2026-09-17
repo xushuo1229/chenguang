@@ -1,6 +1,7 @@
 /**
  * 知行 · Shell Bootstrap
- * 只在首帧前读取既有登录用户镜像并稳定页面壳，不读取业务数据、不触发网络。
+ * 同步脚本，在 sidebar DOM 就绪后立即执行，确保首帧即为最终 shell。
+ * 不读取业务数据、不触发网络、不等待 Promise / DOMContentLoaded。
  */
 (function () {
   'use strict';
@@ -63,11 +64,7 @@
     if (rangeLabel) setShellText(rangeLabel, weekLabel());
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', renderShell);
-  } else {
-    renderShell();
-  }
+  renderShell();
 
   globalThis.cgShellBootstrap = { render: renderShell };
 })();

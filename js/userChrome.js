@@ -27,18 +27,6 @@
     return page.toLowerCase() === 'today.html';
   }
 
-  function revealChrome() {
-    document.documentElement.classList.remove('app-booting');
-  }
-
-  function revealAfterChromeIsReady() {
-    var timeoutId = setTimeout(revealChrome, 200);
-    document.fonts.load('900 1em "Font Awesome 6 Free"').finally(function () {
-      clearTimeout(timeoutId);
-      revealChrome();
-    });
-  }
-
   document.addEventListener('DOMContentLoaded', function () {
     render();
     if (isTodayPage()) {
@@ -48,7 +36,6 @@
           console.warn('[TodayReflection] mount failed:', error && error.message ? error.message : error);
         });
     }
-    revealAfterChromeIsReady();
   });
   globalThis.addEventListener('chenguang:update', render);
   globalThis.cgRenderUserChrome = render;

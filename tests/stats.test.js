@@ -157,6 +157,24 @@ test('默认加载（本周）：页面可初始化，各区块渲染，图/热�
   expect(charts.length).toBeGreaterThan(0);
 });
 
+test('成长轨迹：以 runtime projection 展示有界成长节点', async () => {
+  await boot(seedData());
+  const list = document.getElementById('timelineList');
+  const empty = document.getElementById('timelineEmpty');
+  const narrative = document.getElementById('timelineNarrative');
+
+  expect(list).toBeTruthy();
+  expect(narrative).toBeTruthy();
+  expect(narrative.children.length).toBeGreaterThan(0);
+  expect(narrative.textContent).toContain('成长阶段');
+  expect(list.children.length).toBeGreaterThan(0);
+  expect(list.children.length).toBeLessThanOrEqual(8);
+  expect(empty.hidden).toBe(true);
+  expect(list.textContent).toContain('截至');
+  expect(list.textContent).not.toContain('API_KEY');
+  expect(list.textContent).not.toContain('Analytics focus metric');
+});
+
 /* ==================== 时间切换 ==================== */
 
 test('切换「今日」：标签更新、图表重建、概览刷新', async () => {
@@ -191,18 +209,39 @@ test('成长轨迹：透明展示记忆，显式更新一次持久化', async ()
   await boot(data);
   const baseline = JSON.parse(localStorage.getItem('chenguangData'));
   expect(baseline._meta.revision).toBe(7);
-  expect(document.getElementById('memoryList').children.length).toBeGreaterThan(0);
+  expect(document.getElementById('memoryCandidateList').children.length).toBeGreaterThan(0);
 
   document.getElementById('memoryRefreshBtn').click();
   await settle(); await settle();
   let saved = JSON.parse(localStorage.getItem('chenguangData'));
   expect(saved._meta.revision).toBe(8);
-  expect(saved.user.memory.patterns.length).toBeGreaterThan(0);
+  expect(saved.user.memory.candidates.length).toBeGreaterThan(0);
+  expect(saved.user.memory.candidates.every((item) => item.status === 'pending')).toBe(true);
+
+  const confirmButton = document.querySelector('#memoryCandidateList [data-memory-action="confirm"]');
+  confirmButton.click();
+  await settle(); await settle();
+  saved = JSON.parse(localStorage.getItem('chenguangData'));
+  const confirmedId = confirmButton.getAttribute('data-memory-id');
+  expect(saved.user.memory.candidates.find((item) => item.id === confirmedId).status).toBe('confirmed');
+  expect(document.body.textContent).toContain('已记录这条成长规律');
+  expect(JSON.parse(JSON.stringify(saved.user.memory)).candidates.filter((item) => item.id === confirmedId)).toHaveLength(1);
+
+  const ignoreButton = document.querySelector('#memoryCandidateList [data-memory-action="reject"]');
+  if (ignoreButton) {
+    const beforeRevision = saved._meta.revision;
+    ignoreButton.click();
+    await settle(); await settle();
+    saved = JSON.parse(localStorage.getItem('chenguangData'));
+    const rejectedId = ignoreButton.getAttribute('data-memory-id');
+    expect(saved._meta.revision).toBe(beforeRevision + 1);
+    expect(saved.user.memory.candidates.find((item) => item.id === rejectedId).status).toBe('rejected');
+  }
 
   document.getElementById('memoryRefreshBtn').click();
   await settle(); await settle();
   saved = JSON.parse(localStorage.getItem('chenguangData'));
-  expect(saved._meta.revision).toBe(8);
+  expect(saved._meta.revision).toBe(ignoreButton ? 10 : 9);
 });
 
 test('切换「本周」：刷新不崩，概览为周口径', async () => {

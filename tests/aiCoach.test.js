@@ -124,22 +124,64 @@ test('AI Coach 模块没有数据写入或直接数据访问', () => {
   expect(aiCoachSrc).not.toMatch(/\.setItem\(|\.removeItem\(|fetch\(/);
 });
 
-test('AI Coach 基于长期记忆生成亮点与挑战，不修改输入', () => {
+test('AI Coach 只读取 confirmed Memory，不读取 pending candidate', () => {
   const context = normalContext();
   context.memory = {
-    patterns: [{ id: 'pattern:study_rising', kind: 'habit_pattern', statement: '过去 90 天学习节奏保持长期改善。', confidence: 'medium' }],
-    milestones: [{ id: 'milestone:streak_7', kind: 'growth_milestone', statement: '连续成长 7 天。', confidence: 'high' }],
-    preferences: [],
-    insights: [{ id: 'insight:learning', kind: 'growth_insight', statement: '过去 30 天学习动力持续积累。', confidence: 'medium' }]
+    confirmed: [
+      { id: 'pattern:study_rising', type: 'Habit', content: '过去 90 天学习节奏保持长期改善。', confidence: 0.5, evidence: [{ source: 'GrowthIntelligence', metric: 'study', value: 25, timestamp: TODAY }] },
+      { id: 'milestone:streak_7', type: 'Achievement', content: '连续成长 7 天。', confidence: 0.9, evidence: [{ source: 'Analytics', metric: 'current_streak', value: 7, timestamp: TODAY }] },
+      { id: 'insight:learning', type: 'Pattern', content: '过去 30 天学习动力持续积累。', confidence: 0.5, evidence: [{ source: 'GrowthIntelligence', metric: 'study', value: 20, timestamp: TODAY }] }
+    ],
+    candidates: [{ id: 'candidate:pending', type: 'Habit', content: '未确认习惯。', confidence: 0.3, status: 'pending', evidence: [] }]
   };
   const before = JSON.stringify(context);
   const coach = AICoach.buildCoachContext(context);
   expect(coach.insights.map((item) => item.message).join(' ')).toContain('学习节奏');
+  expect(coach.insights.map((item) => item.message).join(' ')).not.toContain('未确认习惯');
   expect(coach.warnings.some((item) => item.type === 'memory_challenge')).toBe(false);
 
-  context.memory.patterns.push({ id: 'pattern:goal_break_declining', kind: 'habit_pattern', statement: '长期目标容易在执行中段中断。', confidence: 'medium' });
+  context.memory.confirmed.push({ id: 'pattern:goal_break_declining', type: 'Risk', content: '长期目标容易在执行中段中断。', confidence: 0.5, evidence: [{ source: 'GrowthIntelligence', metric: 'goal', value: -20, timestamp: TODAY }] });
   const mutatedSnapshot = JSON.stringify(context);
   const challengeCoach = AICoach.buildCoachContext(context);
   expect(challengeCoach.warnings.map((item) => item.message).join(' ')).toContain('容易在执行中段中断');
   expect(JSON.stringify(context)).toBe(mutatedSnapshot);
+});
+
+test('AI Coach 优先使用 Context Insight，并在缺失时 fallback confirmed', () => {
+  const context = normalContext();
+  context.memory = {
+    insights: [{
+      id: 'memory-insight:test',
+      type: 'MemoryInsight',
+      content: '长期记录显示学习节奏优先级最高。',
+      confidence: 0.8,
+      sourceIds: ['pattern:test'],
+      evidence: [{ source: 'GrowthIntelligence', metric: 'study', value: 25, timestamp: TODAY }]
+    }],
+    confirmed: [{ id: 'pattern:test', type: 'Habit', content: 'confirmed fallback should not win.', confidence: 0.8, evidence: [] }],
+    candidates: [{ id: 'candidate:pending', type: 'Habit', content: 'pending trend.', confidence: 0.5, status: 'pending', evidence: [] }]
+  };
+  const coach = AICoach.buildCoachContext(context);
+
+  expect(coach.insights[0].message).toContain('长期记录显示');
+  expect(coach.insights[0].message).not.toContain('confirmed fallback');
+  expect(coach.insights.map((item) => item.message).join(' ')).not.toContain('pending trend');
+});
+
+test('AI Coach 将 dailyFeedback 作为短期上下文，不并入长期事实', () => {
+  const context = normalContext();
+  context.dailyFeedback = {
+    summary: '根据今天记录，完成了一次专注。',
+    highlights: ['今天记录了专注 25 分钟。'],
+    changes: [{ metric: 'focus', direction: 'up', description: '最近记录显示专注投入上升。' }],
+    nextActions: ['可以尝试继续保持一次小专注。']
+  };
+  const coach = AICoach.buildCoachContext(context);
+
+  expect(coach.dailyFeedback.summary).toContain('根据今天记录');
+  expect(coach.dailyFeedback.scope).toBe('daily');
+  expect(JSON.stringify(coach.insights)).not.toContain('根据今天记录');
+
+  const fallback = AICoach.buildCoachContext(normalContext());
+  expect(fallback.dailyFeedback).toBeNull();
 });

@@ -120,7 +120,7 @@ describe('validateHistory', () => {
 describe('promptBuilder', () => {
   test('System Prompt 含教练人设、事实边界、注入防护、只读声明', () => {
     const p = promptBuilder.buildSystemPrompt({ today: '2026-09-12' });
-    for (const kw of ['知行 AI 教练', '长期成长教练', '2026-09-12', '数据事实边界', '不可信数据', '只读铁律', '不能创建/修改/删除']) {
+    for (const kw of ['知行 AI 教练', '长期成长教练', '2026-09-12', '数据事实边界', '不可信数据', '只读铁律', '不能创建/修改/删除', '用户确认长期规律', '未确认可能趋势']) {
       assert.ok(p.includes(kw), 'System Prompt 应包含：' + kw);
     }
   });

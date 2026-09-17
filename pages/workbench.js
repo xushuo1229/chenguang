@@ -40,8 +40,12 @@ import CourseSchedule from '../js/courseSchedule.js';
 // 统计引擎（Phase 10）：成长面板的连续打卡复用唯一事实来源（Phase 15 修复）
 import Analytics from '../js/analytics.js';
 import GrowthIntelligence from '../js/growthIntelligence.js';
+import GrowthTimeline from '../js/growthTimeline.js';
 import AIActions from '../js/aiActions.js';
 import CoachMemory from '../js/coachMemory.js';
+import { buildDailyFeedback } from '../js/dailyFeedback.js';
+import RetentionContext from '../js/retentionContext.js';
+import GrowthMemory from '../js/growthMemory.js';
 import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
 
   // ============================================================
@@ -59,6 +63,10 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
     // Store 是全局数据存储对象 CGStore 的引用
     // 所有数据（课程、书籍、运动、待办、打卡记录等）都通过 Store 来读写
     var Store = window.CGStore;
+
+    function notifyRecordSaved(message) {
+      toast(message + ' 今日成长反馈已更新。', 'success');
+    }
 
     /* ---------- 弹窗位置修复 ---------- */
     // 页面早期把所有弹窗写在了「首页视图」里面：一旦切到课程/管理/我的视图，
@@ -656,6 +664,64 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
 
     var dismissedProposals = [];
 
+
+    function renderRetention(snapshot, brief) {
+      var today = brief && brief.date ? brief.date : undefined;
+      var snap = snapshot && typeof snapshot === 'object' ? snapshot : {};
+      var welcomeEl = document.getElementById('retentionWelcome');
+      var welcomeTitle = document.getElementById('retentionWelcomeTitle');
+      var welcomeList = document.getElementById('retentionWelcomeRecords');
+      var welcomeMsg = document.getElementById('retentionWelcomeMessage');
+      if (welcomeEl && welcomeTitle && welcomeList && welcomeMsg) {
+        var wb = RetentionContext.buildWelcomeBack(snap, { today: today });
+        if (wb && wb.records.length) {
+          welcomeEl.hidden = false;
+          welcomeTitle.textContent = '欢迎回来';
+          welcomeList.textContent = '';
+          wb.records.forEach(function (record) {
+            var li = document.createElement('li');
+            li.textContent = record;
+            welcomeList.appendChild(li);
+          });
+          welcomeMsg.textContent = wb.message;
+        } else {
+          welcomeEl.hidden = true;
+          welcomeTitle.textContent = '';
+          welcomeList.textContent = '';
+          welcomeMsg.textContent = '';
+        }
+      }
+      var streakEl = document.getElementById('retentionStreak');
+      var streakMsg = document.getElementById('retentionStreakMessage');
+      if (streakEl && streakMsg) {
+        var sr = RetentionContext.buildStreakReminder(snap, { today: today });
+        if (sr) {
+          streakEl.hidden = false;
+          streakMsg.textContent = sr.message;
+        } else {
+          streakEl.hidden = true;
+          streakMsg.textContent = '';
+        }
+      }
+      var candidateEl = document.getElementById('retentionCandidate');
+      var candidateContent = document.getElementById('retentionCandidateContent');
+      var candidateEvidence = document.getElementById('retentionCandidateEvidence');
+      if (candidateEl && candidateContent && candidateEvidence) {
+        var memory = snap.memory || null;
+        var candidate = RetentionContext.getRetentionCandidate(memory);
+        if (candidate) {
+          candidateEl.hidden = false;
+          candidateEl.setAttribute('data-candidate-id', candidate.id);
+          candidateContent.textContent = candidate.content;
+          candidateEvidence.textContent = candidate.evidence.length ? '依据：' + candidate.evidence.join('，') : '';
+        } else {
+          candidateEl.hidden = true;
+          candidateEl.removeAttribute('data-candidate-id');
+          candidateContent.textContent = '';
+          candidateEvidence.textContent = '';
+        }
+      }
+    }
     function renderGrowthBrief(snapshot) {
       var container = document.getElementById('growthBriefCard');
       if (!container) return;
@@ -669,6 +735,74 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
       var dateEl = document.getElementById('growthBriefDate');
       var changesEl = document.getElementById('growthBriefChanges');
       var actionsEl = document.getElementById('growthBriefActions');
+      var stageEl = document.getElementById('growthBriefStage');
+      var stageLabel = document.getElementById('growthBriefStageLabel');
+      var stageDescription = document.getElementById('growthBriefStageDescription');
+      var feedback = buildDailyFeedback(snapshot, {
+        today: brief.date,
+        todaySummary: brief.todaySummary,
+        growthState: brief.growthState
+      });
+      var feedbackEl = document.getElementById('growthBriefFeedback');
+      if (feedbackEl) {
+        feedbackEl.innerHTML = '';
+        var summaryTitle = document.createElement('h5');
+        summaryTitle.textContent = '今日变化';
+        var summaryText = document.createElement('p');
+        summaryText.textContent = feedback.summary;
+        feedbackEl.appendChild(summaryTitle);
+        feedbackEl.appendChild(summaryText);
+
+        var highlightTitle = document.createElement('h5');
+        highlightTitle.textContent = '今日亮点';
+        feedbackEl.appendChild(highlightTitle);
+        if (feedback.highlights.length) {
+          var highlightList = document.createElement('ul');
+          feedback.highlights.forEach(function (highlight) {
+            var item = document.createElement('li');
+            item.textContent = highlight;
+            highlightList.appendChild(item);
+          });
+          feedbackEl.appendChild(highlightList);
+        } else {
+          var emptyHighlight = document.createElement('p');
+          emptyHighlight.textContent = '完成一次记录后，这里会生成你的今日成长反馈';
+          feedbackEl.appendChild(emptyHighlight);
+        }
+
+        var actionTitle = document.createElement('h5');
+        actionTitle.textContent = '下一步建议';
+        feedbackEl.appendChild(actionTitle);
+        if (feedback.nextActions.length) {
+          var actionList = document.createElement('ul');
+          feedback.nextActions.forEach(function (action) {
+            var item = document.createElement('li');
+            item.textContent = action;
+            actionList.appendChild(item);
+          });
+          feedbackEl.appendChild(actionList);
+        } else {
+          var emptyAction = document.createElement('p');
+          emptyAction.textContent = '完成一次记录后，这里会生成你的今日成长反馈';
+          feedbackEl.appendChild(emptyAction);
+        }
+      }
+      var narrative = GrowthTimeline.buildNarrative(GrowthTimeline.buildTimeline({
+        today: brief.date,
+        growthState: brief.growthState
+      }));
+      if (stageEl && stageLabel && stageDescription) {
+        if (narrative.currentStage) {
+          stageEl.hidden = false;
+          stageLabel.textContent = '当前成长阶段：' + narrative.currentStage.label;
+          stageDescription.textContent = narrative.currentStage.meaning;
+        } else {
+          stageEl.hidden = true;
+          stageLabel.textContent = '';
+          stageDescription.textContent = '';
+        }
+      }
+      renderRetention(snapshot, brief);
       if (statusEl) statusEl.textContent = brief.status;
       renderGrowthScore(rangesEl, scoreEl, brief.growthState);
       if (dateEl) dateEl.textContent = brief.date;
@@ -1031,7 +1165,7 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
       if (act === 'checkin') {
         var already = Store.isCheckedIn(today());
         if (already) { toast('✅ 今天已打卡，继续保持！', 'info'); }
-        else { Store.addCheckin(today(), 'done'); updateUI(); toast('✅ 今日打卡成功！', 'success'); }
+        else { Store.addCheckin(today(), 'done'); updateUI(); notifyRecordSaved('✅ 今日打卡成功！'); }
         return;
       }
 
@@ -1180,8 +1314,9 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
 
       // 勾选/取消今日任务（工作台任务清单）
       if (trigger.hasAttribute('data-toggle-todo')) {
-        Store.toggleTodo(trigger.getAttribute('data-toggle-todo'));
+        var toggledTodo = Store.toggleTodo(trigger.getAttribute('data-toggle-todo'));
         updateUI();
+        if (toggledTodo && toggledTodo.done) notifyRecordSaved('任务已完成');
         return;
       }
 
@@ -1600,7 +1735,7 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
       Store.addReading({ date: today(), bookName: name, pages: read, totalPages: total });
       updateUI();
       closeModal('modalAddBook');
-      toast('✅ 书籍已添加：' + name, 'success');
+      notifyRecordSaved('✅ 书籍已添加：' + name);
     });
 
     // 更新书籍
@@ -1628,7 +1763,7 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
       Store.addSport({ date: today(), name: type, calories: cal, duration: min, type: 'general' });
       updateUI();
       closeModal('modalAddSport');
-      toast('运动已记录：' + type, 'success');
+      notifyRecordSaved('运动已记录：' + type);
     });
 
     // 保存英语
@@ -1639,7 +1774,7 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
       Store.addEnglish({ date: today(), words: words, minutes: mins });
       updateUI();
       closeModal('modalAddEnglish');
-      toast('英语学习已记录：' + words + ' 词', 'success');
+      notifyRecordSaved('英语学习已记录：' + words + ' 词');
     });
 
     // 保存新建任务
@@ -1718,7 +1853,7 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
       Store.addFocus({ date: today(), minutes: elapsedMin, task: task });
       updateUI();
       closeModal('modalFocusTimer');
-      toast(auto ? ('专注完成，+' + elapsedMin + ' 分钟') : ('已记录 ' + elapsedMin + ' 分钟专注'), 'success');
+      notifyRecordSaved(auto ? ('专注完成，+' + elapsedMin + ' 分钟') : ('已记录 ' + elapsedMin + ' 分钟专注'));
     }
     function focusReset() {
       stopFocusTick();
@@ -2060,7 +2195,7 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
         if (!Store.isCheckedIn(today())) {
           Store.addCheckin(today(), 'done');
           updateUI();
-          toast('✅ 今日打卡成功！', 'success');
+          notifyRecordSaved('✅ 今日打卡成功！');
         }
         return;
       }

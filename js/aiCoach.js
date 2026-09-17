@@ -47,7 +47,7 @@ function mapSignal(item, type, fallbackSeverity) {
     return directMessage ? { type: type, severity: fallbackSeverity, message: directMessage } : null;
   }
   if (!item || typeof item !== 'object') return null;
-  var message = text(item.reason || item.description || item.message || item.statement || item.text);
+  var message = text(item.reason || item.description || item.message || item.content || item.statement || item.text);
   if (!message) return null;
   return {
     type: text(item.type) || type,
@@ -154,20 +154,30 @@ function buildCoachContext(context) {
   var growthState = source.growthState && typeof source.growthState === 'object' ? source.growthState : {};
   var goals = source.goals && typeof source.goals === 'object' ? source.goals : {};
   var memory = source.memory && typeof source.memory === 'object' ? source.memory : {};
+  var confirmedMemory = arr(memory.confirmed);
+  var contextInsights = arr(memory.insights);
   var trendSignals = mapTrendSignals(growth.trends);
+  var dailyFeedbackSource = source.dailyFeedback && typeof source.dailyFeedback === 'object' ? source.dailyFeedback : null;
+  var dailyFeedback = dailyFeedbackSource && text(dailyFeedbackSource.summary) ? {
+    scope: 'daily',
+    summary: text(dailyFeedbackSource.summary, 220),
+    highlights: arr(dailyFeedbackSource.highlights).map(function (item) { return text(item, 160); }).filter(Boolean).slice(0, 3),
+    changes: arr(dailyFeedbackSource.changes).slice(0, 3),
+    nextActions: arr(dailyFeedbackSource.nextActions).map(function (item) { return text(item, 160); }).filter(Boolean).slice(0, 2)
+  } : null;
 
-  var memoryChallenges = arr(memory.patterns).filter(function (pattern) {
+  var memoryChallenges = confirmedMemory.filter(function (pattern) {
     return pattern && (String(pattern.id || '').indexOf('declining') >= 0 ||
       (pattern.evidence && Number(pattern.evidence.delta) < 0));
   }).map(function (pattern) {
     return mapSignal(pattern, 'memory_challenge', 'medium');
   }).filter(Boolean);
 
-  var memoryInsights = arr(memory.patterns).filter(function (pattern) {
+  var memoryInsights = contextInsights.concat(confirmedMemory.filter(function (pattern) {
     return pattern && !memoryChallenges.some(function (warning) {
       return warning && pattern.statement === warning.message;
     });
-  }).concat(arr(memory.insights)).map(function (signal) {
+  })).map(function (signal) {
     return mapSignal(signal, 'long_term_memory', 'positive');
   }).filter(Boolean);
 
@@ -196,6 +206,7 @@ function buildCoachContext(context) {
     recommendations: recommendations.slice(0, 3),
     warnings: warnings.slice(0, 4),
     encouragement: buildEncouragement(score, dataSufficient, warnings.length),
+    dailyFeedback: dailyFeedback,
     dataSufficient: dataSufficient === true,
     readOnly: true
   };

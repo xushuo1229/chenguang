@@ -19,6 +19,7 @@ const router = require('express').Router();
 const ctrl = require('../controllers/aiController');
 const aiService = require('../services/aiService');
 const feedbackService = require('../services/aiReflectionFeedbackService');
+const reflectionContextSource = require('../services/reflectionContextSource');
 const { aiLimiter } = require('../middleware/rateLimit');
 const { authRequired } = require('../middleware/auth');
 
@@ -28,17 +29,20 @@ const { authRequired } = require('../middleware/auth');
 router.post('/chat', authRequired, aiLimiter, ctrl.chat);
 
 // POST /api/ai/reflection → AI Daily Reflection
-// 请求体：{ context: GrowthContext | AIContext }
-// 响应体：{ data: { reflection }, meta: { contextVersion, model } }
+  // 请求体：{ context?: { userNote?: string } }
+  // Reflection 系统事实由 user_data 在服务端派生；客户端 context 不是事实来源。
+  // 响应体：{ data: { reflection }, meta: { contextVersion, model } }
 router.post('/reflection', authRequired, aiLimiter, async (req, res, next) => {
   try {
-    const context = req.body && req.body.context;
-    const result = await aiService.dailyReflection({ growthContext: context, userId: req.userId });
+    const growthContext = await reflectionContextSource.buildAuthoritativeReflectionContext({
+      userId: req.userId,
+    });
+    const result = await aiService.dailyReflection({ growthContext, userId: req.userId });
     const reflectionId = await feedbackService.recordReflectionGeneration(req.userId);
     res.success({ reflection: result.reflection, reflectionId }, {
       contextVersion: result.contextVersion,
       model: result.model,
-      contextSource: result.contextSource,
+      contextSource: 'authenticated-authoritative',
     });
   } catch (err) {
     next(err);

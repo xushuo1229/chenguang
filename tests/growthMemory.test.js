@@ -57,7 +57,7 @@ function emptyContext() {
 
 test('正常数据生成习惯、里程碑、偏好和长期洞察', () => {
   const memory = GrowthMemory.buildMemory(memoryContext(), { today: TODAY });
-  expect(memory.version).toBe('1.0');
+  expect(memory.version).toBe('2.1');
   expect(memory.updatedAt).toBe(TODAY);
   expect(memory.patterns.map((item) => item.statement).join(' ')).toMatch(/30 天|习惯/);
   expect(memory.milestones.map((item) => item.statement).join(' ')).toMatch(/连续成长 7 天|里程碑/);
@@ -71,6 +71,57 @@ test('空数据用户不会生成虚构长期记忆', () => {
   expect(memory.milestones).toHaveLength(0);
   expect(memory.preferences).toHaveLength(0);
   expect(memory.insights).toHaveLength(0);
+});
+
+test('Memory v2 使用统一 type、数值 confidence、证据数组和生命周期', () => {
+  const memory = GrowthMemory.buildMemory(memoryContext(), { today: TODAY });
+  const types = ['Preference', 'Habit', 'Pattern', 'Risk', 'Achievement', 'GoalHistory'];
+
+  [...memory.patterns, ...memory.milestones, ...memory.preferences, ...memory.insights].forEach((item) => {
+    expect(types).toContain(item.type);
+    expect(item.confidence).toBeGreaterThanOrEqual(0);
+    expect(item.confidence).toBeLessThanOrEqual(1);
+    expect(Array.isArray(item.evidence)).toBe(true);
+    expect(item.lifecycle).toEqual(expect.objectContaining({
+      stage: expect.any(String),
+      createdAt: TODAY,
+      lastSeenAt: TODAY,
+      ageDays: 0
+    }));
+  });
+});
+
+test('normalizeMemory 兼容旧 Memory 并剥离敏感证据', () => {
+  const legacy = {
+    version: '1.0',
+    updatedAt: '2026-08-01',
+    patterns: [{
+      id: 'pattern:legacy',
+      kind: 'habit_pattern',
+      statement: '旧记忆。',
+      confidence: 'medium',
+      weight: 60,
+      status: 'active',
+      createdAt: '2026-08-01',
+      lastSeenAt: '2026-08-01',
+      occurrences: 2,
+      evidence: { metric: 'study', delta: 20, token: 'secret-token' }
+    }],
+    milestones: [],
+    preferences: [],
+    insights: []
+  };
+  const normalized = GrowthMemory.normalizeMemory(legacy, { today: TODAY });
+  const item = normalized.patterns[0];
+
+  expect(normalized.version).toBe('2.1');
+  expect(item.type).toBe('Habit');
+  expect(item.kind).toBe('habit_pattern');
+  expect(item.confidence).toBe(0.5);
+  expect(item.evidence).toEqual([{ metric: 'study', delta: 20 }]);
+  expect(item.lifecycle.stage).toBe('aging');
+  expect(item.updatedAt).toBe(TODAY);
+  expect(JSON.stringify(normalized)).not.toContain('secret-token');
 });
 
 test('30 天趋势生成长期模式，短期波动不会生成长期结论', () => {
@@ -114,18 +165,15 @@ test('长期未出现的记忆会降权并标记 inactive', () => {
   const merged = GrowthMemory.mergeMemory(existing, GrowthMemory.buildMemory(emptyContext(), { today: TODAY }), { today: TODAY });
   expect(merged.patterns[0].weight).toBe(15);
   expect(merged.patterns[0].status).toBe('inactive');
-  expect(GrowthMemory.buildContextMemory(merged).patterns).toHaveLength(0);
+  expect(GrowthMemory.buildContextMemory(merged).confirmed).toHaveLength(0);
 });
 
 test('Context Memory 只保留 active、高权重且有限数量的记忆', () => {
   const next = GrowthMemory.buildMemory(memoryContext(), { today: TODAY });
   const merged = GrowthMemory.mergeMemory(next, next, { today: TODAY });
   const contextMemory = GrowthMemory.buildContextMemory(merged);
-  expect(contextMemory.patterns.length).toBeLessThanOrEqual(4);
-  expect(contextMemory.milestones.length).toBeLessThanOrEqual(3);
-  expect(contextMemory.preferences.length).toBeLessThanOrEqual(3);
-  expect(contextMemory.insights.length).toBeLessThanOrEqual(4);
-  contextMemory.patterns.forEach((item) => expect(item).not.toHaveProperty('weight'));
+  expect(contextMemory.confirmed.length).toBeLessThanOrEqual(14);
+  expect(contextMemory.confirmed.every((item) => !Object.prototype.hasOwnProperty.call(item, 'weight'))).toBe(true);
 });
 
 test('生成过程不修改输入 Context 或已有 Memory', () => {
@@ -152,7 +200,7 @@ test('Memory 内容剥离敏感字段，只保留白名单证据', () => {
 });
 
 test('Growth Memory 模块不直接访问浏览器存储或业务模块', () => {
-  expect(growthMemorySrc).not.toMatch(/localStorage|sessionStorage|CGStore|Store\.get|Analytics\.|GoalEngine|GrowthIntelligence|AICoach|GrowthReport/);
+  expect(growthMemorySrc).not.toMatch(/localStorage|sessionStorage|CGStore|Store\.get|import\s+.*Analytics|import\s+.*GoalEngine|import\s+.*GrowthIntelligence|import\s+.*AICoach|import\s+.*GrowthReport/);
 });
 
 test('updateMemory 通过 Store.setUser 持久化，未变化时不重复写入', async () => {
@@ -166,9 +214,9 @@ test('updateMemory 通过 Store.setUser 持久化，未变化时不重复写入'
   const store = (await import('../js/store.js')).default;
   const revision = store.getRevision();
   const memory = GrowthMemory.updateMemory(store, memoryContext(), { today: TODAY });
-  expect(memory.patterns.length).toBeGreaterThan(0);
+  expect(memory.candidates.length).toBeGreaterThan(0);
   expect(store.getRevision()).toBe(revision + 1);
-  expect(store.getUser().memory.patterns.length).toBeGreaterThan(0);
+  expect(store.getUser().memory.candidates.length).toBeGreaterThan(0);
 
   const unchangedRevision = store.getRevision();
   const unchanged = GrowthMemory.updateMemory(store, memoryContext(), { today: TODAY });

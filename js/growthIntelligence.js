@@ -488,6 +488,7 @@ function computeGrowthState(data, opts) {
     actionProposals: proposals,
     dataSufficiency: dataSufficiency
   };
+  state.todaySummary = todaySummary;
   state.growthSummary = buildGrowthSummary(snap, state);
   if (cache) {
     stateCache.key = cache;
@@ -509,6 +510,7 @@ function buildDailyInsight(data, opts) {
     strength: state.positiveSignals[0] || null,
     recommendedActions: state.actionProposals,
     why: insufficient ? '没有足够的连续记录或目标数据。' : (state.recommendedFocus[0] ? state.recommendedFocus[0].reason : '当前没有高风险信号。'),
+    todaySummary: state.todaySummary,
     growthState: state
   };
 }

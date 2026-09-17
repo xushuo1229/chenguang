@@ -136,7 +136,7 @@ describe('reflection output and owner controls', () => {
     );
   });
 
-  test('authenticated API marks the submitted context source', async () => {
+  test('authenticated API ignores client-submitted facts and uses authoritative context', async () => {
     const server = app.listen(0);
     const port = server.address().port;
     try {
@@ -154,8 +154,9 @@ describe('reflection output and owner controls', () => {
         'x-requested-with': 'XMLHttpRequest',
       }, { context: MALICIOUS_CONTEXT });
       assert.equal(response.status, 200);
-      assert.equal(response.body.meta.contextSource, 'authenticated-client-submitted');
-      assert.equal(response.body.data.reflection.performance.tasks.total, 4);
+      assert.equal(response.body.meta.contextSource, 'authenticated-authoritative');
+      assert.equal(response.body.data.reflection.performance.tasks.total, 0);
+      assert.equal(response.body.data.reflection.performance.tasks.completed, 0);
     } finally {
       server.close();
     }
