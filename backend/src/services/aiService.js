@@ -28,12 +28,15 @@ const config = require('../config/env');
 const ApiError = require('../utils/ApiError');
 const { getProvider } = require('./providers');
 const promptBuilder = require('./promptBuilder');
+const { CONTEXT_VERSION, sanitizeReflectionContext } = require('./reflectionContext');
 
 // 允许的 role 白名单（防止注入非法角色）
 const ALLOWED_ROLES = ['user', 'assistant'];
 
 // Context 中绝对不允许出现的字段名（纵深防御：即使前端被绕过也拦下）
 const FORBIDDEN_KEY_RE = /^(api[-_]?key|token|password|secret|authorization)$/i;
+const REFLECTION_MAX_OUTPUT_TOKENS = 1200;
+const REFLECTION_MAX_REPLY_CHARS = 8000;
 
 function emptyGrowthContext() {
   return {
@@ -46,31 +49,6 @@ function emptyGrowthContext() {
     signals: { positive: [], risks: [] },
     suggestions: [],
   };
-}
-
-function normalizeGrowthContext(input) {
-  let context = input;
-  if (context && typeof context === 'object' && !Array.isArray(context) && context.growthContext) {
-    context = context.growthContext;
-  }
-  if (context == null) context = {};
-  if (typeof context !== 'object' || Array.isArray(context)) {
-    throw ApiError.badRequest('INVALID_CONTEXT', 'GrowthContext 格式不正确');
-  }
-
-  const clean = stripForbiddenKeys(context);
-  if (JSON.stringify(clean).length > config.aiMaxContextChars) {
-    throw ApiError.badRequest('CONTEXT_TOO_LARGE', 'Context 数据过大');
-  }
-
-  return Object.assign(emptyGrowthContext(), clean, {
-    version: typeof clean.version === 'string' && clean.version ? clean.version : '1.0',
-    today: typeof clean.today === 'string' && clean.today ? clean.today.slice(0, 10) : '未知',
-    signals: {
-      positive: Array.isArray(clean.signals && clean.signals.positive) ? clean.signals.positive : [],
-      risks: Array.isArray(clean.signals && clean.signals.risks) ? clean.signals.risks : [],
-    },
-  });
 }
 
 function buildPerformance(growthContext) {
@@ -97,6 +75,10 @@ function buildPerformance(growthContext) {
 
 function parseReflectionJson(reply) {
   const text = String(reply || '').trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+  if (text.length > REFLECTION_MAX_REPLY_CHARS) {
+    console.warn('[AI] Daily Reflection response exceeded the local size limit');
+    throw ApiError.internal('AI_INVALID_RESPONSE', 'AI 复盘暂时不可用，请稍后再试');
+  }
   try {
     return JSON.parse(text);
   } catch (_) {
@@ -117,15 +99,31 @@ function normalizeReflection(value) {
     throw ApiError.internal('AI_INVALID_RESPONSE', 'AI 复盘暂时不可用，请稍后再试');
   }
   const summary = value.summary && typeof value.summary === 'object' ? value.summary : {};
-  const asArray = (input) => Array.isArray(input) ? input.slice(0, 5) : [];
+  const asArray = (input) => Array.isArray(input) ? input.slice(0, 3) : [];
+  const boundedText = (value, maxLength) => typeof value === 'string' ? value.slice(0, maxLength) : '';
   return {
     summary: {
-      title: typeof summary.title === 'string' ? summary.title : '',
-      overview: typeof summary.overview === 'string' ? summary.overview : '',
+      title: boundedText(summary.title, 80),
+      overview: boundedText(summary.overview, 600),
     },
-    insights: asArray(value.insights).filter((item) => item && typeof item === 'object'),
-    suggestions: asArray(value.suggestions).filter((item) => item && typeof item === 'object'),
+    insights: asArray(value.insights).filter((item) => item && typeof item === 'object').map((item) => ({
+      type: boundedText(item.type, 40),
+      content: boundedText(item.content, 400),
+    })),
+    suggestions: asArray(value.suggestions).filter((item) => item && typeof item === 'object').map((item) => ({
+      priority: boundedText(item.priority, 20),
+      content: boundedText(item.content, 400),
+    })),
   };
+}
+
+function normalizeReflectionOwner(userId) {
+  if (userId == null) return { userId: null, source: 'legacy-direct-call' };
+  const parsed = Number(userId);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw ApiError.unauthorized('UNAUTHORIZED', '未授权');
+  }
+  return { userId: parsed, source: 'authenticated-client-submitted' };
 }
 
 /**
@@ -262,9 +260,11 @@ async function dailyReflection(p) {
     throw ApiError.internal('AI_NOT_CONFIGURED', 'AI 服务未配置，请稍后再试');
   }
 
-  const growthContext = normalizeGrowthContext(p.growthContext);
+  const owner = normalizeReflectionOwner(p.userId);
+  const growthContext = sanitizeReflectionContext(p.growthContext);
   const result = await provider.chatCompletion({
     messages: promptBuilder.buildReflectionPrompt(growthContext),
+    maxTokens: REFLECTION_MAX_OUTPUT_TOKENS,
     baseUrl: config.aiBaseUrl,
     apiKey: config.aiApiKey,
     model: config.aiModel,
@@ -275,8 +275,9 @@ async function dailyReflection(p) {
   reflection.performance = buildPerformance(growthContext);
   return {
     reflection,
-    contextVersion: growthContext.version,
+    contextVersion: CONTEXT_VERSION,
     model: result.model,
+    contextSource: owner.source,
   };
 }
 
@@ -286,4 +287,5 @@ module.exports = {
   validateHistory,
   validateContext,
   stripForbiddenKeys,
+  sanitizeReflectionContext,
 };

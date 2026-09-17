@@ -142,7 +142,7 @@ function buildReflectionPrompt(growthContext) {
   const context = growthContext && typeof growthContext === 'object' && !Array.isArray(growthContext)
     ? growthContext
     : {};
-  const contextVersion = String(context.version || '1.0');
+  const contextVersion = '1.0';
 
   const systemPrompt = [
     '你是用户的个人成长教练。',

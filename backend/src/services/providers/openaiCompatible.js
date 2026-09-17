@@ -38,6 +38,7 @@ async function chatCompletion(p) {
   const apiKey = (p && p.apiKey) || '';
   const model = (p && p.model) || '';
   const timeoutMs = (p && p.timeoutMs) || 30000;
+  const maxTokens = Number(p && p.maxTokens);
 
   if (!apiKey) throw ApiError.internal('AI_NOT_CONFIGURED', 'AI 服务未配置，请稍后再试');
 
@@ -51,7 +52,7 @@ async function chatCompletion(p) {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + apiKey,
       },
-      body: JSON.stringify({ model, messages }),
+      body: JSON.stringify(maxTokens > 0 ? { model, messages, max_tokens: maxTokens } : { model, messages }),
       signal: controller.signal,
     });
 

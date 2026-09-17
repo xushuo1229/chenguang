@@ -32,10 +32,11 @@ router.post('/chat', authRequired, aiLimiter, ctrl.chat);
 router.post('/reflection', authRequired, aiLimiter, async (req, res, next) => {
   try {
     const context = req.body && req.body.context;
-    const result = await aiService.dailyReflection({ growthContext: context });
+    const result = await aiService.dailyReflection({ growthContext: context, userId: req.userId });
     res.success({ reflection: result.reflection }, {
       contextVersion: result.contextVersion,
       model: result.model,
+      contextSource: result.contextSource,
     });
   } catch (err) {
     next(err);
