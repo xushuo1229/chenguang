@@ -111,6 +111,8 @@ async function initDatabase() {
   // 用 try-catch 静默跳过，属于预期）。
   try { db.exec("ALTER TABLE user_data ADD COLUMN revision INTEGER NOT NULL DEFAULT 1"); } catch (_) {}
   try { db.exec("ALTER TABLE user_data ADD COLUMN device_id TEXT NOT NULL DEFAULT ''"); } catch (_) {}
+  try { db.exec("ALTER TABLE course_space_nodes ADD COLUMN source_candidate_id TEXT NOT NULL DEFAULT ''"); } catch (_) {}
+  try { db.exec("ALTER TABLE course_space_evidence ADD COLUMN candidate_id TEXT NOT NULL DEFAULT ''"); } catch (_) {}
 
   console.log('[DB] SQLite 表结构初始化完成 → ' + config.dbPath);
 }

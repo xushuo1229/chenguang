@@ -47,6 +47,7 @@ import { buildDailyFeedback } from '../js/dailyFeedback.js';
 import RetentionContext from '../js/retentionContext.js';
 import GrowthMemory from '../js/growthMemory.js';
 import { mountCourseSpace } from '../js/courseSpaceUI.js';
+import { mountCourseSpaceExtraction } from '../js/courseSpaceExtractionUI.js';
 import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
 
   // ============================================================
@@ -2258,6 +2259,7 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
       updateUI();
       var courseSpace = mountCourseSpace();
       courseSpace.loadSnapshot();
+      mountCourseSpaceExtraction();
       // 支持从其它页面直达：workbench.html?view=course / manage / profile
       var wantView = new URLSearchParams(location.search).get('view');
       if (WB_VIEWS.indexOf(wantView) === -1) wantView = 'home';

@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS course_space_nodes (
   status      TEXT NOT NULL DEFAULT 'validated',
   confidence  TEXT NOT NULL DEFAULT 'medium',
   version     INTEGER NOT NULL DEFAULT 1,
+  source_candidate_id TEXT NOT NULL DEFAULT '',
   created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -92,8 +93,48 @@ CREATE TABLE IF NOT EXISTS course_space_evidence (
   course_id   TEXT NOT NULL,
   document_id TEXT NOT NULL,
   node_id     TEXT NOT NULL,
+  candidate_id TEXT NOT NULL DEFAULT '',
   quote       TEXT NOT NULL,
   locator     TEXT NOT NULL DEFAULT '',
   version     INTEGER NOT NULL DEFAULT 1,
   created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS course_space_extraction_jobs (
+  id                TEXT PRIMARY KEY,
+  user_id           INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  course_id         TEXT NOT NULL,
+  document_id       TEXT NOT NULL,
+  document_version  INTEGER NOT NULL,
+  content_hash      TEXT NOT NULL,
+  status            TEXT NOT NULL DEFAULT 'queued',
+  provider          TEXT NOT NULL,
+  model             TEXT NOT NULL,
+  prompt_version    TEXT NOT NULL,
+  started_at        TEXT NOT NULL DEFAULT '',
+  completed_at      TEXT NOT NULL DEFAULT '',
+  error             TEXT NOT NULL DEFAULT '',
+  created_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS course_space_knowledge_candidates (
+  id                  TEXT PRIMARY KEY,
+  user_id             INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  course_id           TEXT NOT NULL,
+  document_id         TEXT NOT NULL,
+  document_version    INTEGER NOT NULL,
+  extraction_job_id   TEXT NOT NULL,
+  type                TEXT NOT NULL,
+  title               TEXT NOT NULL,
+  content             TEXT NOT NULL,
+  confidence          REAL NOT NULL,
+  status              TEXT NOT NULL DEFAULT 'pending',
+  original_title      TEXT NOT NULL,
+  original_content    TEXT NOT NULL,
+  reviewed_title      TEXT NOT NULL DEFAULT '',
+  reviewed_content    TEXT NOT NULL DEFAULT '',
+  created_at          TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at          TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (extraction_job_id) REFERENCES course_space_extraction_jobs(id) ON DELETE CASCADE
 );

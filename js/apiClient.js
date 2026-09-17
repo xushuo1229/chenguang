@@ -526,6 +526,29 @@ var CGAPI = {
       },
       createEvidence: function (payload) {
         return request('POST', '/course-space/evidence', payload);
+      },
+      createExtractionJob: function (payload) {
+        return request('POST', '/course-space/extraction/jobs', payload, { timeoutMs: 45000 });
+      },
+      listExtractionJobs: function (payload) {
+        const p = payload || {};
+        const params = new URLSearchParams();
+        if (p.courseId) params.set('courseId', p.courseId);
+        params.set('limit', String(p.limit || 20));
+        return request('GET', `/course-space/extraction/jobs?${params.toString()}`);
+      },
+      listCandidates: function (payload) {
+        const p = payload || {};
+        const params = new URLSearchParams();
+        if (p.courseId) params.set('courseId', p.courseId);
+        if (p.jobId) params.set('jobId', p.jobId);
+        if (p.status) params.set('status', p.status);
+        params.set('limit', String(p.limit || 20));
+        params.set('offset', String(p.offset || 0));
+        return request('GET', `/course-space/extraction/candidates?${params.toString()}`);
+      },
+      reviewCandidate: function (candidateId, payload) {
+        return request('POST', `/course-space/extraction/candidates/${encodeURIComponent(candidateId)}/review`, payload);
       }
     }
   };
