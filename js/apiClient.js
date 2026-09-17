@@ -465,6 +465,18 @@ var CGAPI = {
         return request('POST', '/ai/reflection', {
           context: p.context || {}
         }, { timeoutMs: p.timeoutMs || 35000 });
+      },
+
+      /**
+       * reflectionFeedback(payload) —— 提交 AI Reflection 用户反馈
+       * 【返回值】Promise，resolve 时返回 { success: true }
+       */
+      reflectionFeedback: function (payload) {
+        var p = payload || {};
+        return request('POST', '/ai/reflection/feedback', {
+          reflectionId: p.reflectionId || '',
+          rating: p.rating || ''
+        }, { timeoutMs: p.timeoutMs || 10000 });
       }
     },
 

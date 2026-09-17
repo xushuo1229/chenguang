@@ -18,6 +18,7 @@
 const router = require('express').Router();
 const ctrl = require('../controllers/aiController');
 const aiService = require('../services/aiService');
+const feedbackService = require('../services/aiReflectionFeedbackService');
 const { aiLimiter } = require('../middleware/rateLimit');
 const { authRequired } = require('../middleware/auth');
 
@@ -33,11 +34,24 @@ router.post('/reflection', authRequired, aiLimiter, async (req, res, next) => {
   try {
     const context = req.body && req.body.context;
     const result = await aiService.dailyReflection({ growthContext: context, userId: req.userId });
-    res.success({ reflection: result.reflection }, {
+    const reflectionId = await feedbackService.recordReflectionGeneration(req.userId);
+    res.success({ reflection: result.reflection, reflectionId }, {
       contextVersion: result.contextVersion,
       model: result.model,
       contextSource: result.contextSource,
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/ai/reflection/feedback → 用户对 Reflection 的二值反馈
+// 只保存归属、ID、rating、时间；不保存 Reflection 内容或 GrowthContext。
+router.post('/reflection/feedback', authRequired, aiLimiter, async (req, res, next) => {
+  try {
+    const { reflectionId, rating } = req.body || {};
+    await feedbackService.submitReflectionFeedback({ userId: req.userId, reflectionId, rating });
+    res.json({ success: true });
   } catch (err) {
     next(err);
   }

@@ -2,6 +2,7 @@
 
 import AIContext from './aiContext.js';
 import { createAiReflectionService } from './aiReflectionService.js';
+import { createAiReflectionFeedbackService } from './aiReflectionFeedbackService.js';
 
 const STYLE_ID = 'ai-reflection-ui-style';
 const FRIENDLY_ERROR_TEXT = 'AI 复盘暂时不可用，请稍后再试。';
@@ -31,6 +32,8 @@ function ensureStyles(documentRef) {
     '.ai-reflection-section { margin-top:16px; }',
     '.ai-reflection-label { margin:0 0 8px; font-size:.78rem; font-weight:700; color:var(--brand-amber); }',
     '.ai-reflection-list { margin:0; padding-left:18px; line-height:1.6; }',
+    '.ai-reflection-feedback { margin-top:16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }',
+    '.ai-reflection-feedback .ai-reflection-label { margin:0; }',
     '.ai-reflection-error { color:#c2410c; }',
     '@media (max-width: 640px) {',
     '  .ai-reflection-header { align-items:flex-start; flex-direction:column; }',
@@ -91,6 +94,7 @@ export function createAiReflectionUI(options) {
   const settings = options || {};
   const documentRef = settings.document || document;
   const service = settings.service || createAiReflectionService();
+  const feedbackService = settings.feedbackService || createAiReflectionFeedbackService();
   const contextProvider = settings.contextProvider || defaultContextProvider;
   const root = element('section', 'ai-reflection-card');
   root.setAttribute('aria-label', 'AI 今日复盘');
@@ -110,12 +114,30 @@ export function createAiReflectionUI(options) {
   root.appendChild(status);
   root.appendChild(content);
 
+  const feedbackSection = element('div', 'ai-reflection-feedback');
+  const feedbackQuestion = element('p', 'ai-reflection-label', '这次反思对你有帮助吗？');
+  const helpfulButton = element('button', 'ai-reflection-button', '👍 有帮助');
+  const notHelpfulButton = element('button', 'ai-reflection-button', '👎 不太符合');
+  helpfulButton.type = 'button';
+  notHelpfulButton.type = 'button';
+  feedbackSection.appendChild(feedbackQuestion);
+  feedbackSection.appendChild(helpfulButton);
+  feedbackSection.appendChild(notHelpfulButton);
+  feedbackSection.hidden = true;
+  root.appendChild(feedbackSection);
+
   let requestInFlight = false;
+  let currentReflectionId = '';
+  let feedbackInFlight = false;
+  let feedbackSubmitted = false;
 
   function clearContent() {
     status.textContent = '';
     status.className = 'ai-reflection-status';
     content.textContent = '';
+    feedbackSection.hidden = true;
+    currentReflectionId = '';
+    feedbackSubmitted = false;
   }
 
   function renderIdle() {
@@ -150,10 +172,11 @@ export function createAiReflectionUI(options) {
     content.appendChild(empty);
   }
 
-  function renderSuccess(reflection) {
+  function renderSuccess(reflection, reflectionId) {
     clearContent();
     button.disabled = false;
     root.removeAttribute('aria-busy');
+    currentReflectionId = typeof reflectionId === 'string' ? reflectionId : '';
     const summary = reflection.summary || {};
     const performance = performanceText(reflection.performance);
     if (performance) {
@@ -193,6 +216,50 @@ export function createAiReflectionUI(options) {
       if (list.children.length) section.appendChild(list);
       if (section.children.length) content.appendChild(section);
     }
+
+    if (currentReflectionId && !feedbackSubmitted) {
+      helpfulButton.disabled = false;
+      notHelpfulButton.disabled = false;
+      status.textContent = '';
+      feedbackSection.hidden = false;
+    }
+  }
+
+  function renderFeedbackLoading() {
+    helpfulButton.disabled = true;
+    notHelpfulButton.disabled = true;
+    status.textContent = '正在提交反馈...';
+    status.className = 'ai-reflection-status';
+  }
+
+  function renderFeedbackSuccess() {
+    feedbackSubmitted = true;
+    feedbackSection.hidden = true;
+    status.textContent = '感谢你的反馈';
+    status.className = 'ai-reflection-status';
+  }
+
+  function renderFeedbackError() {
+    feedbackInFlight = false;
+    helpfulButton.disabled = false;
+    notHelpfulButton.disabled = false;
+    status.textContent = '反馈提交失败，请稍后再试';
+    status.className = 'ai-reflection-status ai-reflection-error';
+    feedbackSection.hidden = false;
+  }
+
+  async function submitFeedback(rating) {
+    if (feedbackInFlight || feedbackSubmitted || !currentReflectionId) return;
+    feedbackInFlight = true;
+    renderFeedbackLoading();
+    try {
+      await feedbackService.submit({ reflectionId: currentReflectionId, rating });
+      renderFeedbackSuccess();
+    } catch (_) {
+      renderFeedbackError();
+    } finally {
+      feedbackInFlight = false;
+    }
   }
 
   async function generate() {
@@ -203,7 +270,7 @@ export function createAiReflectionUI(options) {
       const result = await service.generate(contextProvider());
       const reflection = result && result.reflection;
       if (hasReflectionContent(reflection)) {
-        renderSuccess(reflection);
+        renderSuccess(reflection, result.reflectionId);
       } else {
         renderEmpty();
       }
@@ -215,6 +282,8 @@ export function createAiReflectionUI(options) {
   }
 
   button.addEventListener('click', generate);
+  helpfulButton.addEventListener('click', () => submitFeedback('helpful'));
+  notHelpfulButton.addEventListener('click', () => submitFeedback('not_helpful'));
   renderIdle();
 
   return {
@@ -222,6 +291,10 @@ export function createAiReflectionUI(options) {
     button,
     status,
     content,
+    helpfulButton,
+    notHelpfulButton,
+    feedbackSection,
+    submitFeedback,
     generate,
     renderIdle,
     renderLoading,

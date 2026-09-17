@@ -28,3 +28,21 @@ CREATE TABLE IF NOT EXISTS user_data (
   device_id    TEXT NOT NULL DEFAULT '',
   updated_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ---------- AI Reflection 生成归属表 ----------
+-- 只记录生成事件归属，不保存 Reflection 全文、GrowthContext 或行为数据。
+CREATE TABLE IF NOT EXISTS ai_reflections (
+  reflection_id TEXT PRIMARY KEY,
+  user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at    TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ---------- AI Reflection 用户反馈表 ----------
+CREATE TABLE IF NOT EXISTS ai_reflection_feedback (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  reflection_id TEXT NOT NULL REFERENCES ai_reflections(reflection_id) ON DELETE CASCADE,
+  rating        TEXT NOT NULL CHECK (rating IN ('helpful', 'not_helpful')),
+  created_at    TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, reflection_id)
+);

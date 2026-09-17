@@ -12,6 +12,7 @@ function normalizeReflectionResponse(response) {
 
   return {
     reflection,
+    reflectionId: response.data.reflectionId || '',
     meta: response.meta || {}
   };
 }
