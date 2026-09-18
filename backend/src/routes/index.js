@@ -34,6 +34,7 @@ const syncCtrl = require('../controllers/syncController');
 const ai = require('./ai');
 const courseSpace = require('./courseSpace');
 const knowledgeState = require('./knowledgeState');
+const agentHome = require('./agentHome');
 const { authRequired } = require('../middleware/auth');
 const { writeLimiter } = require('../middleware/rateLimit');
 
@@ -70,5 +71,8 @@ router.use('/course-space', courseSpace);
 // ===== 学生知识状态（只读） =====
 // Student Knowledge State 是 Course Knowledge 之上的用户掌握投影，只读开放。
 router.use('/knowledge-state', knowledgeState);
+
+// ===== Agent Home Context（只读） =====
+router.use('/agent-home', agentHome);
 
 module.exports = router;
