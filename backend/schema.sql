@@ -143,3 +143,39 @@ CREATE TABLE IF NOT EXISTS course_space_knowledge_candidates (
   updated_at          TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (extraction_job_id) REFERENCES course_space_extraction_jobs(id) ON DELETE CASCADE
 );
+
+-- ---------- Student Knowledge State ----------
+-- Phase 26.1 additive layer: user-owned mastery projections over Course Knowledge.
+-- These tables never replace CGStore, Analytics, Goals, Sync, Memory or Course Space.
+CREATE TABLE IF NOT EXISTS student_knowledge_states (
+  id                TEXT PRIMARY KEY,
+  user_id           INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  course_id         TEXT NOT NULL,
+  knowledge_node_id TEXT NOT NULL,
+  mastery_level     REAL NOT NULL DEFAULT 0,
+  confidence        REAL NOT NULL DEFAULT 0,
+  state             TEXT NOT NULL DEFAULT 'weak',
+  created_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (knowledge_node_id) REFERENCES course_space_nodes(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS student_knowledge_evidence (
+  id                 TEXT PRIMARY KEY,
+  user_id            INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  knowledge_state_id TEXT NOT NULL,
+  source_type        TEXT NOT NULL,
+  source_id          TEXT NOT NULL,
+  evidence_data      TEXT NOT NULL,
+  created_at         TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (knowledge_state_id) REFERENCES student_knowledge_states(id) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_student_knowledge_states_owner_course_node
+  ON student_knowledge_states(user_id, course_id, knowledge_node_id);
+
+CREATE INDEX IF NOT EXISTS idx_student_knowledge_states_owner_course_updated
+  ON student_knowledge_states(user_id, course_id, updated_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_student_knowledge_evidence_owner_state
+  ON student_knowledge_evidence(user_id, knowledge_state_id, created_at DESC);

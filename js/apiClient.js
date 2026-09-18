@@ -553,6 +553,17 @@ var CGAPI = {
       listCandidateEvidence: function (candidateId) {
         return request('GET', `/course-space/extraction/candidates/${encodeURIComponent(candidateId)}/evidence`);
       }
+    },
+
+    /* ===== Student Knowledge State ===== */
+    knowledgeState: {
+      list: function (courseId, payload) {
+        const p = payload || {};
+        const params = new URLSearchParams();
+        params.set('limit', String(p.limit || 20));
+        params.set('offset', String(p.offset || 0));
+        return request('GET', `/knowledge-state/course/${encodeURIComponent(courseId)}?${params.toString()}`);
+      }
     }
   };
 

@@ -76,11 +76,16 @@ function createCourseSpaceUI(options) {
   status.setAttribute('aria-live', 'polite');
   const results = element('div', 'course-space-results');
   results.setAttribute('aria-live', 'polite');
+  const stateStatus = element('p', 'course-space-status');
+  const stateResults = element('div', 'course-space-results');
+  stateResults.setAttribute('aria-label', 'Knowledge State Preview');
 
   root.appendChild(head);
   root.appendChild(toolbar);
   root.appendChild(status);
   root.appendChild(results);
+  root.appendChild(stateStatus);
+  root.appendChild(stateResults);
 
   function selectedCourseId() {
     return courseSelect.value || '';
@@ -145,6 +150,52 @@ function createCourseSpaceUI(options) {
     results.appendChild(item);
   }
 
+  function renderStateItem(state) {
+    const item = element('article', 'course-space-item');
+    const stateText = state.state === 'mastered' ? '已掌握' : state.state === 'learning' ? '学习中' : '薄弱';
+    item.appendChild(element('p', 'course-space-item-title', state.nodeTitle || '未命名节点'));
+    item.appendChild(element('p', 'course-space-item-meta', `掌握 ${Math.round((state.masteryLevel || 0) * 100)}% · 可信度 ${Math.round((state.confidence || 0) * 100)}% · ${stateText}`));
+    item.appendChild(element('p', 'course-space-item-meta', `证据 ${state.evidenceCount || 0}`));
+    stateResults.appendChild(item);
+  }
+
+  function renderStateEmpty(text) {
+    stateStatus.textContent = '';
+    stateResults.textContent = '';
+    stateResults.appendChild(element('p', 'course-space-empty', text));
+  }
+
+  function renderStateError() {
+    stateStatus.className = 'course-space-status course-space-error';
+    stateStatus.textContent = '知识状态暂时不可用，请稍后再试。';
+    stateResults.textContent = '';
+  }
+
+  function renderStates(states) {
+    stateStatus.className = 'course-space-status';
+    stateStatus.textContent = '';
+    stateResults.textContent = '';
+    if (!Array.isArray(states) || !states.length) {
+      renderStateEmpty('还没有知识掌握状态。');
+      return;
+    }
+    states.slice(0, 5).forEach(renderStateItem);
+  }
+
+  async function loadKnowledgeState() {
+    const courseId = selectedCourseId();
+    if (!courseId) return renderStateEmpty('选择课程后查看知识掌握状态。');
+    stateStatus.className = 'course-space-status';
+    stateStatus.textContent = '正在加载知识状态...';
+    stateResults.textContent = '';
+    try {
+      const response = await service.knowledgeState(courseId, { limit: 10 });
+      renderStates(response && response.data ? response.data.states : []);
+    } catch (_) {
+      renderStateError();
+    }
+  }
+
   function renderSnapshot(data) {
     renderIdle();
     if (!data || typeof data !== 'object') return renderEmpty('课程空间还没有内容。');
@@ -189,6 +240,7 @@ function createCourseSpaceUI(options) {
     try {
       const response = await service.snapshot(selectedCourseId());
       renderSnapshot(response && response.data);
+      await loadKnowledgeState();
     } catch (_) {
       renderError();
       return;
@@ -208,6 +260,7 @@ function createCourseSpaceUI(options) {
   }
 
   searchButton.addEventListener('click', search);
+  courseSelect.addEventListener('change', loadSnapshot);
   searchInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') search();
   });
@@ -221,8 +274,11 @@ function createCourseSpaceUI(options) {
     status,
     summary,
     results,
+    stateStatus,
+    stateResults,
     loadSnapshot,
     search,
+    loadKnowledgeState,
     renderSnapshot,
     renderSearch,
     renderEmpty,

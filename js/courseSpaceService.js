@@ -10,6 +10,9 @@ function createCourseSpaceService(options) {
     },
     search(payload) {
       return client.courseSpace.search(payload);
+    },
+    knowledgeState(courseId, payload) {
+      return client.knowledgeState.list(courseId, payload);
     }
   };
 }

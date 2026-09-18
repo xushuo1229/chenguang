@@ -14,6 +14,9 @@ vi.mock('../js/apiClient.js', () => ({
       createNode: vi.fn(),
       createRelation: vi.fn(),
       createEvidence: vi.fn()
+    },
+    knowledgeState: {
+      list: vi.fn()
     }
   }
 }));
@@ -51,6 +54,9 @@ describe('course space service', () => {
     expect(CGAPI.courseSpace.search).toHaveBeenCalledWith({
       query: 'closure', courseId: 'course-1', limit: 10
     });
+    CGAPI.knowledgeState.list.mockResolvedValue({ data: { states: [] } });
+    await service.knowledgeState('course-1', { limit: 10 });
+    expect(CGAPI.knowledgeState.list).toHaveBeenCalledWith('course-1', { limit: 10 });
   });
 });
 
@@ -100,5 +106,59 @@ describe('course space UI', () => {
     await ui.loadSnapshot();
     expect(ui.status.textContent).toBe('课程空间暂时不可用，请稍后再试。');
     expect(ui.root.textContent).not.toContain('/secret/db');
+  });
+
+  test('renders bounded knowledge state preview', async () => {
+    CGAPI.courseSpace.snapshot.mockResolvedValue(snapshot);
+    CGAPI.knowledgeState.list.mockResolvedValue({
+      data: {
+        states: [{
+          nodeTitle: 'Promise',
+          masteryLevel: 0.65,
+          confidence: 0.5,
+          state: 'learning',
+          evidenceCount: 2
+        }]
+      }
+    });
+    const ui = createCourseSpaceUI();
+    document.body.appendChild(ui.root);
+    await ui.loadSnapshot();
+    ui.courseSelect.value = 'course-1';
+    await ui.loadKnowledgeState();
+    expect(CGAPI.knowledgeState.list).toHaveBeenCalledWith('course-1', { limit: 10 });
+    expect(ui.stateResults.textContent).toContain('Promise');
+    expect(ui.stateResults.textContent).toContain('掌握 65%');
+    expect(ui.stateResults.textContent).toContain('可信度 50%');
+    expect(ui.stateResults.textContent).toContain('学习中');
+    expect(ui.stateResults.querySelector('script')).toBeNull();
+  });
+
+  test('shows knowledge state empty and friendly error states', async () => {
+    CGAPI.courseSpace.snapshot.mockResolvedValue(snapshot);
+    CGAPI.knowledgeState.list.mockResolvedValue({ data: { states: [] } });
+    const ui = createCourseSpaceUI();
+    document.body.appendChild(ui.root);
+    await ui.loadSnapshot();
+    ui.courseSelect.value = 'course-1';
+    await ui.loadKnowledgeState();
+    expect(ui.stateResults.textContent).toContain('还没有知识掌握状态。');
+
+    const failing = createCourseSpaceUI();
+    document.body.appendChild(failing.root);
+    CGAPI.courseSpace.snapshot.mockRejectedValueOnce(new Error('state db /secret'));
+    failing.courseSelect.value = 'course-1';
+    await failing.loadSnapshot();
+    expect(failing.status.textContent).toBe('课程空间暂时不可用，请稍后再试。');
+
+    const stateFailing = createCourseSpaceUI();
+    document.body.appendChild(stateFailing.root);
+    CGAPI.courseSpace.snapshot.mockResolvedValueOnce(snapshot);
+    CGAPI.knowledgeState.list.mockRejectedValueOnce(new Error('/secret/state'));
+    await stateFailing.loadSnapshot();
+    stateFailing.courseSelect.value = 'course-1';
+    await stateFailing.loadKnowledgeState();
+    expect(stateFailing.stateStatus.textContent).toBe('知识状态暂时不可用，请稍后再试。');
+    expect(stateFailing.root.textContent).not.toContain('/secret/state');
   });
 });

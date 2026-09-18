@@ -33,6 +33,7 @@ const auth = require('./auth');
 const syncCtrl = require('../controllers/syncController');
 const ai = require('./ai');
 const courseSpace = require('./courseSpace');
+const knowledgeState = require('./knowledgeState');
 const { authRequired } = require('../middleware/auth');
 const { writeLimiter } = require('../middleware/rateLimit');
 
@@ -65,5 +66,9 @@ router.use('/course', require('./scheduleImport'));
 // ===== 课程空间 / 知识基础 =====
 // Course Knowledge 与既有 Course System 2.0 分离，不进入 chenguangData。
 router.use('/course-space', courseSpace);
+
+// ===== 学生知识状态（只读） =====
+// Student Knowledge State 是 Course Knowledge 之上的用户掌握投影，只读开放。
+router.use('/knowledge-state', knowledgeState);
 
 module.exports = router;
