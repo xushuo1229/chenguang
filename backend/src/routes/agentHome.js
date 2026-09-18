@@ -2,6 +2,7 @@
 
 const express = require('express');
 const service = require('../services/agentHomeService');
+const insightService = require('../services/agentInsightService');
 const { authRequired } = require('../middleware/auth');
 
 const router = express.Router();
@@ -9,6 +10,16 @@ const router = express.Router();
 router.get('/context', authRequired, async (req, res, next) => {
   try {
     const result = await service.buildAgentHomeContext({ userId: req.userId });
+    res.success(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/insights', authRequired, async (req, res, next) => {
+  try {
+    const context = await service.buildAgentHomeContext({ userId: req.userId });
+    const result = insightService.buildInsights(context);
     res.success(result);
   } catch (err) {
     next(err);
