@@ -191,7 +191,7 @@ describe('agent home context builder', () => {
     const owner = await prepareUser('agent-context-boundary@example.com');
     const context = await agentHomeService.buildAgentHomeContext({ userId: owner.userId });
 
-    assert.equal(context.behavior.source, 'reflection_context_source');
+    assert.equal(context.behavior.source, 'sync.activity');
     assert.equal(context.behavior.authority, 'deterministic_projection');
     assert.equal(context.behavior.type, 'behavior_summary');
     assert.equal(context.behavior.confidence, 1);

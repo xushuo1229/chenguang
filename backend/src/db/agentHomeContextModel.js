@@ -39,7 +39,20 @@ function listKnowledgeStates({ userId, limit }) {
   return result.rows;
 }
 
+function listCourseEvidence({ userId, limit }) {
+  const result = query(
+    `SELECT id, course_id, document_id, node_id, quote, locator, version
+       FROM course_space_evidence
+      WHERE user_id = $1
+      ORDER BY created_at DESC, id
+      LIMIT $2`,
+    [userId, limit],
+  );
+  return result.rows;
+}
+
 module.exports = {
   listCourseNodes,
+  listCourseEvidence,
   listKnowledgeStates,
 };
