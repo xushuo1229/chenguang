@@ -10,6 +10,9 @@ const { sanitizeReflectionContext } = require('../reflectionContext');
 const { asArray, boundedNumber, boundedText, createAdapter } = require('./adapterContract');
 
 const COURSE_LIMIT = 10;
+const RECENT_WINDOW = 7;
+const RECENT_CURRENT = 3;
+const MAX_DAILY_MINUTES = 10000;
 
 function localToday() {
   const now = new Date();
@@ -35,6 +38,52 @@ function projectCourses(payload) {
     .filter((course) => course.courseId);
 }
 
+function recordDate(value) {
+  const date = String(value || '');
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : '';
+}
+
+function buildRecent7(payload, today) {
+  const dates = Array.from({ length: RECENT_WINDOW }, (_, index) => dateOffset(today, index - 6));
+  const dateSet = new Set(dates);
+  const currentSet = new Set(dates.slice(-RECENT_CURRENT));
+  const focusByDate = new Map();
+  const studyDates = new Set();
+
+  const addFocus = (record) => {
+    const date = recordDate(record && record.date);
+    if (!dateSet.has(date)) return;
+    const minutes = boundedNumber(record.minutes, MAX_DAILY_MINUTES);
+    focusByDate.set(date, (focusByDate.get(date) || 0) + minutes);
+  };
+
+  const addStudyDay = (record, minutesField) => {
+    const date = recordDate(record && record.date);
+    if (!dateSet.has(date)) return;
+    if (boundedNumber(record[minutesField], MAX_DAILY_MINUTES) > 0) studyDates.add(date);
+  };
+
+  asArray(payload.focus).forEach(addFocus);
+  asArray(payload.english).forEach((record) => addStudyDay(record, 'minutes'));
+
+  const focusMinutes = dates.reduce((sum, date) => sum + (focusByDate.get(date) || 0), 0);
+  const current3FocusMinutes = dates.slice(-RECENT_CURRENT)
+    .reduce((sum, date) => sum + (focusByDate.get(date) || 0), 0);
+  const previous4FocusMinutes = dates.slice(0, RECENT_WINDOW - RECENT_CURRENT)
+    .reduce((sum, date) => sum + (focusByDate.get(date) || 0), 0);
+
+  return {
+    startDate: dates[0],
+    endDate: dates[dates.length - 1],
+    focusMinutes,
+    current3FocusMinutes,
+    previous4FocusMinutes,
+    studyActiveDays: studyDates.size,
+    current3StudyDays: dates.slice(-RECENT_CURRENT).filter((date) => studyDates.has(date)).length,
+    previous4StudyDays: dates.slice(0, RECENT_WINDOW - RECENT_CURRENT).filter((date) => studyDates.has(date)).length,
+  };
+}
+
 function buildBehaviorSummary({ snapshot }) {
   if (!snapshot || snapshot.adapter !== 'sync_data' || snapshot.readOnly !== true) {
     const error = new Error('INVALID_ADAPTER_INPUT');
@@ -55,7 +104,7 @@ function buildBehaviorSummary({ snapshot }) {
     suggestions: [],
   });
 
-  return createAdapter({
+    return createAdapter({
     adapter: 'behavior',
     source: 'sync.activity',
     authority: 'deterministic_projection',
@@ -69,6 +118,7 @@ function buildBehaviorSummary({ snapshot }) {
       goals: summary.goals,
       risks: summary.signals.risks,
       trend: [],
+      recent7: buildRecent7(payload, today),
     },
   });
 }

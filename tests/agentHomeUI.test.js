@@ -14,9 +14,17 @@ function contextResponse() {
       actionLevel: 'insight_only',
       behavior: {
         value: {
-          taskSummary: { completed: 2, total: 4 },
-          focusSummary: { minutes: 45, studyMinutes: 65, exerciseMinutes: 20 },
-          streaks: { current: 3 },
+        taskSummary: { completed: 2, total: 4 },
+        focusSummary: { minutes: 45, studyMinutes: 65, exerciseMinutes: 20 },
+        streaks: { current: 3 },
+        recent7: {
+          focusMinutes: 120,
+          current3FocusMinutes: 80,
+          previous4FocusMinutes: 40,
+          studyActiveDays: 4,
+          current3StudyDays: 2,
+          previous4StudyDays: 2,
+        },
         },
         source: 'sync.activity',
         authority: 'deterministic_projection',
@@ -63,11 +71,21 @@ function insightsResponse() {
       version: 'agent-insight-v1',
       scope: 'agent_home',
       insights: [{
-        headline: 'Promise 当前掌握度较低。',
+        id: 'knowledge-gap-detected',
+        type: 'knowledge_gap_detected',
+        title: 'Promise 当前掌握度较低。',
         explanation: '根据当前用户的 Knowledge State 记录生成。',
-        evidence: [{ source: 'student_knowledge_states', authority: 'source' }],
-        confidence: 0.8,
-        recommended_actions: [{ type: 'review' }],
+        source: 'student_knowledge_states',
+        authority: 'source',
+        evidence: [{
+          source: 'student_knowledge_adapter',
+          authority: 'source',
+          metric: 'weakTopics[0].masteryLevel',
+          period: 'current',
+          value: 0.2,
+        }],
+        confidence: 1,
+        actionLevel: 'insight_only',
       }],
       metadata: { readOnly: true, actionLevel: 'insight_only' },
     },
@@ -111,6 +129,7 @@ describe('agent home service', () => {
   test('rejects writable or malformed agent contracts', () => {
     expect(() => normalizeContext({ data: { version: 'learning-context-v1', readOnly: false } })).toThrow('INVALID_AGENT_CONTEXT');
     expect(() => normalizeInsights({ data: { version: 'agent-insight-v1', insights: [], metadata: { readOnly: false } } })).toThrow('INVALID_AGENT_INSIGHTS');
+    expect(() => normalizeInsights({ data: { version: 'agent-insight-v1', insights: [], metadata: { readOnly: true, actionLevel: 'review' } } })).toThrow('INVALID_AGENT_INSIGHTS');
   });
 });
 
@@ -150,7 +169,8 @@ describe('agent home UI', () => {
     expect(text).toContain('来自课程知识库 · source');
     expect(text).toContain('来自成长记忆（派生记忆） · derived_memory');
     expect(text).toContain('Promise 当前掌握度较低。');
-    expect(text).toContain('student_knowledge_states · source');
+    expect(text).toContain('weakTopics[0].masteryLevel · current：0.2');
+    expect(text).toContain('student_knowledge_adapter · source');
     expect(target.querySelectorAll('button')).toHaveLength(0);
     expect(target.querySelectorAll('form')).toHaveLength(0);
   });

@@ -22,7 +22,10 @@ function normalizeInsights(response) {
   if (!payload || payload.version !== AGENT_INSIGHT_VERSION || !Array.isArray(payload.insights)) {
     throw new Error('INVALID_AGENT_INSIGHTS');
   }
-  if (!isObject(payload.metadata) || payload.metadata.readOnly !== true) {
+  if (!isObject(payload.metadata) || payload.metadata.readOnly !== true || payload.metadata.actionLevel !== 'insight_only') {
+    throw new Error('INVALID_AGENT_INSIGHTS');
+  }
+  if (payload.insights.some((insight) => insight && insight.actionLevel && insight.actionLevel !== 'insight_only')) {
     throw new Error('INVALID_AGENT_INSIGHTS');
   }
   return payload;

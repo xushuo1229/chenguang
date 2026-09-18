@@ -124,11 +124,13 @@ function renderInsights(host, insights) {
   }
   insights.insights.slice(0, 5).forEach((insight) => {
     const item = element('article', 'agent-insight');
-    item.appendChild(element('h4', null, insight.headline || '学习观察'));
+    item.appendChild(element('h4', null, insight.title || insight.headline || '学习观察'));
     item.appendChild(element('p', null, insight.explanation || ''));
     const evidence = element('ul', 'agent-evidence');
     (insight.evidence || []).slice(0, 3).forEach((item) => {
-      evidence.appendChild(element('li', null, `${item.source || '未知来源'} · ${item.authority || 'unknown'}`));
+      const metric = [item.metric || item.field, item.period].filter(Boolean).join(' · ');
+      const value = item.value == null ? '' : `：${item.value}`;
+      evidence.appendChild(element('li', null, `${metric}${value} · ${item.source || '未知来源'} · ${item.authority || 'unknown'}`));
     });
     item.appendChild(evidence);
     host.appendChild(item);
