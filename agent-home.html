@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agent Home · 知行</title>
+  <meta name="theme-color" content="#0B1220">
+  <meta name="description" content="知行 Agent Home：只读学习状态与结构化学习观察。">
+  <link rel="icon" href="/brand/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/vendor/fontawesome/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="css/variables.css" as="style">
+  <link rel="preload" href="css/shared.css" as="style">
+  <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/shared.css">
+  <link rel="stylesheet" href="css/components.css">
+  <style>
+    body { display: flex; min-height: 100vh; }
+    .main {
+      flex: 1;
+      padding: 20px 28px 48px;
+      max-width: 1180px;
+      width: 100%;
+      overflow-y: auto;
+    }
+    .agent-page-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 22px; }
+    .agent-page-header h2 { margin: 0; font-size: 1.45rem; font-weight: 700; }
+    .agent-page-header p { margin: 5px 0 0; color: var(--text-muted); font-size: .86rem; }
+    .agent-trust-note { display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; border: 1px solid var(--border-soft); border-radius: 999px; background: var(--bg-card); color: var(--text-muted); font-size: .76rem; white-space: nowrap; }
+    @media (max-width: 760px) {
+      .main { padding: 14px 14px 32px; }
+      .agent-page-header { display: block; }
+      .agent-trust-note { margin-top: 12px; white-space: normal; }
+    }
+  </style>
+  <script src="js/shellBootstrap.js"></script>
+</head>
+<body class="dashboard-shell" data-theme="fusion" data-brand="xingzhixing">
+<aside class="sidebar">
+  <div class="wb-brand">
+    <div class="wb-brand-mark"><img src="/brand/logo-icon.svg" alt="知行品牌图标"></div>
+    <div class="wb-brand-copy"><strong>知行</strong><span>AI Personal Growth OS</span></div>
+  </div>
+  <a href="workbench.html" class="nav-item" data-nav="home"><i class="fas fa-home"></i>首页</a>
+  <a href="today.html" class="nav-item"><i class="fas fa-list-check"></i>今日计划</a>
+  <a href="workbench.html?view=course" class="nav-item" data-nav="course"><i class="fas fa-graduation-cap"></i>课程</a>
+  <a href="goals.html" class="nav-item" data-nav="goals"><i class="fas fa-bullseye"></i>目标</a>
+  <a href="stats.html" class="nav-item" data-nav="stats"><i class="fas fa-chart-line"></i>统计</a>
+  <a href="ai.html" class="nav-item" data-nav="ai"><i class="fas fa-compass"></i>AI 教练</a>
+  <a href="agent-home.html" class="nav-item active"><i class="fas fa-lightbulb"></i>Agent Home</a>
+  <div class="nav-bottom">
+    <a href="workbench.html?view=manage" class="nav-item" data-nav="manage"><i class="fas fa-cog"></i>管理</a>
+    <a href="workbench.html?view=profile" class="nav-item" data-nav="profile"><i class="fas fa-user"></i>我的</a>
+    <div class="wb-user">
+      <div class="wb-user-avatar" id="sidebarUserAvatar"></div>
+      <div class="wb-user-copy"><strong id="sidebarUserName"></strong><span>成长记录</span></div>
+    </div>
+    <div class="wb-motto">知而后行<br>行而致远</div>
+  </div>
+</aside>
+<script>cgShellBootstrap.render();</script>
+<main class="main">
+  <header class="agent-page-header">
+    <div>
+      <h2>Agent Home</h2>
+      <p>结构化理解你的学习状态。当前仅提供只读洞察。</p>
+    </div>
+    <div class="agent-trust-note"><i class="fas fa-shield-halved"></i> 只读 · 数据可溯源 · 不自动修改</div>
+  </header>
+  <div id="agentHomeRoot"></div>
+</main>
+<script type="module" src="/js/agentHome.js"></script>
+</body>
+</html>

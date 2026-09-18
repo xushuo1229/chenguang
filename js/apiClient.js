@@ -564,6 +564,16 @@ var CGAPI = {
         params.set('offset', String(p.offset || 0));
         return request('GET', `/knowledge-state/course/${encodeURIComponent(courseId)}?${params.toString()}`);
       }
+    },
+
+    /* ===== Agent Home ===== */
+    agentHome: {
+      context: function () {
+        return request('GET', '/agent-home/context', null, { timeoutMs: 15000 });
+      },
+      insights: function () {
+        return request('GET', '/agent-home/insights', null, { timeoutMs: 15000 });
+      }
     }
   };
 

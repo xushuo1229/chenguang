@@ -149,6 +149,7 @@ export default defineConfig(({ mode }) => ({
         stats: resolve(__dirname, 'stats.html'),         // 统计数据页
         ai: resolve(__dirname, 'ai.html'),               // AI 助手
         goals: resolve(__dirname, 'goals.html'),         // 目标系统
+        agentHome: resolve(__dirname, 'agent-home.html'), // Agent Home
       },
     },
 
