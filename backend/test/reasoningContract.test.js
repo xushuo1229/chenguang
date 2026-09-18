@@ -112,4 +112,40 @@ describe('agent reasoning contract', () => {
     assert.equal(result.explanations[0].evidenceRefs[0].metric, 'focus_minutes');
     assert.deepEqual(result.permissions.write, []);
   });
+
+  test('rejects malformed insight confidence without numeric coercion', () => {
+    const invalidConfidences = [NaN, Infinity, null, undefined, '1', true, -0.1, 1.1];
+    invalidConfidences.forEach((confidence) => {
+      const insightsFixture = insights();
+      insightsFixture.insights[0].confidence = confidence;
+      assert.throws(
+        () => validateReasoningInput({ context: context(), insights: insightsFixture }),
+        /INVALID_AGENT_INSIGHTS/,
+      );
+    });
+  });
+
+  test('drops reasoning explanations whose confidence is not a bounded number', () => {
+    const result = normalizeReasoning({
+      version: REASONING_VERSION,
+      generatedAt: '2026-09-18T00:00:00.000Z',
+      userId: 7,
+      scope: 'agent_home',
+      available: true,
+      explanations: [{
+        insightId: 'focus-trend-7d',
+        insightType: 'focus_increase',
+        title: '为什么出现专注趋势观察？',
+        why: '该观察比较了最近 3 天与此前 4 天的专注记录。',
+        evidenceRefs: [{ insightId: 'focus-trend-7d', index: 0 }],
+        confidence: '1',
+        actionLevel: ACTION_LEVEL,
+      }],
+      permissions: { read: ['deterministic_insights'], write: [] },
+      metadata: { readOnly: true, actionLevel: ACTION_LEVEL },
+    });
+
+    assert.equal(result.available, true);
+    assert.deepEqual(result.explanations, []);
+  });
 });

@@ -20,9 +20,8 @@ function boundedText(value, maxLength = 160) {
 }
 
 function boundedUnit(value) {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed) || parsed < 0) return 0;
-  return Math.min(parsed, 1);
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1) return null;
+  return value;
 }
 
 function invalidInput(message) {
@@ -59,7 +58,7 @@ function validateReasoningInput({ context, insights }) {
 
   const valid = insights.insights.every((insight) => {
     if (!isObject(insight) || insight.actionLevel !== ACTION_LEVEL) return false;
-    if (!Number.isFinite(Number(insight.confidence)) || Number(insight.confidence) < 0 || Number(insight.confidence) > 1) return false;
+    if (typeof insight.confidence !== 'number' || !Number.isFinite(insight.confidence) || insight.confidence < 0 || insight.confidence > 1) return false;
     return Array.isArray(insight.evidence) && insight.evidence.length > 0;
   });
   if (!valid) throw invalidInput('INVALID_AGENT_INSIGHTS');
@@ -78,6 +77,8 @@ function normalizeEvidenceRef({ insightId, index, source, metric, period }) {
 
 function normalizeExplanation(explanation) {
   if (!isObject(explanation)) return null;
+  const confidence = boundedUnit(explanation.confidence);
+  if (confidence == null) return null;
   const evidenceRefs = Array.isArray(explanation.evidenceRefs)
     ? explanation.evidenceRefs.slice(0, MAX_EVIDENCE_REFS).map(normalizeEvidenceRef).filter((ref) => ref.insightId && ref.index >= 0)
     : [];
@@ -91,7 +92,7 @@ function normalizeExplanation(explanation) {
     title: boundedText(explanation.title, MAX_TEXT),
     why: boundedText(explanation.why, MAX_TEXT),
     evidenceRefs,
-    confidence: boundedUnit(explanation.confidence),
+    confidence,
     actionLevel: ACTION_LEVEL,
   };
 }
