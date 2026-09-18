@@ -1,7 +1,7 @@
 'use strict';
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { createAgentHomeService, normalizeContext, normalizeInsights } from '../js/agentHomeService.js';
+import { createAgentHomeService, normalizeContext, normalizeInsights, normalizeReasoning } from '../js/agentHomeService.js';
 import { createAgentHomeView } from '../js/agentHomeView.js';
 import agentHomeHtml from '../agent-home.html?raw';
 
@@ -92,11 +92,42 @@ function insightsResponse() {
   };
 }
 
+function reasoningResponse() {
+  return {
+    data: {
+      version: 'agent-reasoning-v1',
+      generatedAt: '2026-09-18T00:00:00.000Z',
+      userId: 1,
+      scope: 'agent_home',
+      available: true,
+      summary: { title: '学习观察解释', narrative: '以下解释只基于已验证的结构化洞察。', insightCount: 1, evidenceCount: 1 },
+      explanations: [{
+        insightId: 'knowledge-gap-detected',
+        insightType: 'knowledge_gap_detected',
+        title: '为什么出现知识缺口观察？',
+        why: '该观察聚合了当前用户 Knowledge State 中的薄弱主题。',
+        evidenceRefs: [{
+          insightId: 'knowledge-gap-detected',
+          index: 0,
+          source: 'student_knowledge_adapter',
+          metric: 'weakTopics[0].masteryLevel',
+          period: 'current',
+        }],
+        confidence: 1,
+        actionLevel: 'insight_only',
+      }],
+      permissions: { read: ['deterministic_insights'], write: [] },
+      metadata: { readOnly: true, actionLevel: 'insight_only', sourceInsightVersion: 'agent-insight-v1', contextVersion: 'learning-context-v1' },
+    },
+  };
+}
+
 function createClient() {
   return {
     agentHome: {
       context: vi.fn().mockResolvedValue(contextResponse()),
       insights: vi.fn().mockResolvedValue(insightsResponse()),
+      reasoning: vi.fn().mockResolvedValue(reasoningResponse()),
     },
   };
 }
@@ -122,14 +153,22 @@ describe('agent home service', () => {
 
     expect(client.agentHome.context).toHaveBeenCalledTimes(1);
     expect(client.agentHome.insights).toHaveBeenCalledTimes(1);
+    expect(client.agentHome.reasoning).toHaveBeenCalledTimes(1);
     expect(result.context.version).toBe('learning-context-v1');
     expect(result.insights.version).toBe('agent-insight-v1');
+    expect(result.reasoning.version).toBe('agent-reasoning-v1');
   });
 
   test('rejects writable or malformed agent contracts', () => {
     expect(() => normalizeContext({ data: { version: 'learning-context-v1', readOnly: false } })).toThrow('INVALID_AGENT_CONTEXT');
     expect(() => normalizeInsights({ data: { version: 'agent-insight-v1', insights: [], metadata: { readOnly: false } } })).toThrow('INVALID_AGENT_INSIGHTS');
     expect(() => normalizeInsights({ data: { version: 'agent-insight-v1', insights: [], metadata: { readOnly: true, actionLevel: 'review' } } })).toThrow('INVALID_AGENT_INSIGHTS');
+    const writableReasoning = reasoningResponse();
+    writableReasoning.data.permissions.write = ['todos'];
+    expect(() => normalizeReasoning(writableReasoning)).toThrow('INVALID_AGENT_REASONING');
+    const emptySuccessfulReasoning = reasoningResponse();
+    emptySuccessfulReasoning.data.explanations = [];
+    expect(() => normalizeReasoning(emptySuccessfulReasoning)).toThrow('INVALID_AGENT_REASONING');
   });
 });
 
@@ -153,6 +192,7 @@ describe('agent home UI', () => {
     const service = { load: vi.fn().mockResolvedValue({
       context: contextResponse().data,
       insights: insightsResponse().data,
+      reasoning: reasoningResponse().data,
     }) };
     const { target, view } = mount(service);
     await view.load();
@@ -171,8 +211,28 @@ describe('agent home UI', () => {
     expect(text).toContain('Promise 当前掌握度较低。');
     expect(text).toContain('weakTopics[0].masteryLevel · current：0.2');
     expect(text).toContain('student_knowledge_adapter · source');
+    expect(text).toContain('Reasoning Explanation');
+    expect(text).toContain('Why：该观察聚合了当前用户 Knowledge State 中的薄弱主题。');
+    expect(text).toContain('置信度：1.00');
+    expect(text).toContain('weakTopics[0].masteryLevel · current');
+    expect(text).toContain('来自确定性洞察 · insight_only');
     expect(target.querySelectorAll('button')).toHaveLength(0);
     expect(target.querySelectorAll('form')).toHaveLength(0);
+  });
+
+  test('falls back safely when reasoning API is unavailable', async () => {
+    const client = createClient();
+    client.agentHome.reasoning = vi.fn().mockRejectedValue(new Error('provider unavailable'));
+    const service = createAgentHomeService({ client });
+    const result = await service.load();
+    const { target, view } = mount(service);
+    await view.load();
+
+    expect(result.reasoning.available).toBe(false);
+    expect(result.reasoning.reason).toBe('reasoning_unavailable');
+    expect(view.status.textContent).toBe('');
+    expect(target.textContent).toContain('Reasoning Explanation');
+    expect(target.textContent).toContain('暂无推理解释。');
   });
 
   test('shows meaningful empty state without inventing data', async () => {
@@ -185,6 +245,7 @@ describe('agent home UI', () => {
         memories: { growth: { value: { available: false, items: [] }, source: 'cgstore.user.memory', authority: 'derived_memory' } },
       },
       insights: { version: 'agent-insight-v1', insights: [], metadata: { readOnly: true } },
+      reasoning: { version: 'agent-reasoning-v1', available: false, explanations: [], permissions: { write: [] }, metadata: { readOnly: true, actionLevel: 'insight_only' } },
     }) };
     const { target, view } = mount(service);
     await view.load();
@@ -194,6 +255,7 @@ describe('agent home UI', () => {
     expect(target.textContent).toContain('暂无课程知识');
     expect(target.textContent).toContain('暂无成长记忆');
     expect(target.textContent).toContain('暂无足够数据生成洞察。');
+    expect(target.textContent).toContain('暂无推理解释。');
   });
 
   test('shows friendly API error without exposing internals', async () => {

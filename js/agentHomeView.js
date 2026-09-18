@@ -7,6 +7,7 @@ const AUTHORITY_LABELS = {
   'course_space': '来自课程知识库',
   'cgstore.user.memory': '来自成长记忆（派生记忆）',
   'reflection_storage': '来自用户反思',
+  'deterministic_insights': '来自确定性洞察',
 };
 
 function element(tag, className, text) {
@@ -18,6 +19,12 @@ function element(tag, className, text) {
 
 function authorityLabel(source) {
   return AUTHORITY_LABELS[source] || '来自已授权学习数据';
+}
+
+function confidenceLabel(value) {
+  const confidence = Number(value);
+  if (!Number.isFinite(confidence) || confidence < 0 || confidence > 1) return '置信度：未知';
+  return `置信度：${confidence.toFixed(2)}`;
 }
 
 function badge(source, authority) {
@@ -41,6 +48,9 @@ function ensureStyles() {
     .agent-empty { color: var(--text-muted); font-size: .86rem; }
     .agent-insight { padding: 14px 0; border-top: 1px solid var(--border-soft); }
     .agent-insight:first-child { border-top: 0; padding-top: 0; }
+    .agent-reasoning { padding: 14px 0; border-top: 1px solid var(--border-soft); }
+    .agent-reasoning:first-child { border-top: 0; padding-top: 0; }
+    .agent-confidence { margin: 5px 0 0; color: var(--text-muted); font-size: .78rem; }
     .agent-evidence { margin: 9px 0 0; padding-left: 18px; color: var(--text-muted); font-size: .78rem; }
     .agent-status { min-height: 22px; color: var(--text-muted); font-size: .86rem; }
     @media (max-width: 760px) { .agent-grid { grid-template-columns: 1fr; } .agent-card { padding: 16px; } }
@@ -137,6 +147,27 @@ function renderInsights(host, insights) {
   });
 }
 
+function renderReasoning(host, reasoning) {
+  if (!reasoning || reasoning.available !== true || !reasoning.explanations.length) {
+    host.appendChild(element('p', 'agent-empty', '暂无推理解释。'));
+    return;
+  }
+
+  reasoning.explanations.slice(0, 5).forEach((explanation) => {
+    const item = element('article', 'agent-reasoning');
+    item.appendChild(element('h4', null, explanation.title || '学习观察解释'));
+    item.appendChild(element('p', null, `Why：${explanation.why || '暂无解释。'}`));
+    item.appendChild(element('p', 'agent-confidence', confidenceLabel(explanation.confidence)));
+    const evidence = element('ul', 'agent-evidence');
+    (explanation.evidenceRefs || []).slice(0, 3).forEach((ref) => {
+      const metric = [ref.metric, ref.period].filter(Boolean).join(' · ');
+      evidence.appendChild(element('li', null, `${metric} · ${ref.source || '未知来源'}`));
+    });
+    item.appendChild(evidence);
+    host.appendChild(item);
+  });
+}
+
 function createAgentHomeView({ target, service }) {
   ensureStyles();
   const root = element('div', 'agent-home');
@@ -159,7 +190,7 @@ function createAgentHomeView({ target, service }) {
     content.replaceChildren(element('p', 'agent-empty', '暂时无法读取学习状态。'));
   }
 
-  function render({ context, insights }) {
+  function render({ context, insights, reasoning = {} }) {
     status.textContent = '';
     root.removeAttribute('aria-busy');
     const behavior = context.behavior || {};
@@ -177,8 +208,10 @@ function createAgentHomeView({ target, service }) {
     renderGrowth(growthCard, growth);
     const insightCard = sectionCard('AI Insights', '结构化学习观察', insights.metadata ? 'agent_insight' : 'agent_insight', 'insight_only');
     renderInsights(insightCard, insights);
+    const reasoningCard = sectionCard('Reasoning Explanation', '解释已有洞察，不新增事实', 'deterministic_insights', 'insight_only');
+    renderReasoning(reasoningCard, reasoning);
 
-    content.replaceChildren(overview, courses, knowledge, growthCard, insightCard);
+    content.replaceChildren(overview, courses, knowledge, growthCard, insightCard, reasoningCard);
   }
 
   function load() {

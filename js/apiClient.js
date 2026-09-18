@@ -573,6 +573,9 @@ var CGAPI = {
       },
       insights: function () {
         return request('GET', '/agent-home/insights', null, { timeoutMs: 15000 });
+      },
+      reasoning: function () {
+        return request('GET', '/agent-home/reasoning', null, { timeoutMs: 15000 });
       }
     }
   };
