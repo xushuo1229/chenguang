@@ -1,6 +1,6 @@
 # Phase 27.6.3 · LLM Provider Abstraction 架构
 
-状态：READY_FOR_INDEPENDENT_REAUDIT
+状态：FROZEN（2026-09-19，独立 Re-Audit READY_TO_FREEZE，见 PHASE_27_6_3_LLM_PROVIDER_INDEPENDENT_REAUDIT.md）
 日期：2026-09-19
 前置：Phase 27.6.2.3 Semantic Validation（已冻结）
 能力等级：L1 — Bounded Context Read Layer（不变，本 Phase 不提升能力等级）
@@ -124,7 +124,7 @@ Provider 模块**禁止**：
 
 ### 2.2 `validateProviderInput({ context, task })`
 
-契约违规一律 throw（`statusCode 400`，错误码 `PROVIDER_*`）：
+契约违规一律 throw（`statusCode 400`，错误码 `PROVIDER_*`）；六道检查全部通过返回 `true`（适配器随后将完整防火墙上下文交给 Prompt 构建器；`ownerUserId` 为 Provider 可感知字段且计入字节预算）：
 
 1. `context.version === 'agent-llm-context-v1'`（复用 `toProviderPayload` 的版本闸）。
 2. `task ∈ TASKS`（复用 `contextContract.TASKS`，不复制集合）。
@@ -164,7 +164,7 @@ module.exports = { name: 'openaiCompatible', generateExplanation };
 
 - `REGISTRY`：`{ openaiCompatible: openaiCompatibleProvider }`，与 `services/providers/index.js` 同构。
 - `getAgentProvider(name)`：按名取适配器，未知返回 `null`（调用方决策，不抛）。
-- `resolveAgentProvider()`：读 `config.agentLlmProvider`，未配置/未知 → `null`（上游据此走确定性兜底，而不是报错）。
+- `resolveAgentProvider()`：读 `config.agentLlmProvider`（env.js 恒定默认 `openaiCompatible`，故「未配置」终态与显式配置一致）；配置值未知或适配器形状非法 → `null`（上游据此走确定性兜底，而不是报错）。
 - 注册时校验适配器形状（`name` 非空 + `generateExplanation` 为函数），坏适配器在启动期暴露。
 
 ### 3.3 传输层复用（不引入第二套并行系统）
