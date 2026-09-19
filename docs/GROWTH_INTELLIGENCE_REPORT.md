@@ -1,18 +1,18 @@
-# Phase 19.1 Growth Intelligence Report
+# 第19.1阶段增长智能报告
 
-## 1. Implementation Summary
+# 1. 实现摘要
 
-Phase 19.1 completes the Growth Intelligence foundation. The system now derives an explainable Growth Score, long-term trend summaries, strengths, and risks from the existing Analytics snapshot and GoalEngine outputs. The AI Coach receives this result through the existing read-only AI Context chain, and Workbench displays a compact 7/30/90-day insight card.
+第19.1阶段完成了增长智能基础。系统现在从现有的分析快照和目标引擎输出中得出可解释的增长得分、长期趋势总结、优势和风险。AI教练通过现有的只读AI上下文链接收此结果，而工作台显示一个紧凑的7/30/90天洞察卡。
 
-This phase did not introduce a new data source, store, state manager, route system, framework, or AI write path.
+此阶段没有引入新的数据源、存储、状态管理器、路由系统、框架或 AI 写入路径。
 
-## 2. Architecture Changes
+# 2. 架构更改
 
-### New / Extended Module
+## 新 / 扩展模块
 
-`js/growthIntelligence.js` remains the pure Growth Intelligence calculation layer.
+`js/growthIntelligence.js` 仍然是纯粹的增长智能计算层。
 
-### Data Flow
+## 数据流
 
 ```text
 CGStore snapshot
@@ -23,55 +23,55 @@ CGStore snapshot
 → AI Provider
 ```
 
-Growth Intelligence accepts an injected snapshot and `today` option. It does not read raw collections for statistics, does not own business data, and does not write to `CGStore` or `localStorage`.
+Growth Intelligence 接受注入的快照和 `today` 选项。它不读取原始集合来获取统计数据，不拥有业务数据，也不写入 `CGStore` 或 `localStorage`。
 
-## 3. Changed Files
+# 3. 已更改的文件
 
-| File | Change |
+| 文件 | 变更 |
 | --- | --- |
-| `js/growthIntelligence.js` | Added 90-day windows, weighted Growth Score, and 7/30/90-day growth summary. |
-| `js/aiContext.js` | Added compatibility `growth` context, compact trend mapping, and context budget trimming. |
-| `js/aiDataRetrieval.js` | Exposed 90-day trends and Growth Score/summary through controlled retrieval. |
-| `pages/workbench.js` | Rendered Growth Score and range insights in the existing growth brief. |
-| `workbench.html` | Added the compact score/range display to the existing card. |
-| `ai.html` | Updated quick prompts to long-term growth questions. |
-| `tests/growthIntelligence.test.js` | Added score, 7/30/90, empty/large data, and trend coverage. |
-| `tests/aiContext.test.js` | Added `growth` context and read-only regression coverage. |
-| `tests/ai.page.test.js` | Updated quick prompt expectations. |
-| `tests/ux-product.test.js` | Added Workbench score and 7/30/90 rendering coverage. |
-| `docs/superpowers/plans/2026-09-14-phase-19-1-growth-intelligence.md` | Recorded the implementation plan. |
+| `js/growthIntelligence.js` | 添加了90天窗口、加权增长得分以及7/30/90天的增长摘要。 |
+| `js/aiContext.js` | 添加了兼容性 `growth` 上下文、紧凑趋势映射以及上下文预算修剪。 |
+| `js/aiDataRetrieval.js` | 通过受控检索展示了90天趋势和增长得分/摘要。 |
+| `pages/workbench.js` | 在现有增长简报中呈现了增长得分和范围洞察。 |
+| `workbench.html` | 在现有卡片中添加了紧凑的得分/范围显示。 |
+| `ai.html` | 将快速提示更新为长期增长问题。 |
+| `tests/growthIntelligence.test.js` | 添加了得分、7/30/90、空数据/大数据及趋势覆盖。 |
+| `tests/aiContext.test.js` | 添加了 `growth` 上下文和只读回归覆盖。 |
+| `tests/ai.page.test.js` | 更新了快速提示预期。 |
+| `tests/ux-product.test.js` | 添加了工作台得分和7/30/90呈现覆盖。 |
+| `docs/superpowers/plans/2026-09-14-phase-19-1-growth-intelligence.md` | 记录了实施计划。 |
 
-## 4. Growth Intelligence Design
+# 4. 成长智慧设计
 
-### Growth Score
+## 增长评分
 
-The score is a 0-100 weighted index, not a simple average of raw metrics:
+该评分是一个0-100的加权指数，而不是原始指标的简单平均值：
 
-| Factor | Weight | Meaning |
+|因子 |权重 |含义 |
 | --- | ---: | --- |
-| Completion | 45% | 30-day todo completion and course progress. |
-| Consistency | 30% | 30-day active-day ratio plus current streak. |
-| Momentum | 25% | Recent trend direction/delta across learning, execution, and life metrics. |
+| 完成度 | 45% | 30天待办事项完成情况和课程进度。|
+| 一致性 | 30% | 30天活跃天数比例以及当前连续天数。|
+| 动量 | 25% | 最近学习、执行和生活指标的趋势方向/变化。|
 
-Missing factors are excluded from the effective weighted average instead of being invented as zero. The output includes factor values, weights, and explanation text. Empty data produces `0` with `dataSufficient: false`.
+缺失的因素会从有效加权平均中排除，而不是被设为零。输出包括因素值、权重和解释文本。空数据会产生 `0` 和 `dataSufficient: false`。
 
-### Trends
+## 趋势
 
-Trend windows now include 7, 14, 30, and 90 days. The public `buildGrowthOverview` exposes explicit 7/30/90-day ranges. Each range reports:
+趋势窗口现在包括7天、14天、30天和90天。公共 `buildGrowthOverview` 暴露了明确的7/30/90天范围。每个范围报告：
 
-- learning trend status and metric-level evidence;
-- consistency through active days and streak;
-- task completion;
-- strengths;
-- risks.
+- 学习趋势状态和指标级证据；
+- 通过活跃天数和连续天数保持一致性；
+- 任务完成情况；
+- 优势；
+- 风险。
 
-### Strengths and Risks
+## 优势与风险
 
-Strengths come from rising/new activity trends, strong consistency, and strong task completion. Risks come from falling focus, learning, exercise, reading, or task-completion trends. Every result carries human-readable evidence; the module only suggests, never writes.
+优势来自于上升的/新的活动趋势、强的一致性和高的任务完成度。风险来自于注意力、学习、锻炼、阅读或任务完成趋势的下降。每个结果都带有人类可读的证据；该模块仅提供建议，从不撰写内容。
 
-## 5. AI Integration
+# 5. 人工智能集成
 
-AI Context now includes:
+人工智能上下文现包括：
 
 ```json
 {
@@ -84,36 +84,36 @@ AI Context now includes:
 }
 ```
 
-The previous `growthState` field remains for compatibility. `contextVersion` remains `1.0`, so the backend and provider contract stay stable. Controlled retrieval now includes 90-day trends and score/summary data. Quick questions cover:
+先前的`growthState`字段保留以保持兼容性。`contextVersion`保持`1.0`，因此后端和提供商合同保持稳定。受控检索现在包括90天趋势和评分/摘要数据。快速问题涵盖：
 
 - “分析我的最近状态”
 - “我最近哪里进步最大？”
 - “我的主要问题是什么？”
 
-## 6. Tests
+# 6. 测试
 
-| Check | Result |
+|检查 |结果 |
 | --- | --- |
-| Frontend | **PASS** — 32 files, 367 tests |
-| Backend | **PASS** — 66 tests |
-| Build | **PASS** |
-| Diff Check | **PASS** |
+|前端 |**通过** — 32个文件，367次测试 |
+|后端 |**通过** — 66次测试 |
+|构建 |**传球** |
+|差别检查 |**通过** |
 
-New coverage includes normal data, empty data, 1,200-record bulk data, improving trends, declining trends, score bounds, AI Context compatibility, and Workbench rendering.
+新的覆盖范围包括正常数据、空数据、1200条记录的批量数据、改进趋势、下降趋势、分数范围、AI上下文兼容性以及工作台渲染。
 
-## 7. Security Review
+# 7. 安全审查
 
-**PASS**
+* *通过**
 
-- Growth Intelligence is read-only.
-- AI Context remains read-only and does not expose credentials.
-- AI page still renders replies with `textContent`.
-- No AI action can write business data; user confirmation and Store writes remain outside the AI chain.
-- Context budget trimming remains active.
-- User data remains snapshot-scoped and isolated by the existing authenticated backend data path.
+- 增长智能为只读。
+- AI 上下文保持只读，并且不暴露凭证。
+- AI 页面仍然使用 `textContent` 渲染回复。
+- 没有任何 AI 操作可以写入业务数据；用户确认和存储写入仍然在 AI 链之外。
+- 上下文预算裁剪保持激活状态。
+- 用户数据保持快照作用域，并通过现有的已认证后台数据路径隔离。
 
-## 8. Final Recommendation
+# 8. 最终建议
 
-**Phase 19.2 AI Coach Upgrade can proceed.**
+* *第19.2阶段 AI 教练升级可以进行。**
 
-Recommended next step: use the stable `growth` context as the coaching policy input, add long-term Coach Memory synthesis, and keep action generation deterministic with user confirmation.
+建议的下一步：使用稳定的`growth`上下文作为指导策略输入，添加长期教练记忆综合，并通过用户确认保持动作生成的确定性。

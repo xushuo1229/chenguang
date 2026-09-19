@@ -1,39 +1,39 @@
-# XINGZHIXING Final Visual Acceptance
+# XINGZHIXING最终视觉验收
 
-## Acceptance result
+# #验收结果
 
-**PASS**
+及格
 
-## Brand
+品牌
 
-- All six product pages activate `data-brand="xingzhixing"`.
-- Every page loads `/xingzhixing.css` after the legacy theme layers.
-- Every page uses the new favicon.
-- Dashboard sidebars use the new icon and AI Personal Growth OS descriptor.
-- No product page uses the sun icon as the brand mark.
+- 所有六个产品页面均激活`data-brand="xingzhixing"`。
+- 每个页面都会在传统主题图层之后加载`/xingzhixing.css`。
+- 每个页面都使用新的收藏夹图标。
+- 仪表板侧边栏使用新的图标和AI个人成长操作系统描述符。
+- 没有产品页面使用太阳图标作为品牌标志。
 
-## Visual system
+视觉辅助系统
 
-- Primary ink: `#0B1220`
-- Accent: `#38BDF8`
-- Growth: `#34D399`
-- AI: `#8B5CF6`
-- Background: `#F8FAFC`
-- Surface: `#FFFFFF`
-- Text: `#0F172A`
+- 主墨迹： `#0B1220`
+- 口音： `#38BDF8`
+- 增长： `#34D399`
+- AI：[[代码0]]
+- 背景： `#F8FAFC`
+- 表面： `#FFFFFF`
+- 文本： `#0F172A`
 
-The amber primary system is superseded by XINGZHIXING accent and growth gradients while preserving old class names and component behavior.
+AMBER 主系统被XINGZHIXING口音和生长梯度所取代 ，同时保留了旧的类名和组件行为。
 
-## Interaction and stability
+# #互动和稳定性
 
-- Goals, Stats, and AI Coach have zero observed layout shift in automated headless Chrome.
-- Dashboard navigation links remain stable on desktop and mobile.
-- Stats does not show an empty skeleton before charts and sections are ready.
-- First paint does not rely on entrance animation.
+- 在自动无头Chrome中，目标、统计数据和人工智能教练的布局变化为零。
+- 控制面板导航链接在电脑和移动设备上保持稳定。
+- 在图表和章节准备就绪之前，统计数据不会显示空白骨架。
+- 第一幅油漆不依赖于入口动画。
 
-## Regression checks
+# #回归检查
 
-- Frontend Vitest suite: pass.
-- Production Vite build: pass.
-- Backend Node test suite: pass.
-- Business data models, API contracts, sync protocol, and AI read-only boundaries: unchanged.
+- 前端Vitest套件：PASS。
+- 生产VITE构建：通过。
+- 后端节点测试套件：通过。
+- 业务数据模型、API合约、同步协议和AI只读边界：不变。

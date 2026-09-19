@@ -1,77 +1,77 @@
-# Phase 17 — AI Personal Coach 2.0 Report
+# 第17阶段 — AI私人教练2.0报告
 
-## Status
+# 状态
 
-| Capability | Status | Evidence |
+| 能力 | 状态 | 证据 |
 | --- | --- | --- |
-| Controlled Retrieval Orchestration | COMPLETE | `js/aiToolRunner.js`, `js/aiDataRetrieval.js`, `js/aiContext.js` |
-| Coach Memory | COMPLETE | `js/coachMemory.js`, `js/aiContext.js` |
-| Proposal Feedback Lifecycle | COMPLETE | `js/aiActions.js`, `pages/workbench.js` |
-| Weekly Review | COMPLETE | `js/growthIntelligence.js`, `pages/ai.js` |
-| AI Page And Workbench Integration | COMPLETE | `ai.html`, `pages/ai.js`, `pages/workbench.js` |
-| Native Model Tool Calling | NOT IMPLEMENTED | Intentional architecture decision |
-| Cross-device Memory Sync | NOT IMPLEMENTED | Current memory is local and identity-scoped |
-| Production Visual Regression | PARTIAL | Automated page tests and production build passed; no browser screenshot matrix was run |
+|受控检索编排 |完成 |`js/aiToolRunner.js`， `js/aiDataRetrieval.js`， `js/aiContext.js` |
+|教练记忆 |完成 |[[代码0]]，[[代码1]] |
+|提案反馈生命周期 |完成 |`js/aiActions.js`， `pages/workbench.js` |
+|每周回顾 |完整 |[[代码0]]，[[代码1]] |
+|AI页面与工作台集成 |完成 |`ai.html`， `pages/ai.js`， `pages/workbench.js` |
+|原生模型工具调用 |未实现 |有意架构决策 |
+|跨设备内存同步 |未实现 |当前内存为本地且带有身份作用域 |
+|生产可视化回归 |部分 |自动化页面测试和生产构建通过;未运行浏览器截图矩阵 |
 
-## Baseline And Scope
+# 基线与范围
 
-- Repository: `F:\chenguang-platform`.
-- Branch: `codex/growth-intelligence`.
-- Baseline commit: `bfa22b8`.
-- Existing Store, Analytics, and Goal Engine semantics remain authoritative for business data.
-- No React, Vue, Tailwind, TypeScript, Docker, or agent framework was introduced.
+- 仓库：`F:\chenguang-platform`。
+- 分支：`codex/growth-intelligence`。
+- 基线提交：`bfa22b8`。
+- 现有的 Store、Analytics 和 Goal Engine 语义仍然对业务数据具有权威性。
+- 未引入 React、Vue、Tailwind、TypeScript、Docker 或代理框架。
 
-## Architecture
+# 建筑
 
-AI Coach 2.0 keeps the existing read-only intelligence boundary:
+AI 教练 2.0 保持现有的只读智能边界：
 
-1. `CGStore` remains the only business-data source for retrieval.
-2. `AIRetrieval` plans and executes whitelisted read-only queries.
-3. `AIToolRunner` validates and bounds the controlled tool loop.
-4. `AIContext` combines base context, retrieved facts, and Coach Memory.
-5. `AIActions` still requires explicit user confirmation before business mutation.
-6. `CoachMemory` persists only recommendation lifecycle evidence, not raw user content or AI-fabricated outcomes.
+1. `CGStore` 仍然是唯一的业务数据检索来源。
+2. `AIRetrieval` 计划并执行白名单只读查询。
+3. `AIToolRunner` 验证并限定受控工具循环。
+4. `AIContext` 结合基础上下文、检索到的事实和教练记忆。
+5. `AIActions` 在进行业务修改之前仍然需要明确的用户确认。
+6. `CoachMemory` 仅保存推荐生命周期的证据，而不保存原始用户内容或 AI 生成的结果。
 
-This is **Controlled Retrieval Orchestration**, not native model tool calling. The model does not invoke local functions directly and cannot ask the frontend to mutate `CGStore` or localStorage.
+这是**受控检索编排**，而不是本地模型工具调用。模型不会直接调用本地函数，也无法要求前端修改`CGStore`或本地存储。
 
-## Retrieval And Tool Registry
+# 检索与工具注册
 
-- The tool registry contains only read-only handlers for today summary, trends, learning history, course progress, English/reading/exercise/focus history, todo status, goal progress, growth state, and growth profile.
-- Every tool call has a whitelist check, argument-schema check, date/range validation, result-size limit, and execution error boundary.
-- One loop is capped at 5 calls; individual results are capped at 8,192 JSON characters and total loop output at 32,768 characters.
-- A failed tool call ends the loop with a diagnostic code instead of being silently ignored.
+- 工具注册表仅包含针对今日总结、趋势、学习历史、课程进度、英语/阅读/练习/专注历史、待办事项状态、目标进展、成长状态和成长档案的只读处理程序。
+- 每个工具调用都包含白名单检查、参数-模式检查、日期/范围验证、结果大小限制和执行错误边界。
+- 一个循环最多调用 5 次；单个结果最多为 8,192 个 JSON 字符，总循环输出最多为 32,768 个字符。
+- 一次工具调用失败会以诊断代码结束循环，而不是被静默忽略。
 
-## Coach Memory And Feedback
+# 教练记忆与反馈
 
-- Memory uses `cg_ai_coach_memory_v1`, separate from `cg_store_v1` and normal user data.
-- The store shape is `{ version: 1, users: { [userId]: { recommendations, memories, updatedAt } } }`.
-- Recommendations move through `proposed`, `accepted`, `rejected`, `completed`, or `expired`.
-- Acceptance and rejection are user-confirmed through the Action Layer.
-- Outcomes are derived from real Store todos linked through `__aiProposalId`; the AI cannot report a fabricated outcome.
-- Strategy effectiveness is derived only after at least 3 completed/expired samples. Otherwise it returns `insufficientEvidence: true`.
+- 内存使用 `cg_ai_coach_memory_v1`，独立于 `cg_store_v1` 和普通用户数据。
+- 存储结构为 `{ version: 1, users: { [userId]: { recommendations, memories, updatedAt } } }`。
+- 推荐通过 `proposed`、`accepted`、`rejected`、`completed` 或 `expired` 进行。
+- 接受和拒绝通过操作层由用户确认。
+- 结果来源于通过 `__aiProposalId` 链接的真实商店待办事项；AI 不能报告虚构的结果。
+- 策略有效性仅在至少 3 个已完成/过期的样本后得出。否则返回 `insufficientEvidence: true`。
 
-## Weekly Review
+# 每周回顾
 
-`GrowthIntelligence.buildWeeklyReview` summarizes the observed week and exposes evidence-backed trends in the AI page. The section is read-only and uses the existing Store/Analytics data.
+`GrowthIntelligence.buildWeeklyReview` 总结了所观察的周，并展示了 AI 页面中有证据支持的趋势。该部分为只读，并使用现有的 Store/Analytics 数据。
 
-## Security Review
+# 安全审查
 
-- Secrets: No API keys, tokens, or backend credentials were added to frontend files or tests.
-- Prompt/tool injection: User messages influence only intent keywords. Retrieved content is data, not executable instructions. Tool plans cannot add handlers, bypass the registry, or pass undeclared arguments.
-- Cross-user isolation: Coach Memory is identity-scoped and guarded before read/update. The backend sync remains user-token-scoped.
-- Output size: Tool results and aggregate loop output have finite JSON-character limits.
-- Unauthorized mutation: Tool handlers are read-only. `add_todo`, goal, and schedule mutations continue to require explicit confirmation through `AIActions`.
+- 秘密：没有将任何 API 密钥、令牌或后端凭证添加到前端文件或测试中。
+- 提示/工具注入：用户消息仅影响意图关键字。检索的内容是数据，而不是可执行指令。工具计划不能添加处理程序、绕过注册表或传递未声明参数。
+- 跨用户隔离：教练记忆是身份范围的，并在读取/更新之前受到保护。后端同步仍以用户令牌为范围。
+- 输出大小：工具结果和汇总循环输出具有有限的 JSON 字符数限制。
+- 未经授权的变更：工具处理程序为只读。`add_todo`、目标和计划的变更仍然需要通过 `AIActions` 明确确认。
 
-## Verification
+# 验证
 
-- Frontend: `npm test` — 23 files, 317 tests, all passed.
-- Production build: `npm run build` — passed.
-- Backend: `cd backend; npm test` — 19 suites, 62 tests, all passed.
-- Static verification: AI page and Workbench behavior covered by existing page tests; `git diff --check` passed.
+- 前端：`npm test` — 23 个文件，317 个测试，全部通过。
+- 生产构建：`npm run build` — 已通过。
+- 后端：`cd backend; npm test` — 19 个套件，62 个测试，全部通过。
+- 静态验证：AI 页面和工作台行为由现有页面测试覆盖；`git diff --check` 已通过。
 
-## Known Limitations
+# 已知限制
 
-1. Native model tool calling was deliberately not implemented.
-2. Coach Memory does not yet sync across devices or browsers.
-3. The production visual review relied on automated page tests rather than a browser screenshot matrix.
-4. Strategy effectiveness remains evidence-gated and is intentionally conservative with small samples.
+1. 本地模型工具调用故意未实现。
+2. 教练记忆尚未在设备或浏览器之间同步。
+3. 生产环境的视觉审查依赖自动化页面测试，而非浏览器截图矩阵。
+4. 策略有效性仍受证据限制，并且在样本较小情况下故意保持保守。

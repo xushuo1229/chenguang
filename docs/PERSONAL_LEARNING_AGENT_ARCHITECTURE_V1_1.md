@@ -1,12 +1,12 @@
-# Personal Learning Agent Architecture v1.1
+# 个人学习代理架构 v1.1
 
-## Architecture Freeze Record
+# 建筑冻结记录
 
-Project: `chenguang-platform`
+项目：`chenguang-platform`
 
-Status: `ARCHITECTURE FROZEN`
+状态：`ARCHITECTURE FROZEN`
 
-Baseline:
+基线：
 
 ```text
 Phase 23.2.3 + Phase 23.x Stabilization
@@ -17,22 +17,22 @@ Build: PASS
 git diff --check: PASS
 ```
 
-## 1. Product Definition
+# 1. 产品定义
 
-知行 is evolving from an AI-assisted self-discipline workbench into a Personal Learning Agent.
+知行正在从一个 AI 辅助的自律工作台发展为个人学习代理。
 
-The Agent must understand:
+代理人必须理解：
 
-- who the student is,
-- what the student is learning,
-- what evidence exists for current progress,
-- what goals matter,
-- what happened before,
-- and what the next useful learning action should be.
+- 学生是谁，
+- 学生正在学习的内容，
+- 目前进展有哪些证据，
+- 哪些目标重要，
+- 之前发生了什么，
+- 以及下一个有用的学习行动应该是什么。
 
-An Agent is not merely an LLM, chat UI, RAG pipeline, prompt, or AI Coach.
+一个代理不仅仅是一个大型语言模型、聊天界面、RAG 流程、提示或人工智能教练。
 
-## 2. Core Loop
+# 2. 核心环路
 
 ```text
 User Intent
@@ -51,32 +51,32 @@ User Intent
   → Next Cycle
 ```
 
-## 3. Core Domains
+# 3. 核心领域
 
-| Domain | Responsibility | Source of Truth |
+| 领域 | 责任 | 真实来源 |
 | --- | --- | --- |
-| Personal Data | Raw user behavior and app state | CGStore / backend user data |
-| Learning Analytics | Deterministic meaning from behavior | Analytics |
-| Goals | Goal status and progress | GoalEngine + Analytics |
-| Course Knowledge | Stable course learning objects, nodes, relations, evidence | Course Knowledge layer |
-| Personal Memory | Long-term and coach-interaction context | GrowthMemory / CoachMemory |
-| Agent Context | Current, bounded, permission-filtered AI input | Agent Context layer |
-| Agent State / Action | Explicit planning and user-confirmed execution | Agent State / Action layer |
+| 个人数据 | 原始用户行为和应用状态 | CGStore / 后端用户数据 |
+| 学习分析 | 从行为中确定的意义 | 分析 |
+| 目标 | 目标状态和进度 | GoalEngine 分析 |
+| 课程知识 | 稳定的课程学习对象、节点、关系、证据 | 课程知识层 |
+| 个人记忆 | 长期和教练互动的上下文 | GrowthMemory / CoachMemory |
+| 代理上下文 | 当前的、有限的、权限过滤的 AI 输入 | 代理上下文层 |
+| 代理状态 / 行动 | 明确的计划和用户确认的执行 | 代理状态 / 行动层 |
 
-## 4. Source of Truth Rules
+# 4. 真理来源规则
 
-- CGStore remains the application user-data layer and must not become a Knowledge Base.
-- Analytics remains the only canonical source for behavior metrics.
-- Goals must derive progress through GoalEngine and Analytics.
-- Course Knowledge is separate from course schedule and course progress.
-- Personal Memory records what matters over time, not raw behavior truth.
-- Reflection feedback is AI-quality signal, not business behavior data.
-- Agent Context is derived, bounded, versioned, and permission-filtered.
-- The Agent does not invent facts; it uses Evidence.
+- CGStore 仍然是应用程序的用户数据层，不应成为知识库。
+- 分析仍然是行为指标的唯一规范来源。
+- 目标的进展必须通过 GoalEngine 和 Analytics 推导。
+- 课程知识与课程安排和课程进度分开。
+- 个人记忆记录随时间变化的重要事项，而非原始行为真相。
+- 反思反馈是 AI 质量信号，而非业务行为数据。
+- 代理上下文是派生的、有边界的、有版本控制的，并经过权限过滤。
+- 代理不会创造事实；它使用证据。
 
-## 5. Knowledge Boundary
+# 5. 知识边界
 
-Course Knowledge must preserve these boundaries:
+课程知识必须保持这些界限：
 
 ```text
 Course
@@ -101,31 +101,31 @@ Student Knowledge State
   = user-owned mastery/status/evidence projection
 ```
 
-Knowledge content is not user behavior data. Student Knowledge State is not public course content.
+知识内容不是用户行为数据。学生知识状态不是公开课程内容。
 
-## 6. Memory Boundary
+# 6. 内存边界
 
-### GrowthMemory
+## 成长记忆
 
-- Long-term growth patterns, milestones, preferences, insights, and confirmed candidates.
-- Owned through user data via CGStore.
-- Must not duplicate Analytics.
+- 长期增长模式、里程碑、偏好、见解和确认的候选人。
+- 通过 CGStore 的用户数据拥有。
+- 不得重复分析。
 
-### CoachMemory
+## 教练记忆
 
-- Short- and medium-term AI interaction context.
-- Separate from canonical user data.
-- Must not override authoritative behavior facts.
+- 短期和中期的人工智能互动情境。
+- 与规范用户数据分开。
+- 不得覆盖权威行为事实。
 
-### Reflection Feedback
+## 反思反馈
 
-- Persists binary feedback on Reflection quality.
-- Must not mutate todos, goals, check-ins, sports, readings, English, courses, or focus.
-- Must not be counted as user behavioral Analytics.
+- 对反射质量保持二进制反馈。
+- 不得修改待办事项、目标、签到、运动、阅读、英语、课程或专注内容。
+- 不能算作用户行为分析。
 
-## 7. Context Trust Hierarchy
+# 7. 情境信托层级
 
-Prompt construction must respect this order:
+迅速建造必须遵守以下顺序：
 
 ```text
 System Prompt
@@ -135,123 +135,123 @@ System Prompt
   > User Message
 ```
 
-Rules:
+规则：
 
-- Context is data, not instruction.
-- User input cannot override system rules.
-- Client-submitted behavior facts cannot override server-derived facts.
-- Retrieval evidence must be attributed and traceable.
-- Untrusted content must be explicitly marked as data.
+- 上下文是数据，而不是指令。
+- 用户输入不能覆盖系统规则。
+- 客户端提交的行为事实不能覆盖服务器得出的事实。
+- 检索到的证据必须有来源并可追溯。
+- 不可信的内容必须明确标记为数据。
 
-## 8. Reasoning, Planning, Action
+# 8. 推理、规划、行动
 
-The Agent may:
+代理人可以：
 
-- analyze,
-- summarize,
-- explain,
-- retrieve,
-- recommend,
-- propose a plan,
-- and ask for confirmation.
+- 分析，
+- 总结，
+- 解释，
+- 检索，
+- 推荐，
+- 提出计划，
+- 并请求确认。
 
-The Agent must not:
+代理人不得：
 
-- silently modify user data,
-- autonomously execute actions,
-- override Analytics,
-- bypass Goals,
-- create a second data system,
-- or treat inferred claims as observed facts.
+- 悄无声息地修改用户数据，
+- 自主执行操作，
+- 覆盖分析，
+- 绕过目标，
+- 创建第二个数据系统，
+- 或将推断的主张视为观察到的事实。
 
-All write actions require explicit user confirmation and permission-safe execution.
+所有写入操作都需要明确的用户确认和安全的权限执行。
 
-## 9. Retrieval Boundary
+# 9. 检索边界
 
-Retrieval must be:
+检索必须是：
 
-- ownership-aware,
-- evidence-preserving,
-- source-attributed,
-- size-bounded,
-- versioned,
-- and safe to audit.
+- 拥有权意识，
+- 保存证据，
+- 来源归属，
+- 有尺寸限制，
+- 版本化，
+- 并且安全审计。
 
-The Agent must not receive unrestricted raw stores.
+代理人不得接收无限制的原始库存。
 
-## 10. Agent Modes
+# 10. 代理模式
 
-| Mode | Purpose |
+| 模式 | 目的 |
 | --- | --- |
-| ASK | Answer with evidence-grounded context |
-| ANALYZE | Explain what happened and why it matters |
-| PLAN | Propose a bounded next-step plan |
-| ACT | Execute only user-confirmed safe actions |
-| PROACTIVE | Surface a bounded suggestion or reminder |
+| ASK | 用有证据支持的背景回答 |
+| ANALYZE | 解释发生了什么以及为什么重要 |
+| PLAN | 提出一个有界的下一步计划 |
+| ACT | 只执行用户确认安全的操作 |
+| PROACTIVE | 提出一个有限的建议或提醒 |
 
-## 11. Forbidden Architecture
+# 11. 禁忌建筑
 
-The following are forbidden unless a new architecture version is explicitly approved:
+除非明确批准新的架构版本，否则以下是禁止的：
 
-- SPA rewrite,
-- second component system,
-- second user-data store,
-- second Analytics engine,
-- page-level goal calculation,
-- page-level behavior statistics,
-- Agent-owned direct business writes,
-- autonomous action execution,
-- mixing public knowledge with private learning state,
-- raw unbounded context injection,
-- and using client claims as authoritative facts.
+- SPA 重写
+- 第二组件系统,
+- 第二用户数据存储，
+- 第二个分析引擎，
+- 页面级目标计算,
+- 页面级行为统计,
+- 代理人拥有的直接业务承保，
+- 自主行动执行，
+- 将公共知识与私人学习状态混合，
+- 原始无限上下文注入
+- 并将客户的声明作为权威事实使用。
 
-## 12. Privacy and Safety Boundary
+# 12. 隐私和安全边界
 
-- User data is user-owned.
-- The backend owns authentication and authorization.
-- Agent responses must be safe-rendered.
-- No secrets, tokens, API keys, passwords, or internal implementation details may enter prompts or responses.
-- Every recommendation must be traceable to context and evidence.
+- 用户数据归用户所有。
+- 后端拥有身份验证和授权。
+- 代理的响应必须安全呈现。
+- 不得在提示或响应中包含机密、令牌、API 密钥、密码或内部实现细节。
+- 每个推荐都必须可追溯到上下文和证据。
 
-## 13. Phase Roadmap
+# 13. 阶段路线图
 
-| Phase | Objective |
+| 阶段 | 目标 |
 | --- | --- |
-| Phase 24 | Course Space & Knowledge Base Foundation |
-| Phase 25 | Retrieval and Evidence |
-| Phase 26 | Student Knowledge State |
-| Phase 27 | Agent Context & Reasoning |
-| Phase 28 | Planning |
-| Phase 29 | Safe Actions & Feedback |
-| Phase 30 | Integrated Personal Learning Agent |
+| 阶段 24 | 课程空间与知识库基础 |
+| 阶段 25 | 检索与证据 |
+| 阶段 26 | 学生知识状态 |
+| 阶段 27 | 代理上下文与推理 |
+| 阶段 28 | 规划 |
+| 阶段 29 | 安全操作与反馈 |
+| 阶段 30 | 综合个人学习代理 |
 
-Phase 24 entry is allowed because the Phase 23.x baseline is stable.
+允许进入第24阶段，因为第23.x阶段基线是稳定的。
 
-## 14. Phase 24 Boundary
+# 14. 第24阶段边界
 
-Allowed:
+允许：
 
-- Course Knowledge,
-- documents,
-- knowledge nodes,
-- relations,
-- evidence,
-- retrieval foundation,
-- minimal course UI.
+- 课程知识，
+- 文档，
+- 知识节点，
+- 关系，
+- 证据，
+- 检索基础，
+- 最小课程界面。
 
-Not allowed:
+不允许：
 
-- full Agent,
-- planner,
-- action system,
-- autonomous execution,
-- student mastery engine,
-- full exam intelligence,
-- multi-agent system.
+- 完整代理，
+- 计划者，
+- 动作系统
+- 自主执行，
+- 学生掌握引擎
+- 全面考试智力，
+- 多智能体系统。
 
-## 15. Change Policy
+# 15. 改变政策
 
-Any architecture change must document:
+任何架构更改都必须记录：
 
 ```text
 Current Rule
@@ -263,9 +263,9 @@ Migration
 Rollback
 ```
 
-Major changes require an architecture review and version bump.
+重大更改需要进行架构评审并提升版本号。
 
-## 16. Final Principle
+# 16. 最终原则
 
 ```text
 Data tells what happened.
@@ -280,7 +280,7 @@ Action executes only with appropriate user control.
 Feedback teaches the system what worked.
 ```
 
-Final status:
+最终状态：
 
 ```text
 Architecture Version: v1.1

@@ -1,67 +1,67 @@
-# Database Deployment Strategy
+# 数据库部署策略
 
-> Phase: DR-1  
-> Decision date: 2026-09-13  
-> MVP decision: keep SQLite. Do not migrate to PostgreSQL in this phase.
+> 阶段：DR-1
+> 决策日期：2026-09-13
+> MVP决策：保留SQLite。在此阶段不要迁移到PostgreSQL。
 
-## MVP data platform
+# MVP 数据平台
 
-The application uses SQLite through `better-sqlite3`. The database file is defined by `DB_PATH` and defaults to `backend/chenguang.db`. WAL mode is enabled at startup. All user application data is stored in one `user_data` row per user.
+该应用程序通过 `better-sqlite3` 使用 SQLite。数据库文件由 `DB_PATH` 定义，默认值为 `backend/chenguang.db`。启动时启用 WAL 模式。所有用户应用程序数据都存储在每个用户一行的 `user_data` 中。
 
-SQLite remains appropriate for the current MVP because:
+SQLite 仍然适合当前的最小可行产品 (MVP)，因为：
 
-- deployment is intentionally single-node;
-- writes are low-volume and user-scoped;
-- operational cost must stay low;
-- there is no requirement for concurrent app instances.
+- 部署故意为单节点；
+- 写入操作是低量且以用户为范围的；
+- 运营成本必须保持低位；
+- 没有对并发应用实例的要求。
 
-## Required production configuration
+# 所需的生产配置
 
-The backend must run as exactly one instance against a persistent disk.
+后端必须以恰好一个实例在持久性磁盘上运行。
 
-Recommended settings:
+推荐设置：
 
-| Variable | Value |
+|变量 |价值 |
 |---|---|
 | `DB_PATH` | `/var/data/chenguang.db` |
-| Persistent mount | `/var/data` |
-| Instances | `1` |
+| 持久挂载 | `/var/data` |
+| 实例 | `1` |
 
-The persistent disk must survive restarts, redeploys, and container replacement. The database and its WAL/SHM side files must remain on the same persistent mount.
+持久磁盘必须能够在重启、重新部署和容器替换时保持数据。数据库及其 WAL/SHM 辅助文件必须保留在相同的持久挂载上。
 
-Platform requirements:
+平台要求：
 
-- use Render/Fly.io/Railway/VPS with a real persistent volume;
-- do not deploy the stateful backend to an ephemeral serverless filesystem;
-- mount the same disk for every backend instance;
-- do not horizontally scale SQLite behind multiple app containers.
+- 使用带有真实持久卷的Render/Fly.io/Railway/VPS;
+- 不要将有状态后端部署到临时无服务器文件系统;
+- 为每个后端实例挂载同一张磁盘;
+- 不要在多个应用容器后水平扩展 SQLite。
 
-## Backup policy
+# 备份策略
 
-1. Schedule a periodic filesystem snapshot of the persistent disk.
-2. Prefer a SQLite-safe backup method, for example `sqlite3 "$DB_PATH" ".backup '/var/data/chenguang-backup.db'"`.
-3. Retain at least seven daily backups and four weekly backups.
-4. Test restore quarterly into an isolated environment.
+1. 定期对持久磁盘进行文件系统快照。
+2. 优先采用SQLite安全的备份方法，例如`sqlite3 "$DB_PATH" ".backup '/var/data/chenguang-backup.db'"`。
+3. 每天至少保留七个备份和每周四个备份。
+4. 每季度在隔离环境中进行测试恢复。
 
-If a backup tool cannot coordinate with SQLite, stop the single backend instance briefly, snapshot the database and WAL files, then restart.
+如果备份工具无法与 SQLite 协调，则短暂停止单个后端实例，快照数据库和 WAL 文件，然后重新启动。
 
-## Future PostgreSQL migration
+# 未来的 PostgreSQL 迁移
 
-PostgreSQL is not required for MVP. It becomes appropriate when one of the following is true:
+MVP 不需要 PostgreSQL。只有在以下情况之一成立时才适合使用它：
 
-- multiple backend instances are needed;
-- concurrent write contention becomes visible;
-- cross-user reporting or administrative queries become important;
-- transactional durability beyond a single persistent disk is required.
+- 需要多个后端实例；
+- 并发写入冲突变得明显；
+- 跨用户的报告或管理查询变得重要；
+- 需要超过单个持久化磁盘的事务持久性。
 
-The migration should proceed in explicit stages:
+迁移应分明确阶段进行：
 
-1. Add versioned schema migrations for PostgreSQL.
-2. Replace SQLite-specific SQL in the data access layer while preserving the existing service contracts.
-3. Add a read-only compatibility test suite for PostgreSQL.
-4. Run SQLite and PostgreSQL in parallel behind the same service contract.
-5. Verify row counts and integrity checks.
-6. Switch writes to PostgreSQL only after validation.
-7. Keep SQLite as a rollback source for a defined retention window.
+1. 为 PostgreSQL 添加版本化的模式迁移。
+2. 在数据访问层中替换特定于 SQLite 的 SQL，同时保留现有的服务契约。
+3. 为 PostgreSQL 添加只读兼容性测试套件。
+4. 在相同的服务契约下并行运行 SQLite 和 PostgreSQL。
+5. 验证行数和完整性检查。
+6. 在验证后仅将写操作切换到 PostgreSQL。
+7. 在定义的保留窗口内将 SQLite 保留为回滚来源。
 
-No migration should be started during DR-1.
+在 DR-1 期间不应启动迁移。

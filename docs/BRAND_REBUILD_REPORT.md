@@ -1,37 +1,37 @@
-# XINGZHIXING Brand Rebuild Report
+# XINGZHIXING品牌重塑报告
 
-## Scope
+# 范围
 
-The visible product was rebuilt as 知行 XINGZHIXING while retaining the existing HTML/CSS/ES Module/Vite architecture and all business capabilities.
+可见的产品被重建为XINGZHIXING 知行，同时保留了现有的HTML/CSS/ES模块/VITE架构和所有业务能力。
 
-## Completed
+# 完成
 
-- Added the XINGZHIXING logo system under `assets/brand/`.
-- Added the premium AI design system in `assets/xingzhixing.css`.
-- Added AI OS illustrations for login, landing, dashboard, analysis, coach, and long-term growth.
-- Migrated all six pages to `data-brand="xingzhixing"`.
-- Loaded the new design system after the legacy Calm Dawn layers for a nonbreaking migration.
-- Replaced sunrise icons and the dominant amber visual language with ink blue,智慧青,生命绿, and AI purple.
-- Updated login, landing, dashboard, goals, stats, and AI Coach copy to the “understand yourself, grow continuously” positioning.
-- Updated PWA background, theme color, favicon, description, and icon metadata.
-- Added `docs/XINGZHIXING_DESIGN_SYSTEM.md`.
-- Added automated brand and stability checks.
+- 在`assets/brand/`下添加了XINGZHIXING LOGO系统。
+- 在`assets/xingzhixing.css`中添加了高级AI设计系统。
+- 添加了用于登录、登陆、仪表板、分析、辅导和长期增长的人工智能操作系统插图。
+- 将所有六个页面迁移到`data-brand="xingzhixing"`。
+- 在传统的Calm Dawn层之后加载了新的设计系统，以实现不间断的迁移。
+- 用墨蓝、、和AI紫色取代了日出图标和主导智慧青的生命绿琥珀色视觉语言。
+- 更新登录、登陆、仪表板、目标、统计数据和人工智能教练副本，以“了解自己，不断发展”的定位。
+- 更新了PWA背景、主题颜色、图标、描述和图标元数据。
+- 添加了`docs/XINGZHIXING_DESIGN_SYSTEM.md`。
+- 添加了自动品牌和稳定性检查。
 
-## User-facing changes
+## #面向用户的更改
 
-| Surface | Result |
+|表面|结果|
 | --- | --- |
-| Login | AI product entrance with brand narrative and focused auth card |
-| Landing | AI Personal Growth OS hero, product system story, coach explanation, and CTA |
-| Workbench | Calm dashboard composition with growth brief and persistent coach rail |
-| Stats | Growth analysis framed around consistency, trends, and habit evolution |
-| Goals | Direction, execution, feedback, and long-term retention |
-| AI Coach | Read-only data-aware coaching with clear action handoff |
+|登录|带有品牌叙事和专注授权卡的人工智能产品入口|
+|着陆| AI个人成长操作系统英雄、产品系统故事、教练解释和CTA |
+|工作台|平静的仪表板组成，具有增长简报和持久的客车轨道|
+|统计|围绕一致性、趋势和习惯演变的成长分析|
+|目标|方向、执行、反馈和长期保留|
+|人工智能辅导|只读数据感知辅导，明确行动交接|
 
-## Preserved
+## #保留
 
-- Existing pages, routes, forms, modals, charts, and functionality.
-- `chenguangData`, `CGStore`, `CGAnalytics`, `CGAPI`, and `CGSync`.
-- API paths, database fields, sync envelope, revision behavior, and protocol.
-- AI read-only boundary: the coach does not write user data or complete work for the user.
-- Historical reports and their original brand references.
+- -现有页面、路线、表单、模式、图表和功能。
+- `chenguangData`、`CGStore`、`CGAnalytics`、`CGAPI`和`CGSync`。
+- API路径、数据库字段、同步信封、修订行为和协议。
+- AI只读边界：辅导者不编写用户数据或为用户完成工作。
+- -历史报告及其原始品牌参考。

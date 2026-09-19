@@ -1,52 +1,52 @@
-# Deployment Audit
+# 部署审计
 
-> Audit date: 2026-09-13  
-> Baseline: `c8f14d2`  
-> Scope: production deployment readiness only. No feature development is allowed in Phase DR-1.
+> 审核日期：2026-09-13
+> 基线：`c8f14d2`
+> 范围：仅限生产部署准备阶段。DR-1阶段不允许进行功能开发。
 
-## Executive summary
+# 执行摘要
 
-The MVP application is feature-complete, but the deployment path is not production-ready. The frontend still points to a local backend by default, CI points to a nonexistent backend directory, the production build does not ship the Service Worker or manifest, Docker may include local secrets/database files, and the public schedule-import proxy lacks private-network request protections.
+MVP 应用功能已经完整，但部署路径尚未准备好用于生产环境。前端默认仍指向本地后端，CI 指向一个不存在的后端目录，生产构建未包含 Service Worker 或清单文件，Docker 可能包含本地的秘密/数据库文件，公共的 schedule-import 代理缺少对私有网络请求的保护。
 
-No product behavior changes are planned in this phase. Fixes are limited to deployment configuration, runtime configuration, PWA build output, Docker hardening, documentation, and security controls for the existing import feature.
+此阶段不计划更改产品行为。修复内容仅限于部署配置、运行时配置、PWA 构建输出、Docker 加固、文档以及现有导入功能的安全控制。
 
-## Findings and risk levels
+# 发现和风险等级
 
-| # | Area | Finding | Risk | Impact |
+| # | 领域 | 发现 | 风险 | 影响 |
 |---|---|---|---|---|
-| 1 | Frontend API | `js/apiClient.js` and `js/sync.js` independently hard-code `http://localhost:3000/api`. HTML `meta[name="api-base"]` is present on some pages but is not read by the runtime. | P0 | In production the browser tries to call localhost, so authentication and synchronization fail. |
-| 2 | PWA | Vite copies only `assets/`; the root `service-worker.js` is not copied into `dist/`, and no `manifest.json` is emitted. The Service Worker also hard-codes source paths such as `/js/store.js`, while Vite emits hashed bundle paths. | P1 | Installed/offline behavior is broken in production builds. |
-| 3 | CI/CD | `.github/workflows/deploy.yml` uses `server/` for backend install and deploy, but the actual directory is `backend/`. There is no explicit frontend test, backend test, and build gate before deployment. | P1 | Deployment either fails or can bypass local quality gates. |
-| 4 | Docker | `backend/Dockerfile` uses `COPY . .` and has no `.dockerignore`. It runs as root, has no health check, and does not define a persistent data directory. | P1 | Local `.env`, SQLite database/WAL files, and tests can enter the image; root execution and data loss increase deployment risk. |
-| 5 | Database deployment | Runtime uses SQLite, but `backend/render.yaml` provisions PostgreSQL and injects `DATABASE_URL`; the application does not consume that value. | P1 | Deployment configuration and source of truth disagree. A container without a persistent disk can lose user data. |
-| 6 | Schedule import SSRF | The import proxy validates protocol and URL length but does not block localhost, private IPv4/IPv6, link-local, metadata, or internal domains. It also uses `redirect: follow`, so redirect targets are not revalidated. | P1 | An authenticated user can make the server contact internal services. |
-| 7 | Frontend security | JWT remains in `localStorage`; there is no refresh/revocation/account lifecycle flow in MVP. | P2 | XSS would have a larger blast radius. This is a pre-existing MVP tradeoff and is not expanded by this phase. |
-| 8 | Sync scalability | Rate limiting is in-memory and SQLite has a single writer. | P2 | The current single-node deployment model is acceptable, but horizontal scaling is not. |
-| 9 | Observability | Logging is local console output only; no centralized error tracking or deployment health alerting exists. | P2 | Production failures may be difficult to diagnose. |
+| 1 | 前端 API | `js/apiClient.js` 和 `js/sync.js` 独立地硬编码 `http://localhost:3000/api`。某些页面上存在 HTML `meta[name="api-base"]`，但运行时不会读取它。 | P0 | 在生产环境中，浏览器尝试调用 localhost，因此身份验证和同步失败。 |
+| 2 | PWA | Vite 仅复制 `assets/`；根目录 `service-worker.js` 不会被复制到 `dist/`，也不会生成 `manifest.json`。Service Worker 还会硬编码像 `/js/store.js` 这样的源路径，而 Vite 会生成带哈希的包路径。 | P1 | 在生产构建中，安装/离线行为会出现故障。 |
+| 3 | CI/CD | `.github/workflows/deploy.yml` 使用 `server/` 进行后端安装和部署，但实际目录是 `backend/`。部署前没有明确的前端测试、后端测试和构建门禁。 | P1 | 部署要么失败，要么可以绕过本地质量门。 |
+|4 |Docker |`backend/Dockerfile` 使用 `COPY . .`，没有 `.dockerignore`。它以 root 身份运行，没有健康检查，也不定义持久数据目录。|P1 |本地`.env`、SQLite数据库/WAL文件和测试可以进入镜像;根执行和数据丢失会增加部署风险。|
+| 5 | 数据库部署 | 运行时使用 SQLite，但 `backend/render.yaml` 配置 PostgreSQL 并注入 `DATABASE_URL`；应用程序不使用该值。 | P1 | 部署配置和真实来源不一致。没有持久磁盘的容器可能会丢失用户数据。 |
+| 6 | 调度导入 SSRF | 导入代理会验证协议和 URL 长度，但不会阻止 localhost、私有 IPv4/IPv6、链路本地、元数据或内部域名。它还使用了 `redirect: follow`，因此重定向目标不会被重新验证。 | P1 | 已认证用户可以让服务器联系内部服务。 |
+| 7 | 前端安全 | JWT 保留在 `localStorage` 中；在 MVP 中没有刷新/撤销/账户生命周期流程。 | P2 | XSS 可能会有更大的影响范围。这是一个先前存在的 MVP 权衡，并不会在此阶段扩展。 |
+|8 |同步可扩展性 |速率限制在内存中，SQLite只有一个写入器。|P2 |当前的单节点部署模型是可接受的，但水平扩展则不行。|
+| 9 | 可观察性 | 日志仅为本地控制台输出；不存在集中错误跟踪或部署健康报警。 | P2 | 生产环境中的故障可能难以诊断。 |
 
-## Required fix order
+# 必需的修复顺序
 
-1. **API Base unification** — create one production/dev resolution path, honor `meta[name="api-base"]`, and add a production artifact check for `localhost:3000`.
-2. **PWA production pipeline** — emit `manifest.json` and `service-worker.js` into `dist/`, generate the Service Worker list from real build assets, and retain network-first/runtime caching behavior.
-3. **CI/CD gate repair** — correct backend paths and enforce install, frontend tests, backend tests, build, and deployment order.
-4. **Docker hardening** — exclude secrets and local databases, run as non-root, inject configuration by environment variables, and add a health check.
-5. **Database deployment strategy** — keep SQLite for MVP, document persistent-disk requirements and the future PostgreSQL migration path.
-6. **SSRF hardening** — validate every initial and redirect URL, resolve DNS, reject private/internal destinations, and limit redirects.
-7. **Security scan, regression, build, review, and commit** — no commit is allowed until tests, security review, code review, regression, and build pass.
+1. **API 基础统一** — 创建一个生产/开发解析路径，遵循 `meta[name="api-base"]`，并为 `localhost:3000` 添加生产制品检查。
+2. **PWA 生产流程** — 将 `manifest.json` 和 `service-worker.js` 输出到 `dist/`，从实际构建的资源生成 Service Worker 列表，并保留优先网络/运行时缓存行为。
+3. **CI/CD 门修复** — 修正后端路径并强制执行安装、前端测试、后端测试、构建和部署顺序。
+4. **Docker 强化** — 排除秘密和本地数据库，作为非 root 运行，注入环境变量配置，并添加健康检查。
+5. **数据库部署策略** — 对于 MVP 保持使用 SQLite，记录持久化磁盘需求以及未来迁移到 PostgreSQL 的路径。
+6. **SSRF 加固** — 验证每个初始和重定向 URL，解析 DNS，拒绝私有/内部目标，并限制重定向。
+7. **安全扫描、回归测试、构建、审核和提交**——在测试、安全审核、代码审核、回归测试和构建通过之前，不允许提交。
 
-## Non-goals
+# 非目标
 
-- No new product features.
-- No frontend framework migration.
-- No database migration in DR-1.
-- No change to the existing single-snapshot data model.
-- No push to a remote branch.
+- 没有新的产品功能。
+- 没有前端框架迁移。
+- 在 DR-1 中没有数据库迁移。
+- 现有的单快照数据模型没有变化。
+- 没有推送到远程分支。
 
-## Exit criteria
+# 退出标准
 
-- Production bundle contains no `localhost:3000` API URL.
-- `dist/manifest.json` and `dist/service-worker.js` exist.
-- CI cannot deploy if frontend tests, backend tests, or build fail.
-- Docker context excludes local secrets and databases.
-- Schedule import rejects private/internal destinations and rechecks redirect targets.
-- Full test, security review, code review, regression, and build results are recorded in `docs/PHASE_DR1_REPORT.md`.
+- 生产包不包含任何 `localhost:3000` API URL。
+- `dist/manifest.json` 和 `dist/service-worker.js` 存在。
+- 如果前端测试、后端测试或构建失败，CI 无法部署。
+- Docker 上下文排除了本地机密和数据库。
+- 计划导入会拒绝私有/内部目标并重新检查重定向目标。
+- 完整的测试、安全审查、代码审查、回归和构建结果都会记录在 `docs/PHASE_DR1_REPORT.md` 中。
