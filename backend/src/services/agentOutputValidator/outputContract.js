@@ -237,7 +237,13 @@ function validateOutputContract(candidate) {
   } else {
     const factCount = candidate.explanations.filter((item) => item && item.type === 'fact').length;
     if (factCount > OUTPUT_LIMITS.MAX_FACTS) errors.push(createError('explanations', 'TOO_MANY_FACTS'));
-    candidate.explanations.forEach((item, index) => validateExplanation(item, index, errors));
+    // Phase 27.6.4 §0.1：fallback 输出的 explanations 由 validateFallbackExplanation
+    // 单独治理（27.6.2.1 规范：fallback explanations 使用 deterministic reasoning 结构）。
+    // 通用 claim 校验只服务 validated/partial；对 fallback 施加会与 fallback 分支互斥，
+    // 导致非空确定性兜底永远无法通过校验。
+    if (candidate.status !== 'fallback') {
+      candidate.explanations.forEach((item, index) => validateExplanation(item, index, errors));
+    }
   }
   if (!Array.isArray(candidate.suggestions)) {
     errors.push(createError('suggestions', 'INVALID_FIELD_TYPE'));

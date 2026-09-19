@@ -254,3 +254,69 @@ test('returns identical validation results for identical input', () => {
   const output = validOutput();
   assert.deepEqual(validateOutputContract(output), validateOutputContract(output));
 });
+
+// ---------- Phase 27.6.4 §0.1：fallback explanations 分支优先级修复回归 ----------
+// 27.6.2.1 规范本意：fallback explanations 使用 deterministic reasoning 结构
+// （{id, insightId, title, why, evidenceRefs}），通用 claim 校验只服务 validated/partial。
+// 修复前：通用 pass 对 fallback 施加导致非空确定性兜底永远无法通过校验。
+
+function fallbackExplanation(index = 0) {
+  return {
+    id: 'fallback:reasoning:focus-trend-7d',
+    insightId: 'focus-trend-7d',
+    title: '为什么出现专注趋势观察？',
+    why: '该观察比较了最近 3 天与此前 4 天的专注记录。',
+    evidenceRefs: [evidenceRef(index)],
+  };
+}
+
+function fallbackOutput(explanations) {
+  return {
+    schemaVersion: OUTPUT_SCHEMA_VERSION,
+    status: 'fallback',
+    available: false,
+    fallback: { type: 'deterministic_reasoning', reason: 'llm_timeout', source: 'agent-reasoning-v1' },
+    explanations,
+    suggestions: [],
+    uncertainties: [],
+    metadata: metadata(),
+  };
+}
+
+test('Phase 27.6.4 §0.1: non-empty fallback explanations with deterministic structure pass', () => {
+  const result = validateOutputContract(fallbackOutput([fallbackExplanation()]));
+  assert.equal(result.valid, true);
+});
+
+test('Phase 27.6.4 §0.1: fallback explanations with claim fields are still rejected (shape guard)', () => {
+  const mixed = fallbackOutput([fallbackExplanation()]);
+  mixed.explanations[0].type = 'fact';
+  mixed.explanations[0].text = 'claim text';
+  const result = validateOutputContract(mixed);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.code === 'UNKNOWN_FIELD'));
+});
+
+test('Phase 27.6.4 §0.1: validated output with fallback fields is still rejected (generic pass unchanged)', () => {
+  const output = validOutput();
+  output.explanations[0].insightId = 'focus-trend-7d';
+  output.explanations[0].title = 'title';
+  output.explanations[0].why = 'why';
+  const result = validateOutputContract(output);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.code === 'UNKNOWN_FIELD'));
+});
+
+test('Phase 27.6.4 §0.1: partial status behavior unchanged (shares generic pass with validated)', () => {
+  const output = validOutput();
+  output.status = 'partial';
+  const result = validateOutputContract(output);
+  assert.equal(result.valid, true);
+});
+
+test('Phase 27.6.4 §0.1: more than MAX_EXPLANATIONS fallback entries are still rejected', () => {
+  const output = fallbackOutput([fallbackExplanation(), fallbackExplanation(), fallbackExplanation(), fallbackExplanation(), fallbackExplanation(), fallbackExplanation()]);
+  const result = validateOutputContract(output);
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.code === 'TOO_MANY_EXPLANATIONS'));
+});
