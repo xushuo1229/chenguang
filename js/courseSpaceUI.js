@@ -15,7 +15,8 @@ function ensureStyles(documentRef) {
     '.course-space-title { margin:0; font-size:1.05rem; font-weight:700; }',
     '.course-space-subtitle { margin:4px 0 0; font-size:.82rem; color:var(--text-muted); }',
     '.course-space-toolbar { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }',
-    '.course-space-select, .course-space-input { flex:1; min-width:180px; border:1px solid var(--border-soft); background:var(--bg-elev); color:var(--text-hi); border-radius:var(--r-btn); padding:9px 12px; font-size:.86rem; }',
+    // font-size 16px：iOS Safari 聚焦字号 <16px 的表单控件会强制放大页面（Phase 15 全站契约）
+    '.course-space-select, .course-space-input { flex:1; min-width:180px; border:1px solid var(--border-soft); background:var(--bg-elev); color:var(--text-hi); border-radius:var(--r-btn); padding:9px 12px; font-size:16px; }',
     '.course-space-button { border:1px solid var(--border-soft); background:var(--bg-hover); color:var(--text-dark); border-radius:40px; padding:9px 18px; font-size:.85rem; cursor:pointer; transition:var(--transition-fast); }',
     '.course-space-button:hover:not(:disabled) { border-color:var(--primary); }',
     '.course-space-button:disabled { opacity:.65; cursor:not-allowed; }',

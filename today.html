@@ -81,7 +81,8 @@
       border-radius: var(--r-md);
       padding: 10px 14px;
       color: var(--text-hi);
-      font-size: 0.9rem;
+      /* iOS Safari 聚焦 input<16px 会强制放大页面（Phase 15 全站契约） */
+      font-size: 16px;
       outline: none;
       transition: border-color 0.2s;
     }
@@ -94,7 +95,7 @@
       border-radius: var(--r-md);
       padding: 10px 12px;
       color: var(--text-hi);
-      font-size: 0.9rem;
+      font-size: 16px;
       outline: none;
       width: 120px;
     }
@@ -143,6 +144,8 @@
       flex-shrink: 0;
       font-size: 0.8rem;
       color: var(--brand-teal);
+      background: transparent;
+      padding: 0;
       transition: background 0.15s, border-color 0.15s;
     }
     .tp-task-check.checked {

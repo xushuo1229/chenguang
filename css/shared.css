@@ -583,11 +583,13 @@ tr:hover td { background: var(--bg-hover); }
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  flex: 0 0 auto;
+  /* Phase 16 触控目标契约：等分宽度保证窄屏（320px÷7≈46px）下每项 ≥40px 触控目标 */
+  flex: 1 1 0;
+  min-width: 40px;
   text-decoration: none;
   color: var(--text-muted);
   font-size: 10px;
-  padding: 6px 14px;
+  padding: 6px 4px;
   position: relative;
   transition: color var(--transition-fast), background var(--transition-fast);
   border-radius: var(--radius-sm);
@@ -618,7 +620,6 @@ tr:hover td { background: var(--bg-hover); }
 @media (max-width: 480px) {
   .topbar { padding: 12px 16px; }
   .card { padding: var(--space-4); }
-  .mobile-tabbar a { padding: 6px 9px; }
   .toast { max-width: calc(100vw - 32px); }
 }
 

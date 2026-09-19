@@ -71,7 +71,9 @@ function renderTasks(todos) {
     if (t.priority && t.priority !== 'normal') meta.push('<span class="tp-tag">' + esc(t.priority) + '</span>');
 
     row.innerHTML =
-      '<div class="tp-task-check' + (t.done ? ' checked' : '') + '" data-toggle="' + t.id + '" title="点击切换完成">' + (t.done ? '<i class="fas fa-check"></i>' : '') + '</div>' +
+      // 注意：必须用 <button> 而非 <div>。iOS Safari 对非交互元素（div）的 tap 不合成 click，
+      // 手指点勾选会静默失效；button 原生可交互，touch 合成 click 可靠。
+      '<button type="button" class="tp-task-check' + (t.done ? ' checked' : '') + '" data-toggle="' + t.id + '" title="点击切换完成" aria-label="切换完成状态" aria-pressed="' + (t.done ? 'true' : 'false') + '">' + (t.done ? '<i class="fas fa-check"></i>' : '') + '</button>' +
       '<div class="tp-task-body">' +
       '<div class="tp-task-text">' + esc(t.text) + '</div>' +
       (meta.length ? '<div class="tp-task-meta">' + meta.join('') + '</div>' : '') +
