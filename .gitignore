@@ -40,6 +40,10 @@ build/
 Thumbs.db
 desktop.ini
 
+# ---------- 本地临时产物（浏览器 profile / 走查截图 / 冒烟脚本等，2026-09-19） ----------
+tmp-*
+.tmp-*
+
 # ---------- 工作区内部 ----------
 .workbuddy/
 archive/
