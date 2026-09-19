@@ -1,74 +1,74 @@
-# XINGZHIXING Design System
+# XINGZHIXING 设计系统
 
-## Brand
+# 品牌
 
-知行 XINGZHIXING is an AI Personal Growth OS. The product language moves from “tracking self-discipline” to “understand yourself, act continuously, and evolve with feedback.”
+知行 XINGZHIXING 是一款人工智能个人成长操作系统。产品语言从“跟踪自律”转变为“了解自己，持续行动，并随反馈不断演进”。
 
-The canonical expression is:
+规范表达式是：
 
-- Chinese: 知行
-- English: XINGZHIXING
-- Positioning: AI Personal Growth OS
-- Core line: 理解自己，持续成长
-- Philosophy: 知而后行，行而致远
+- 中文：知行
+- 英文：XINGZHIXING
+- 定位：AI个人成长操作系统
+- 核心理念：理解自己，持续成长
+- 哲学：知而后行，行而致远
 
-## Visual principles
+# 视觉原则
 
-1. **Premium minimal** — generous whitespace, one clear primary action per region, and restrained shadows.
-2. **Intelligent structure** — Linear-style grids make status, trends, risks, and next actions scannable.
-3. **Companionable AI** — purple and blue signal analysis and coaching without pretending the AI can act for the user.
-4. **Long-term growth** — green marks progress; charts emphasize trajectory and consistency instead of vanity totals.
-5. **Calm performance** — pages paint in their final layout and avoid entrance animations that cause flicker.
+1. **高级极简** — 宽敞的空白，每个区域有一个明确的主要操作，并且阴影使用克制。
+2. **智能结构** — 线性风格的网格让状态、趋势、风险和下一步操作易于扫描。
+3. **贴心 AI** — 紫色和蓝色用于信号分析与指导，而不假装 AI 可以替用户操作。
+4. **长期增长** — 绿色标记进展；图表强调轨迹和一致性，而非浮夸的总量。
+5. **平静性能** — 页面以最终布局呈现，避免产生闪烁的入场动画。
 
-## Color
+# 颜色
 
-| Role | Token | Value | Usage |
+| 角色 | 令牌 | 值 | 用途 |
 | --- | --- | --- | --- |
-| Ink | `--xz-ink` | `#0B1220` | Brand anchors and dark brand surfaces |
-| Text | `--xz-slate` | `#0F172A` | Primary text |
-| Accent | `--xz-accent` | `#38BDF8` | Primary actions, active navigation, key data |
-| Accent deep | `--xz-accent-strong` | `#0284C7` | Hover, links, selected states |
-| Growth | `--xz-growth` | `#34D399` | Completion, positive trends, growth paths |
-| AI | `--xz-ai` | `#8B5CF6` | AI coach, insights, model-related surfaces |
-| Background | `--xz-bg` | `#F8FAFC` | Application background |
-| Surface | `--xz-surface` | `#FFFFFF` | Cards and navigation |
-| Line | `--xz-line` | `#E2E8F0` | Hairline dividers and card edges |
-| Muted text | `--xz-muted` | `#64748B` | Secondary copy |
+| 墨水 | `--xz-ink` | `#0B1220` | 品牌锚点和深色品牌表面 |
+| 文字 | `--xz-slate` | `#0F172A` | 主要文字 |
+| 强调色 | `--xz-accent` | `#38BDF8` | 主要操作、活动导航、关键数据 |
+| 深强调色 | `--xz-accent-strong` | `#0284C7` | 悬停、链接、选中状态 |
+| 增长 | `--xz-growth` | `#34D399` | 完成、积极趋势、增长路径 |
+| 人工智能 | `--xz-ai` | `#8B5CF6` | AI 教练、洞察、模型相关表面 |
+| 背景 | `--xz-bg` | `#F8FAFC` | 应用背景 |
+| 表面 | `--xz-surface` | `#FFFFFF` | 卡片和导航 |
+| 线条 | `--xz-line` | `#E2E8F0` | 细线分隔线和卡片边缘 |
+| 静态文字 | `--xz-muted` | `#64748B` | 次要文本 |
 
-Legacy amber tokens are remapped by `assets/xingzhixing.css`; hardcoded legacy amber surfaces are neutralized in the final migration layer so all six pages share one brand without renaming historical class names.
+遗留琥珀标记由`assets/xingzhixing.css`重新映射;硬编码的遗留琥珀表面在最终迁移层中被中和，使六个页面共享一个品牌，而无需重命名历史类名。
 
-## Logo system
+# 标志系统
 
-- `/brand/logo.svg` — primary lockup for light surfaces.
-- `/brand/logo-dark.svg` — dark-surface lockup.
-- `/brand/logo-icon.svg` — app, dashboard, and avatar mark.
-- `/brand/favicon.svg` — browser and PWA icon.
+- [[代码0]] ——光线表面的主要锁定。
+- [[代码0]] ——暗地表锁定。
+- [[代码0]] ——应用、仪表盘和头像标记。
+- `/brand/favicon.svg` —— 浏览器和 PWA 图标。
 
-The icon combines an intelligent node with two mirrored action trajectories. It avoids sunrise, campus, checklist, and generic productivity imagery.
+该图标结合了一个智能节点和两个镜像动作轨迹。它避免了日出、校园、清单和通用的生产力图像。
 
-## Layout system
+# 布局系统
 
-- **Login:** dark brand narrative on the left; focused authentication card on the right.
-- **Landing:** hero, product value, data system, modules, AI coach, growth path, and CTA.
-- **Workbench:** navigation, growth center, and persistent AI rail.
-- **Stats:** overview, consistency, trends, habit evolution, and personal records.
-- **Goals:** direction, active execution, review, and long-term archive.
-- **AI Coach:** context/persona, conversation, and data insights in a stable three-part layout.
+- **登录:** 左侧为深色品牌叙事；右侧为聚焦的认证卡。
+- **首页:** 关键展示、产品价值、数据系统、模块、AI 教练、成长路径和行动号召。
+- **工作台:** 导航、成长中心和持久的 AI 辅助栏。
+- **统计:** 概览、一致性、趋势、习惯演变和个人记录。
+- **目标:** 方向、主动执行、回顾和长期存档。
+- **AI 教练:** 上下文/角色设定、对话和数据洞察，采用稳定的三部分布局。
 
-## Motion and stability
+# 运动与稳定
 
-- Hover motion is limited to subtle lift, border, and shadow changes.
-- Dashboard pages do not use first-paint entrance animation.
-- Scrollbar space is reserved so data loading cannot shift the composition.
-- Charts and dashboards are revealed only after their first complete render.
-- `prefers-reduced-motion` suppresses nonessential motion.
+- 悬停动作仅限于轻微的抬起、边框和阴影变化。
+- 仪表板页面不使用首次绘制进入动画。
+- 滚动条空间已预留，因此数据加载不会移动布局。
+- 图表和仪表板仅在首次完整渲染后显示。
+- `prefers-reduced-motion` 会抑制非必要的动画。
 
-## Technical boundary
+# 技术边界
 
-The design system is a presentation layer. It preserves:
+设计系统是一个呈现层。它保留了：
 
-- HTML/CSS/ES Module/Vite/Vitest architecture.
-- `chenguangData`, `CGStore`, `CGAnalytics`, `CGAPI`, and `CGSync`.
-- `/api/data`, `/api/auth`, and `/api/ai/chat` contracts.
-- Database fields and sync protocol.
-- User data ownership and AI read-only safety boundaries.
+- HTML/CSS/ES 模块/Vite/Vitest 架构。
+- `chenguangData`、`CGStore`、`CGAnalytics`、`CGAPI` 和 `CGSync`。
+- `/api/data`、`/api/auth` 和 `/api/ai/chat` 合同。
+- 数据库字段和同步协议。
+- 用户数据所有权和 AI 只读安全边界。

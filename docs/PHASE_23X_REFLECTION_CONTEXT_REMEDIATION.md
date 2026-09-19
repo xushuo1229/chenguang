@@ -1,14 +1,14 @@
-# Phase 23.x Reflection Context Remediation
+# 第23.x阶段反思情境补救
 
-## 1. Scope
+# 1. 范围
 
-This remediation closes the Reflection context ownership gap identified in the current project audit.
+此补救措施弥合了当前项目审计中发现的反射上下文所有权缺口。
 
-The change is additive and localized to the Reflection request path. It does not change CGStore, Analytics, Goals, Sync, AIContext, GrowthContext, Today Plan, or the Reflection API response contract.
+该更改是附加的，并且仅限于 Reflection 请求路径。它不会更改 CGStore、Analytics、Goals、Sync、AIContext、GrowthContext、Today Plan 或 Reflection API 响应契约。
 
-## 2. Before
+# 2. 之前
 
-The Reflection endpoint trusted client-submitted behavior facts:
+Reflection 端点信任客户端提交的行为事实：
 
 ```text
 Client context
@@ -18,11 +18,11 @@ POST /api/ai/reflection
 AI prompt
 ```
 
-This allowed a malicious or stale client payload to claim facts such as completed tasks or study time.
+这允许恶意或过时的客户端负载声明诸如已完成的任务或学习时间等事实。
 
-## 3. After
+# 3. 之后
 
-The backend now derives Reflection facts from the authenticated user's synchronized user data:
+后端现在从认证用户的同步用户数据中推导出反射事实：
 
 ```text
 req.userId
@@ -38,48 +38,48 @@ Prompt Builder
 AI Service
 ```
 
-Client-supplied `context.userNote` remains available as user-provided narrative input. It is not treated as system fact. Client behavior statistics, version fields, instruction fields, and metadata are ignored.
+客户端提供的`context.userNote`仍可作为用户提供的叙述性输入使用。它不被视为系统事实。客户端行为统计、版本字段、指令字段和元数据将被忽略。
 
-The response now records:
+响应现在记录：
 
 ```text
 meta.contextSource = authenticated-authoritative
 ```
 
-## 4. Derived Facts
+# 4. 推导事实
 
-`backend/src/services/reflectionContextSource.js` derives only bounded facts from `user_data`:
+`backend/src/services/reflectionContextSource.js` 仅从 `user_data` 中推导有限的事实：
 
-| Fact | Source collection | Boundary |
+| 事实 | 来源收集 | 边界 |
 | --- | --- | --- |
-| Today's task total / completed / pending / completion rate | `todos[date = today]` | Today only |
-| Yesterday pending tasks | `todos[date = yesterday]` | Count only |
-| Focus minutes | `focus[date = today]` | Sum of positive minutes |
-| English minutes | `english[date = today]` | Sum of positive minutes |
-| Exercise minutes | `sports[date = today]` | Sum of positive duration |
-| Check-in streaks | `checkins` | Bounded date calculation |
-| Active goals | `goals` | Count only |
+| 今日任务总数 / 已完成 / 待完成 / 完成率 | `todos[date = today]` | 仅今日 |
+| 昨日未完成任务 | `todos[date = yesterday]` | 仅计数 |
+| 专注分钟数 | `focus[date = today]` | 正数分钟总和 |
+| 英语学习分钟数 | `english[date = today]` | 正数分钟总和 |
+| 运动分钟数 | `sports[date = today]` | 正数时长总和 |
+| 签到连续天数 | `checkins` | 有界日期计算 |
+| 活跃目标 | `goals` | 仅计数 |
 
-The source does not infer unstated behavior. If no matching record exists, the fact is zero or empty.
+源不会推断未说明的行为。如果没有匹配的记录，则该事实为零或为空。
 
-## 5. Security Controls
+# 5. 安全控制
 
-- Authentication remains required.
-- `req.userId` is the only ownership source.
-- Client behavior facts are not trusted.
-- Context enters the prompt as data, not system instruction.
-- Context is allowlisted and size-bounded by the existing Reflection sanitizer.
-- AI output remains bounded and safe to parse.
+- 仍然需要身份验证。
+- `req.userId` 是唯一的所有权来源。
+- 不信任客户端行为事实。
+- 上下文以数据形式输入提示，而不是系统指令。
+- 上下文由现有的反射清理器允许列表且大小有限制。
+- AI 输出仍然有界且安全可解析。
 
-## 6. Test Evidence
+# 6. 测试证据
 
-Updated and added tests cover:
+已更新并新增的测试涵盖：
 
-- Malicious client task totals are ignored.
-- The route reports authoritative context ownership.
-- Task, focus, study, exercise, streak, and goal facts are derived server-side.
-- Empty or unknown records produce zero facts rather than inferred behavior.
+- 恶意客户端任务总数将被忽略。
+- 该路由报告权威的上下文所有权。
+- 任务、专注、学习、锻炼、连续记录和目标数据由服务器端生成。
+- 空记录或未知记录会产生零数据，而不是推断行为。
 
-## 7. Boundary Statement
+# 7. 边界声明
 
-Reflection facts are server-derived from CGStore-backed user data. User notes are explicitly user input. AI output is explicitly AI-generated. These three categories remain separated in the Reflection prompt.
+反思事实来源于服务器的 CGStore 支持的用户数据。用户笔记是明确的用户输入。AI 输出是明确的 AI 生成。这三类在反思提示中保持分离。

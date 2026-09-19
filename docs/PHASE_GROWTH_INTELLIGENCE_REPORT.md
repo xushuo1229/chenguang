@@ -1,12 +1,12 @@
-# Growth Intelligence Phase Report
+# 增长情报阶段报告
 
-## 1. Current architecture audit
+# 1. 当前架构审计
 
-- Existing core layers were preserved: `CGStore` owns business data, `CGAnalytics` owns factual aggregation, Goal Engine owns goal progress, and `CGSync` owns cloud synchronization.
-- The previous AI flow was: Store / Analytics / Goal Engine → `aiContext.buildContext` → `/api/ai/chat` → backend prompt builder / provider adapter → reply.
-- The backend continues to keep provider keys and system prompts server-side, validates message roles and context, strips forbidden sensitive keys, and applies login + rate-limit middleware.
+- 现有的核心层被保留：`CGStore` 拥有业务数据，`CGAnalytics` 拥有事实汇总，目标引擎拥有目标进度，`CGSync` 拥有云同步。
+- 之前的 AI 流程为：存储 / 分析 / 目标引擎 → `aiContext.buildContext` → `/api/ai/chat` → 后端提示构建器 / 提供者适配器 → 回复。
+- 后端继续在服务器端保留提供者密钥和系统提示，验证消息角色和上下文，剥离禁止的敏感密钥，并应用登录速率限制中间件。
 
-## 2. Added architecture
+# 2. 添加的架构
 
 ```text
 CGStore / CGAnalytics / Goal Engine
@@ -17,121 +17,121 @@ CGStore / CGAnalytics / Goal Engine
   → Workbench Daily Brief           proposal → user confirmation → business Store API
 ```
 
-No new framework, database, state library, or AI write path was introduced.
+没有引入新的框架、数据库、状态库或人工智能写作路径。
 
-## 3. Growth Intelligence
+# 3. 增长智慧
 
-**DONE**
+* *完成**
 
-- `js/growthIntelligence.js` computes a versioned Growth State from read-only snapshots.
-- Covered domains: learning, execution, focus, English, reading, exercise, course, goal, workload, and consistency.
-- The state includes 7/14/30-day trends, risk signals, positive signals, recommended focus, action proposals, and data sufficiency.
-- Empty or malformed data is explicitly marked `insufficient_data`; the layer does not invent behavior.
+- `js/growthIntelligence.js` 从只读快照计算带版本的成长状态。
+- 涵盖领域：学习、执行、专注、英语、阅读、锻炼、课程、目标、工作量和一致性。
+- 该状态包括7/14/30天的趋势、风险信号、积极信号、推荐的关注点、行动建议以及数据充分性。
+- 空或格式错误的数据会被明确标记为 `insufficient_data`；该层不会自行生成行为。
 
-## 4. Data retrieval
+# 4. 数据检索
 
-**DONE**
+* *完成**
 
-- Added a whitelist-based retrieval layer in `js/aiDataRetrieval.js`.
-- Exposed queries: today summary, week summary, recent trends, course progress, English history, focus history, exercise history, reading history, todo status, goal progress, and growth state.
-- Retrieval is question-aware and returns only compact, relevant results to AI Context.
-- User-entered text is marked with `__untrustedUserContent`; free-text fields outside the whitelist are not exposed.
+- 在`js/aiDataRetrieval.js`中添加了基于白名单的检索层。
+- 公开查询：今日总结、周总结、近期趋势、课程进度、英语历史、关注历史、练习历史、阅读历史、待办状态、目标进度和成长状态。
+- 检索是问题感知的，并且只返回与AI上下文相关的简明结果。
+- 用户输入的文本标记为`__untrustedUserContent`；白名单之外的自由文本字段不予公开。
 
-## 5. Growth State
+# 5. 成长期
 
-**DONE**
+* *完成**
 
-- A stable state schema includes overall and domain states, trend windows, risks, strengths, recommended focus, action proposals, and data sufficiency.
-- State calculation is cached by Store revision and date to avoid repeated aggregation on every UI update.
+- 稳定状态模式包括整体和领域状态、趋势窗口、风险、优势、推荐关注点、行动提案和数据充分性。
+- 状态计算按存储版本和日期缓存，以避免每次UI更新时重复聚合。
 
-## 6. Risk / Opportunity
+# 6. 风险 / 机会
 
-**DONE**
+* *完成**
 
-- Rule-based risks include overdue tasks, todo backlog, low course progress, declining focus or English trends, and at-risk goals.
-- Opportunities include execution momentum, improving focus or English trends, stable courses, and achieved goals.
-- Every signal references evidence from Analytics or Goal Engine.
+- 基于规则的风险包括任务逾期、待办事项积压、课程进度缓慢、注意力或英语趋势下降以及处于风险的目标。
+- 机会包括执行势头、提高专注力或英语趋势、稳定的课程以及已实现的目标。
+- 每个信号都引用了分析或目标引擎的证据。
 
-## 7. AI Context
+# 7. 人工智能上下文
 
-**DONE**
+* *完成**
 
-- Base AI Context now includes a compact Growth State.
-- `buildQueryContext` adds question intent, requested query whitelist, relevant results, and current-user-only metadata.
-- Existing Context version remains `1.0`, preserving backend compatibility.
+- 基础 AI 上下文现在包括一个紧凑的增长状态。
+- `buildQueryContext` 添加了问题意图、请求的查询白名单、相关结果以及仅限当前用户的元数据。
+- 现有上下文版本保持为 `1.0`，以保留后端兼容性。
 
-## 8. Daily Insight
+# 8. 每日洞察
 
-**DONE / PARTIAL**
+* *完成/部分**
 
-- Workbench now renders a Daily Growth Brief before the task cards.
-- The brief shows status, changes, concern, strength, rationale, and 1–3 action proposals.
-- AI page shows today status, findings, risks, long-term trends, proposals, and conversation.
-- Daily/weekly generation is deterministic. There is not yet a separately scheduled background notification workflow.
+- 工作台现在在任务卡之前呈现每日增长简报。
+- 简报显示状态、变化、关注点、优势、理由以及1–3条行动方案。
+- AI页面显示今天的状态、发现、风险、长期趋势、方案和对话。
+- 每日/每周生成是确定性的。目前还没有单独安排的后台通知工作流程。
 
-## 9. AI Action
+# 9. AI行动
 
-**DONE / PARTIAL**
+* *完成 / 部分完成**
 
-- Added `js/aiActions.js` as the user-confirmation layer.
-- Confirmed `add_todo` proposals go through `CGStore.addTodo`; check-in and whitelisted navigation are also supported.
-- The AI/model cannot create, update, delete, or write localStorage directly.
-- Actions are limited to the proposal whitelist and invalid proposals are rejected.
+- 已将`js/aiActions.js`添加为用户确认层。
+- 已确认的 `add_todo` 提案会通过 `CGStore.addTodo`；也支持签到和白名单导航。
+- 该 AI/模型无法直接创建、更新、删除或写入 localStorage。
+- 操作仅限于提案白名单，且无效提案将被拒绝。
 
-## 10. Growth Profile
+# 10. 增长概况
 
-**PARTIAL**
+* *部分**
 
-- Added a derived profile containing stable habits, common risks, effective strategies, current focus, and data sufficiency.
-- Best time slots are intentionally empty because current records do not include reliable time-of-day evidence.
+- 添加了一个包含稳定习惯、常见风险、有效策略、当前关注点和数据充分性的派生概况。
+- 最佳时间段故意留空，因为当前记录不包含可靠的时间段证据。
 
-## 11. Feedback Loop
+# 11. 反馈循环
 
-**PARTIAL**
+* *部分**
 
-- Accepted proposals are observed as `in_progress` or `completed` during the current session.
-- No durable recommendation history is persisted yet, so feedback does not survive reload or sync.
+- 在当前会话中，已接受的提案被视为`in_progress`或`completed`。
+- 尚未保存持久的推荐历史记录，因此反馈在重新加载或同步后不会保留。
 
-## 12. UI changes
+# 12. 用户界面变更
 
-- Workbench first screen now has a Daily Growth Brief.
-- AI page has a long-term trend section and evidence-based next-step proposals.
-- Styling follows the existing Calm Dawn Fusion / 1-to-1 system.
-- `js/userChrome.js` is now bundled as a module, fixing a production build warning and missing dist asset.
+- 工作台的第一个屏幕现在有每日增长简报。
+- AI 页面有一个长期趋势部分和基于证据的下一步建议。
+- 样式遵循现有的 Calm Dawn Fusion / 1 对 1 系统。
+- `js/userChrome.js` 现在作为模块捆绑，修复了生产构建警告和缺失的 dist 资源。
 
-## 13. Security review
+# 13. 安全审查
 
-**DONE (manual review)**
+* *已完成（手动复习）**
 
-- Retrieval has a fixed query whitelist and no arbitrary data access.
-- All retrieval is based on the caller's local Store snapshot and does not accept user IDs.
-- Raw user text is marked untrusted; the backend prompt already treats all context content as non-instruction data.
-- AI actions require explicit user confirmation and use business Store methods only.
-- Provider API keys remain backend-only; backend context sanitization and login/rate-limit behavior remain unchanged.
-- No secrets, temporary files, or credentials were added.
+- 检索有一个固定的查询白名单，没有任意数据访问。
+- 所有检索都基于调用者本地的存储快照，并且不接受用户ID。
+- 原始用户文本被标记为不受信任；后端提示已经将所有上下文内容视为非指令数据。
+- 人工智能操作需要明确的用户确认，并且仅使用商业商店的方法。
+- 提供者 API 密钥仍然仅限于后端使用；后端上下文清理和登录/速率限制行为保持不变。
+- 没有添加任何机密、临时文件或凭证。
 
-## 14. Test results
+# 14. 测试结果
 
-- Frontend: `npm test` — 20 test files, 304 tests passed.
-- Backend: `cd backend && npm test` — 62 tests passed.
-- New coverage includes Growth State, trends, risks, recommendations, retrieval, insufficient data, malformed data, read-only behavior, AI Context, action confirmation, and feedback status.
+- 前端：`npm test` — 20 个测试文件，304 个测试通过。
+- 后端：`cd backend && npm test` — 62 个测试通过。
+- 新的覆盖内容包括增长状态、趋势、风险、建议、检索、数据不足、数据格式错误、只读行为、AI 上下文、操作确认和反馈状态。
 
-## 15. Build results
+# 15. 建造结果
 
-- `npm run build` succeeded.
-- Vite reports no module bundling warnings after converting `userChrome.js` to a module entry.
+- `npm run build` 成功。
+- 将 `userChrome.js` 转换为模块入口后，Vite 报告没有模块打包警告。
 
-## 16. Remaining limitations
+# 16. 剩余的限制
 
-- Feedback history is in-memory and session-only.
-- The assistant does not make model-initiated tool calls; it uses deterministic question-aware retrieval.
-- Best-time-of-day analysis is not implemented because source records lack reliable time fields.
-- Weekly Review is not a separate scheduled workflow; trend analysis is available on demand.
-- Growth Profile is derived and does not yet include longitudinal strategy effectiveness.
+- 反馈历史仅存在于内存中，并且仅限本次会话。
+- 助手不会发起模型驱动的工具调用；它使用确定性的、基于问题的检索。
+- 由于源记录缺乏可靠的时间字段，未实现最佳时间分析。
+- 每周回顾不是一个单独安排的工作流程；趋势分析可以按需使用。
+- 增长概况是推导出来的，尚未包括纵向策略的有效性。
 
-## 17. Next recommended phase
+# 17. 下一推荐阶段
 
-1. Persist sanitized proposal feedback and outcome history.
-2. Add backend tool-call endpoints with per-user authorization and strict query schemas.
-3. Add optional timestamp capture to focus and study records to enable best-time-slot analysis.
-4. Add a scheduled Weekly Review view and export.
+1. 保存经过清理的提案反馈和结果历史记录。
+2. 添加带有每用户授权和严格查询模式的后端工具调用端点。
+3. 在焦点和学习记录中添加可选的时间戳捕获，以启用最佳时间段分析。
+4. 添加定期的每周审查视图和导出功能。

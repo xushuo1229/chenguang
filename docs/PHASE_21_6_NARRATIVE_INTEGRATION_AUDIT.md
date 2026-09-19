@@ -1,14 +1,15 @@
-# Phase 21.6 · 成长叙事集成审计
+# 第21.6阶段 · 成长叙事集成审计
 
-Audit date: 2026-09-15
-Scope: decision audit only.
-No business code, Store schema, Sync protocol, Backend schema, Memory model, Analytics, GrowthIntelligence, or AI Context was modified.
+审计日期：2026-09-15
+范围：仅限决策审计。
+没有修改业务代码、店铺架构、同步协议、后端架构、内存模型、分析、增长智能或 AI 上下文。
 
-## 1. 当前状态
+# 1. 当前状态
 
-**RESULT: NARRATIVE VALUE IS VALID, BUT USER EXPOSURE IS STILL TOO NARROW.**
+* *结果：叙事价值有效，但用户接触仍然过窄。**
 
-The current chain is:
+当前链是：
+
 
 ```text
 CGStore
@@ -19,7 +20,8 @@ CGStore
 → Stats
 ```
 
-The Narrative layer currently turns Timeline events into stages such as:
+叙事层目前将时间线事件转换为如下阶段：
+
 
 ```text
 起点
@@ -30,7 +32,8 @@ The Narrative layer currently turns Timeline events into stages such as:
 → 当前方向
 ```
 
-It outputs:
+它输出：
+
 
 ```js
 {
@@ -49,75 +52,78 @@ It outputs:
 }
 ```
 
-The implementation is runtime-only. It is not persisted, synced, written into Memory, or injected into AI Context.
+该实现仅在运行时有效。它不会被持久化、同步、写入内存或注入到 AI 上下文中。
 
-Current strength:
+当前强度：
 
-1. The projection is bounded.
-2. Stage meanings use fixed copy.
-3. Evidence IDs remain traceable.
-4. Confidence stays within `0-1`.
-5. It does not create historical dates that do not exist.
+1. 该预测是有界的。
+2. 阶段含义使用固定文案。
+3. 证据编号仍然可追踪。
+4. 置信度保持在`0-1`范围内。
+5. 它不会生成不存在的历史日期。
 
-Current weakness:
+当前弱点：
 
-The narrative is only visible in Stats. Stats is the correct home for the full long-term archive, but it is usually visited less often than Workbench. Therefore, the narrative does not yet reinforce daily motivation.
+叙述仅在统计中可见。统计是完整长期档案的正确归宿，但访问频率通常低于工作台。因此，叙述尚未强化日常动力。
 
-## 2. 产品价值审计
+# 2. 产品价值审计
 
-### 2.1 Long-Term Retention
+## 2.1 长期记忆
 
-**STATUS: NEED IMPROVEMENT.**
+* *状态：需要改进。**
 
-The narrative can improve retention because it converts isolated records into a visible progression. However, it currently lives only in Stats. A user who opens Workbench daily may not see it.
+叙述可以提高记忆保留，因为它将孤立的记录转化为可见的进展。然而，它目前仅存在于统计中。每天打开工作台的用户可能看不到它。
 
-The product idea is good, but exposure is incomplete.
+这个产品想法很好，但曝光不完整。
 
-### 2.2 User Achievement
+## 2.2 用户成就
 
-**STATUS: GOOD.**
+* *状态：良好。**
 
-The narrative helps users understand that goals, streaks, focus totals, and course completion are not isolated numbers. They become stages in a longer story.
+这个叙述帮助用户理解目标、连续记录、专注总计和课程完成情况并不是孤立的数字。它们成为更长故事中的阶段。
 
-This directly supports the desired feeling:
+这直接支持所期望的感觉：
+
 
 ```text
 原来我已经走了这么远。
 ```
 
-### 2.3 Daily Usage Motivation
+## 2.3 日常使用动机
 
-**STATUS: NEED IMPROVEMENT.**
+* *状态：需要改进。**
 
-Workbench currently focuses on today’s state, daily feedback, and next actions. That is correct, but it does not yet show continuity.
+工作台目前专注于今天的状态、每日反馈和下一步行动。这是正确的，但它尚未显示连续性。
 
-A light current-stage hint could connect today’s action to a longer arc:
+一个轻微的当前阶段暗示可以将今天的行动与更长的情节联系起来：
+
 
 ```text
 当前成长阶段：稳定尝试
 ```
 
-This should be small. It should not replace today’s feedback.
+这应该很小。它不应该取代今天的反馈。
 
-### 2.4 AI Personalization
+## 2.4 人工智能个性化
 
-**STATUS: NOT READY FOR CONTEXT EXPANSION.**
+* *状态：尚未准备好进行上下文扩展。**
 
-AI already receives Analytics, Growth Intelligence, Goals, Memory, Report, and Daily Feedback. It can explain growth without a new Context field.
+AI 已经接收分析、增长智能、目标、记忆、报告和每日反馈。它可以在不使用新的上下文字段的情况下解释增长。
 
-Adding the full Narrative now would risk duplication and increase Context size. The more useful next step is Workbench exposure.
+现在添加完整的叙述会有重复的风险并增加上下文大小。更有用的下一步是工作台暴露。
 
-### 2.5 Overall Product Value
+## 2.5 产品总体价值
 
-**OVERALL: NEED IMPROVEMENT.**
+* *总体：需要改进。**
 
-The narrative concept is validated, but activation is incomplete. Stats proves the model; Workbench would activate daily perception.
+叙事概念得到了验证，但激活尚未完成。统计证明了模型;工作台将激活每日感知。
 
-## 3. 工作台审计
+# 3. 工作台审计
 
-### 3.1 Current Workbench Responsibility
+## 3.1 当前工作台职责
 
-Workbench currently owns:
+工作台当前拥有：
+
 
 ```text
 Today’s status
@@ -125,74 +131,78 @@ Daily Feedback
 Today’s actions
 ```
 
-The Growth Brief already shows today’s changes, highlights, focus, and recommended actions. This boundary is correct.
+《增长简报》已经显示了今天的变化、重点、关注点和推荐的行动。这一界限是正确的。
 
-### 3.2 Should Workbench Show `currentStage`?
+## 3.2 工作台是否应显示 `currentStage`？
 
-**RECOMMENDATION: B — LIGHT HINT ONLY.**
+* *推荐：B — 仅轻微暗示。**
 
-Workbench should show one sentence:
+工作台应显示一句话：
 
-```text
-当前成长阶段：稳定尝试
-```
-
-It should not show the full Narrative.
-
-### 3.3 Why Not Option A — No Integration
-
-Option A would preserve the current boundary, but it would leave the narrative underused.
-
-The user’s daily entry point would not benefit from the long-term progression. That weakens the retention value of Phase 21.5.
-
-### 3.4 Why Not Option C — Full Narrative
-
-Option C is too heavy.
-
-Workbench should not become a historical archive page. Showing all stages, evidence, and meanings would:
-
-1. Compete with Daily Feedback.
-2. Increase cognitive load.
-3. Duplicate Stats.
-4. Shift Workbench away from action.
-
-### 3.5 Recommended Workbench Presentation
-
-Add one bounded line inside or near the existing Growth Brief:
 
 ```text
 当前成长阶段：稳定尝试
 ```
 
-Optional supporting sentence:
+它不应该显示完整的叙述。
+
+## 3.3 为什么不选择选项A——没有整合
+
+选项A将保留当前边界，但它会使叙事被使用不足。
+
+用户的每日入口点不会从长期进展中受益。这削弱了第21.5阶段的留存价值。
+
+## 3.4 为什么不选择选项 C — 完整叙述
+
+选项C太重了。
+
+工作台不应成为历史档案页面。展示所有阶段、证据和含义将会：
+
+1. 与每日反馈竞争。
+2. 增加认知负荷。
+3. 重复统计数据。
+4. 将工作台从操作中转移。
+
+## 3.5 推荐的工作台展示
+
+在现有的增长简报内或附近添加一条有界线：
+
+
+```text
+当前成长阶段：稳定尝试
+```
+
+可选的支持句：
+
 
 ```text
 你开始把记录变成一种节奏。
 ```
 
-Rules:
+规则：
 
-1. Show only `currentStage`.
-2. Do not render all stages.
-3. Do not render evidence IDs.
-4. Do not render a Timeline list.
-5. If `dataSufficient` is false or `currentStage` is null, hide the hint.
-6. Use `textContent`.
-7. Keep the hint inside the existing Growth Brief, not as a new dashboard card.
+1. 仅显示`currentStage`。
+2. 不要渲染所有阶段。
+3. 不要渲染证据ID。
+4. 不要渲染时间表列表。
+5. 如果`dataSufficient`为假或`currentStage`为空，隐藏提示。
+6. 使用`textContent`。
+7. 将提示保留在现有的增长简报中，而不是作为新的仪表板卡片。
 
-### 3.6 Data Reuse Requirement
+## 3.6 数据重用要求
 
-Future Workbench integration must not recompute GrowthIntelligence or Analytics unnecessarily.
+未来工作台的集成不得不必要地重新计算增长智能或分析。
 
-It should consume the existing snapshot and already-derived Growth Brief state. If Timeline requires `personalBest` or `courseSummary`, these should be reused from the current snapshot and passed into the projection once.
+它应消耗现有快照和已导出的增长简报状态。如果时间线需要 `personalBest` 或 `courseSummary`，应从当前快照中重用这些内容，并传递一次到投影中。
 
-The Workbench integration should not call Timeline multiple times per render.
+工作台集成不应在每次渲染时多次调用时间轴。
 
-## 4. AI 审计
+# 4. AI 审计
 
-### 4.1 Current AI Inputs
+## 4.1 当前的人工智能输入
 
-AI Context already includes:
+AI 上下文已经包括：
+
 
 ```text
 overview
@@ -209,48 +219,50 @@ report
 dailyFeedback
 ```
 
-The AI Coach already consumes:
+AI教练已经消耗：
 
-1. Growth strengths.
-2. Growth risks.
-3. Goal recommendations.
-4. Confirmed Memory.
-5. Daily Feedback.
-6. Growth Score and data sufficiency.
+1. 成长优势。
+2. 成长风险。
+3. 目标建议。
+4. 已确认的记忆。
+5. 每日反馈。
+6. 成长评分及数据充分性。
 
-### 4.2 Does AI Need `ctx.growthNarrative` Now?
+## 4.2 AI现在需要`ctx.growthNarrative`吗？
 
-**RECOMMENDATION: NO.**
+* *推荐：否。**
 
-AI can already explain growth from existing fields.
+人工智能已经可以解释现有领域的增长。
 
-For example:
+例如：
 
-| Narrative question | Existing AI input |
+| 叙事问题 | 现有的人工智能输入 |
 | --- | --- |
 | “我最近稳定吗？” | `growthState.consistencyState` |
 | “我有进步吗？” | `growth.trends`, `growthState.importantChanges` |
-| “我完成了什么？” | `goals`, `courses`, Growth Report |
-| “下一步做什么？” | `growthState.recommendedFocus`, `actionProposals`, Daily Feedback |
-| “我有哪些长期规律？” | confirmed Memory |
+| “我完成了什么？” | `goals`, `courses`, 成长报告 |
+| “下一步做什么？” | `growthState.recommendedFocus`, `actionProposals`, 每日反馈 |
+| “我有哪些长期规律？” | 已确认的记忆 |
 
-The AI does not currently need a dedicated `growthNarrative` field to answer these questions.
+人工智能目前不需要专门的`growthNarrative`字段来回答这些问题。
 
-### 4.3 Coherence Risk
+## 4.3 连贯性风险
 
-One possible issue is that Stats uses fixed stage labels while AI may use its own language. This is acceptable for now because the user has not yet been promised that AI knows the exact stage labels.
+一个可能的问题是 Stats 使用固定的阶段标签，而 AI 可能使用它自己的语言。现在这是可以接受的，因为尚未向用户承诺 AI 知道确切的阶段标签。
 
-If later the product wants AI to answer:
+如果以后产品希望由 AI 回答：
+
 
 ```text
 我现在在哪个成长阶段？
 ```
 
-then a compact runtime-only field may be added.
+然后可以添加一个紧凑的仅运行时字段。
 
-### 4.4 Future AI Context Shape
+## 4.4 未来人工智能的情境形态
 
-If AI integration becomes necessary, it should be compact:
+如果人工智能整合变得必要，它应该是紧凑的：
+
 
 ```js
 ctx.growthNarrative = {
@@ -263,9 +275,10 @@ ctx.growthNarrative = {
 };
 ```
 
-It must be runtime-only.
+它必须是仅运行时的。
 
-It must not contain:
+它不得包含：
+
 
 ```text
 stages[]
@@ -277,55 +290,57 @@ raw user content
 Memory content
 ```
 
-unless a later phase proves those fields are necessary.
+除非后续阶段证明那些领域是必要的。
 
-### 4.5 Trim Order If Added Later
+## 4.5 如果后来添加的修剪顺序
 
-If `ctx.growthNarrative` is added later, it should be treated as derived presentation data, not core fact.
+如果稍后添加 `ctx.growthNarrative`，它应被视为派生呈现数据，而非核心事实。
 
-Recommended trimming order:
+推荐修剪顺序：
 
-1. Remove `summary`.
-2. Remove `currentStage.meaning`.
-3. Remove the entire `growthNarrative`.
+1. 移除 `summary`。
+2. 移除 `currentStage.meaning`。
+3. 移除整个 `growthNarrative`。
 
-Core Analytics facts, Goals, and active action context should survive longer than Narrative.
+核心分析事实、目标和主动行动背景应比叙述性存续更久。
 
-## 5. Context 成本
+# 5. 上下文 成本
 
-A read-only synthetic projection benchmark produced:
+一个只读的合成投影基准产生了：
 
-| Item | Result |
+| 项目 | 结果 |
 | --- | --- |
-| Timeline nodes | 8 |
-| Narrative stages | 5 |
-| Full Narrative JSON | About 953 characters |
-| Compact `currentStage + summary` JSON | About 105 characters |
+| 时间轴节点 | 8 |
+| 叙事阶段 | 5 |
+| 完整叙事 JSON | 大约 953 个字符 |
+| 精简 `currentStage + summary` JSON | 大约 105 个字符 |
 
-Estimated Context impact:
+预计情境影响：
 
-| Design | Estimated cost |
+| 设计 | 预计成本 |
 | --- | --- |
-| Full Narrative | About 250-400 tokens |
-| Compact Narrative | About 40-90 tokens |
+| 完整叙述 | 大约 250-400 个词 |
+| 简明叙述 | 大约 40-90 个词 |
 
-The full Narrative is not worth adding to AI Context. It duplicates data that AI already receives.
+完整的叙述不值得添加到AI上下文中。它重复了AI已经接收到的数据。
 
-The compact version is technically cheap, but it should still wait until there is a real AI use case, such as users repeatedly asking:
+紧凑版本在技术上便宜，但仍应等到有真正的人工智能使用案例，例如用户反复询问时：
+
 
 ```text
 我现在在哪个阶段？
 ```
 
-Do not add Context just for symmetry with UI.
+不要仅为了与界面对称而添加上下文。
 
-## 6. Memory 边界
+# 6. 内存边界
 
-**RESULT: NARRATIVE IS NOT MEMORY.**
+* *结果：叙述不是记忆。**
 
-Narrative is a system-generated explanation derived from Timeline.
+叙述是从时间线生成的系统解释。
 
-Memory is different:
+记忆是不同的：
+
 
 ```text
 Candidate Memory
@@ -334,7 +349,8 @@ Candidate Memory
 → AI reads as long-term fact or possible trend
 ```
 
-Narrative must never be written into:
+叙述绝不应写入：
+
 
 ```text
 user.memory
@@ -343,25 +359,26 @@ Sync payload
 Backend database
 ```
 
-Reason:
+原因：
 
-1. Narrative stages are derived interpretations.
-2. They are not user-confirmed facts.
-3. They do not have the same lifecycle as Memory.
-4. They do not require user confirmation.
-5. Writing them into Memory would blur the boundary between explanation and evidence.
+1. 叙事阶段是衍生的解读。
+2. 它们不是用户确认的事实。
+3. 它们没有与内存相同的生命周期。
+4. 它们不需要用户确认。
+5. 将它们写入记忆会模糊解释与证据之间的界限。
 
-If the product later wants users to save a stage as a personal milestone, that must be a separate user-confirmed action and a separate architecture discussion.
+如果产品以后希望用户将某个阶段保存为个人里程碑，那必须是一个单独的用户确认操作，并且需要单独的架构讨论。
 
-## 7. UX 建议
+# 7. UX 建议
 
-### Stats
+## 统计
 
-**STATUS: CORRECT.**
+* *状态：正确。**
 
-Stats should continue to own the full long-term archive.
+统计部门应继续拥有完整的长期档案。
 
-Recommended content:
+推荐内容：
+
 
 ```text
 成长轨迹
@@ -369,29 +386,31 @@ Recommended content:
 Timeline nodes
 ```
 
-This is already aligned with the product boundary.
+这已经与产品边界对齐。
 
-### Workbench
+## 工作台
 
-**STATUS: SHOULD ADD LIGHT HINT.**
+* *状态：应该添加轻微提示。**
 
-Workbench should show only:
+工作台应只显示：
+
 
 ```text
 当前成长阶段：当前阶段名称
 ```
 
-This connects today’s action to a longer progression without changing Workbench into a history page.
+这将今天的操作与更长的进程连接起来，而不会将工作台变成历史页面。
 
-### AI
+## AI
 
-**STATUS: NO CONTEXT CHANGE NOW.**
+* *状态：目前上下文未改变。**
 
-AI should continue to explain using existing Context.
+人工智能应继续使用现有的上下文进行解释。
 
-It should not display the full Narrative. It should answer personal questions and connect growth state to next actions.
+它不应该显示完整的叙述。它应该回答个人问题，并将成长状态与下一步行动连接起来。
 
-Recommended AI language:
+推荐的人工智能语言：
+
 
 ```text
 根据你的记录，最近连续执行正在变得更稳定。
@@ -399,7 +418,8 @@ Recommended AI language:
 可以先完成一个小目标，把这个节奏保持下去。
 ```
 
-Forbidden AI language:
+禁止的人工智能语言：
+
 
 ```text
 你已经成为自律的人。
@@ -407,13 +427,14 @@ Forbidden AI language:
 你一定会成功。
 ```
 
-## 8. 安全审查
+# 8. 安全审查
 
-### 8.1 Over-Inference
+## 8.1 过度推断
 
-Current Narrative copy is mostly safe because it uses bounded stage language.
+当前的叙述文本大多是安全的，因为它使用了有限的舞台语言。
 
-Allowed:
+允许：
+
 
 ```text
 数据显示你正在形成更稳定节奏。
@@ -421,7 +442,8 @@ Allowed:
 投入已经转化为阶段性结果。
 ```
 
-Forbidden:
+禁止：
+
 
 ```text
 你已经成为自律的人。
@@ -429,25 +451,27 @@ Forbidden:
 你一定会持续进步。
 ```
 
-Future integrations must keep this boundary.
+未来的整合必须保持这个边界。
 
-### 8.2 Fabricated Completion Dates
+## 8.2 编造的完成日期
 
-The Timeline correctly avoids `completedAt` when the data model does not provide it.
+当数据模型未提供 `completedAt` 时，时间轴会正确地避免使用它。
 
-Current output uses:
+当前输出使用：
+
 
 ```text
 asOf
 ```
 
-This prevents the system from inventing a historical date.
+这可以防止系统编造一个历史日期。
 
-Workbench and AI integrations must continue this rule.
+工作台和人工智能整合必须继续遵守此规则。
 
-### 8.3 Sensitive Content
+## 8.3 敏感内容
 
-Narrative uses fixed labels and existing Timeline IDs. It should not introduce:
+叙述使用固定标签和现有的时间线ID。它不应引入：
+
 
 ```text
 Goal titles
@@ -459,90 +483,93 @@ Prompt content
 Authentication fields
 ```
 
-Future AI Context should also remain count-based and stage-based, not raw-content-based.
+未来的 AI 上下文也应保持基于计数和阶段，而非基于原始内容。
 
-### 8.4 Automatic Memory
+## 8.4 自动内存
 
-Narrative must not promote itself into Memory.
+叙事不应将自己提升为记忆。
 
-Correct boundary:
+正确的边界：
+
 
 ```text
 Narrative → UI only
 Memory → Candidate + User confirmation + CGStore
 ```
 
-## 9. 性能审查
+# 9. 性能审查
 
-A read-only synthetic benchmark for the current projection produced:
+针对当前投影生成的只读综合基准测试:
 
-| Operation | 1000 runs |
+|操作 |1000分 |
 | --- | --- |
-| `buildTimeline()` | About `5.83ms` |
-| `buildNarrative()` | About `4.29ms` |
+| `buildTimeline()` | 关于 `5.83ms` |
+| `buildNarrative()` | 关于 `4.29ms` |
 
-Per-call approximate cost:
+每次调用的大致费用：
+
 
 ```text
 buildTimeline: about 0.006ms
 buildNarrative: about 0.004ms
 ```
 
-This is negligible for UI.
+对于用户界面来说，这是可以忽略的。
 
-Performance rules for next phase:
+下一阶段的表现规则：
 
-1. Reuse the existing snapshot.
-2. Reuse already-derived Growth Intelligence state.
-3. Do not call Analytics twice for the same Workbench render.
-4. Do not call GrowthIntelligence twice for the same Workbench render.
-5. Build Timeline and Narrative once per render.
-6. Do not add a new cache layer.
-7. Do not scan raw 365-day records inside the Narrative layer.
+1. 重用现有快照。
+2. 重用已派生的增长智能状态。
+3. 不要对同一工作台渲染调用 Analytics 两次。
+4. 不要对同一工作台渲染调用 GrowthIntelligence 两次。
+5. 每次渲染构建一次时间线和叙事。
+6. 不要添加新的缓存层。
+7. 不要在叙事层中扫描原始的 365 天记录。
 
-The Narrative layer itself is cheap because it only groups the existing bounded Timeline projection.
+叙事层本身很便宜，因为它只对现有的有界时间线投影进行分组。
 
-## 10. 最终建议
+# 10. 最终建议
 
-## Recommended Next Phase
+# 推荐的下一阶段
 
-**A. Phase 21.7 Workbench Integration**
+* *A. 第21.7阶段 工作台集成**
 
-### Why
+## Why
 
-The Narrative already has technical value, but it is underexposed. Workbench is the daily entry point. A light current-stage hint can improve motivation without increasing Context cost or changing architecture.
+叙事本身已经具有技术价值，但曝光不足。工作台是日常的入口点。轻微的当前阶段提示可以在不增加上下文成本或改变架构的情况下提高动力。
 
-### Value
+## 价值
 
-1. Connects today’s action to a long-term arc.
-2. Improves daily perceived progress.
-3. Reinforces retention without new features.
-4. Uses an already safe runtime projection.
+1. 将今天的行动与长期发展联系起来。
+2. 改善每日的感知进展。
+3. 在不增加新功能的情况下强化记忆。
+4. 使用已经安全的运行时投影。
 
-### Risk
+## 风险
 
-Low if implementation stays bounded.
+如果实施保持在界限内，则较低。
 
-Main risks:
+主要风险：
 
-1. Workbench becoming too historical.
-2. Duplicate Analytics computation.
-3. Overclaiming habit formation.
+1. 工作台变得过于历史化。
+2. 重复分析计算。
+3. 过度宣称养成习惯。
 
-These can be controlled by showing one sentence only.
+这些可以通过只显示一句话来控制。
 
-### Implementation Scope
+## 实施范围
 
-Phase 21.7 should include only:
+阶段 21.7 应仅包括：
 
-1. Workbench Growth Brief integration.
-2. Show `currentStage.label` as one light hint.
-3. Optionally show `currentStage.meaning` only if it remains visually small.
-4. Hide the hint when data is insufficient.
-5. Reuse the existing snapshot and Growth Brief state.
-6. Add unit and page tests.
+1. 工作台增长简报集成。
+2. 将 `currentStage.label` 显示为一个轻微的提示。
+3. 如果 `currentStage.meaning` 仍然视觉上较小，则可选择仅显示 `currentStage.meaning`。
+4. 当数据不足时隐藏提示。
+5. 重用现有快照和增长简报状态。
+6. 添加单元测试和页面测试。
 
-Phase 21.7 should not include:
+第21.7阶段不应包括：
+
 
 ```text
 AI Context expansion
@@ -555,4 +582,4 @@ New dashboard card
 New persistent fields
 ```
 
-AI Context integration should be deferred until real usage shows that users expect AI to answer exact stage questions.
+AI上下文集成应推迟，直到实际使用显示用户期望AI回答确切的阶段性问题。

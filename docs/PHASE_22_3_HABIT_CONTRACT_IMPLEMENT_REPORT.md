@@ -1,10 +1,10 @@
-# Phase 22.3 · Habit Formation Contract Hardening 实施报告
+# 第22.3阶段 · 习惯养成合同硬化 实施报告
 
-## Summary
+# 摘要
 
-Phase 22.3 已按“Additive First / Minimal Change / Backward Compatible”完成 Habit Formation 契约强化。
+Phase 22.3 已按“先加法 / 最小变化 / 向后兼容”完成习惯形成契约强化。
 
-本次没有新增第二套习惯算法，也没有把 Habit Formation 接入持久化、Store、Sync、Backend、Memory、AI Context 或 UI。核心工作是明确观察数据契约、数值边界、窗口投影、状态派生和证据解释，并补齐对应的契约与边界测试。
+本次没有新增第二套习惯算法，也没有将 Habit Formation 接入持久化、Store、Sync、Backend、Memory、AI Context 或 UI。核心工作是明确观察数据契约、数值边界、窗口投影、状态派生和证据解释，并补齐对应的契约与边界测试。
 
 关键变化：
 
@@ -13,22 +13,22 @@ Phase 22.3 已按“Additive First / Minimal Change / Backward Compatible”完�
 - 无效日期会被排除，重复日期按最后一条值合并。
 - 日期乱序会排序后计算，不改变派生结果。
 - 缺失日历日期会中断连续性，不会伪造连续记录。
-- `opts.today` 可过滤未来观察。
+- `opts.today` 可过滤未来的观察。
 - 非有限数值按不活跃观察处理。
 - 正数有限 `windowDays` 向下取整且最小为 `1`；`<=0`、`NaN`、`Infinity`、`-Infinity` 回退到 `source.length || 1`。
 - `frequency` 使用 `activeDays / coverageDays`，其中 `coverageDays = max(windowDays, realDateSpan)`。
 
-## Changed Files
+# 已更改的文件
 
 | 文件 | 修改内容 |
 | --- | --- |
-| `js/habitFormation.js` | 修正窗口内日期覆盖率引用；保持并完善 Observation / Value / Window / State / Evidence 契约实现。 |
+| `js/habitFormation.js` | Fixed the reference of date coverage in the window; maintain and improve the implementation of the Observation / Value / Window / State / Evidence contract.
 | `tests/habitFormation.test.js` | 修复测试日期生成器的无效日期问题；补充 Phase 22.3 契约、边界、数据完整性和兼容性测试。 |
 | `docs/PHASE_22_3_HABIT_CONTRACT_IMPLEMENT_REPORT.md` | 新增本阶段中文实施报告。 |
 
-## Contract Changes
+# 合同变更
 
-### Observation Contract
+## 观察合同
 
 - 有效日期：严格 `YYYY-MM-DD` 字符串；本地 `Date` 会转换为用户本地日期键。
 - 无效日期：排除，不计入任何习惯指标，并在 `evidence` 中说明“已排除无效记录”。
@@ -37,20 +37,20 @@ Phase 22.3 已按“Additive First / Minimal Change / Backward Compatible”完�
 - 缺失日期：按真实日历日期判断连续性；缺失日期会中断 streak。
 - 未来日期：传入 `opts.today` 时排除晚于 today 的观察，并在 `evidence` 中说明。
 
-### Value Contract
+## 价值合同
 
 - `value` 使用 `Number()` 转换。
 - 非有限值，包括 `NaN`、`Infinity`、`-Infinity`，按 `0` 处理，即不活跃观察。
 - 只有 `value > 0` 才计入活跃天数。
 
-### Window Contract
+## 窗户合同
 
 - 输入为正数有限值时向下取整，最小窗口为 `1`。
 - `windowDays <= 0`、`NaN`、`Infinity`、`-Infinity` 回退到 `source.length || 1`。
 - 空数据窗口回退为 `1`。
 - 投影只使用最后 `windowDays` 条观察，不读取窗口外历史数据。
 
-### Metric Contract
+## 度量合同
 
 - `frequency = activeDays / coverageDays`。
 - `coverageDays = max(windowDays, realDateSpan)`。
@@ -58,7 +58,7 @@ Phase 22.3 已按“Additive First / Minimal Change / Backward Compatible”完�
 - `currentConsecutive` 与 `maxConsecutive` 按真实日历日期计算。
 - `habitScore` 继续由已有权重派生，未引入第二套评分系统。
 
-### State Contract
+## 国家合同
 
 - `isHabitForming` 保持 Phase 22.2 / v1.0 兼容语义：基于 `habitScore`、`frequency`、`maxConsecutive`。
 - `currentConsecutive` 与 `consistency` 不作为 breaking boolean gate。
@@ -66,49 +66,49 @@ Phase 22.3 已按“Additive First / Minimal Change / Backward Compatible”完�
 - `forming` 与 `stable` 只能在 `isHabitForming === true` 时出现。
 - `reason` 保持稳定优先级，`habitScore` 不足不会再被错误归因为 `low_frequency`。
 
-## Compatibility
+# 兼容性
 
 以下冻结契约未改变：
 
 - `isHabitForming` 的兼容行为。
 - `forming` / `stable` 与 `isHabitForming` 的关系。
-- `early` 的独立 observation stage 语义。
+- `early` 的独立观察阶段语义。
 - `reason` 的稳定归因规则。
 
 以下旧输出字段继续保留：
 
-- `isHabitForming`
-- `habitScore`
-- `frequency`
-- `consistency`
-- `maxConsecutive`
+- [[代码0]]
+- [[代码0]]
+- [[代码0]]
+- [[代码0]]
+- [[代码0]]
 
 Phase 22.2 已恢复的行为未被本次修改破坏。
 
-## Architecture Impact
+# 建筑影响
 
 | 边界 | 是否修改 | 结论 |
 | --- | --- | --- |
-| CGStore | 否 | 未新增 Store 字段，未修改 Store 语义。 |
-| localStorage / Sync | 否 | 未新增持久化，未修改同步协议。 |
-| Backend | 否 | 未修改 API、Schema 或数据库。 |
-| Memory | 否 | 未写入 `user.memory`。 |
-| AI Context | 否 | 未新增 Context 字段或 AI 消费路径。 |
-| Analytics | 否 | 未迁移或重写唯一统计事实来源。 |
+| CGStore | No | No new Store fields added, no changes to Store semantics. |
+| localStorage / Sync | No | No new persistence added, no changes to sync protocol. |
+| Backend | No | No changes to API, Schema, or database. |
+| Memory | No | `user.memory` not written. |
+| AI Context | No | No new Context fields or AI consumption paths added. |
+| Analytics | No | Unique source of statistical facts not migrated or rewritten. |
 | UI | 否 | 未新增页面、组件或视觉变更。 |
 
-Habit Formation 继续保持为纯派生领域模块。
+习惯形成继续保持为纯派生领域模块。
 
-## Security Review
+# 安全审查
 
 - 模块没有写入 `localStorage` 或 `sessionStorage`。
 - 模块没有调用 Store、Sync、Backend 或 AI Provider。
 - 模块没有读取或保存 API Key、Token、Password、Secret。
 - 模块没有保存聊天原文或 Prompt 内容。
 - 输出证据使用固定中文模板，不拼接用户敏感内容。
-- 新增测试继续确认模块不会写 Store 或 localStorage。
+- Add new tests to continue confirming that the module does not write to Store or localStorage.
 
-## Performance
+# 性能
 
 新增/更新的 365 天性能用例继续要求 p95 < 5ms，当前测试通过。
 
@@ -118,9 +118,9 @@ Habit Formation 继续保持为纯派生领域模块。
 - 再在窗口内规范化日期、数值和重复项。
 - 不扫描窗口外历史数据。
 
-## Tests
+# 测试
 
-### Target Tests
+## 目标测试
 
 命令：
 
@@ -147,7 +147,7 @@ PASS: 47 / 47
 - Security：无 Store 写入、无 localStorage 写入。
 - Performance：365 天 p95 < 5ms。
 
-### Full Verification
+## 完全验证
 
 ```text
 Frontend: FAIL（仅 1 个已知 pre-existing failure）
@@ -165,14 +165,14 @@ adding focus updates Daily Feedback without replacing the existing toast copy
 
 该失败属于既有工作区失败，不在 Phase 22.3 修改范围内，本次未修改该测试，也未观察到失败范围扩大。
 
-## Remaining Risks
+# 剩余风险
 
-- `opts.today` 如果不是有效日期，当前不会启用未来日期过滤。该行为已作为 v1.2 明确边界写入 Architecture Freeze，并由回归测试锁定。
+- `opts.today` 如果不是有效日期，当前不会启用未来日期过滤。该行为已在 v1.2 明确记录于 Architecture Freeze，并由回归测试锁定。
 - 缺失日期会降低有效覆盖率，这是符合真实日历语义的设计；未来若引入显式“休息日”语义，需要单独扩展契约。
 - 测试中的日期为固定日期，不依赖系统当前时间；后续如需相对时间测试，应继续通过 `opts.today` 注入。
 
-## Final Status
+# 最终状态
 
-Phase 22.3 实施完成，并通过最小 Remediation 关闭独立审计发现的文档、`minFrequency=0`、invalid-date evidence 和 invalid `opts.today` 测试缺口。
+Phase 22.3 implementation completed, and closed independent audit findings with minimal remediation, including documentation, `minFrequency=0`, invalid-date evidence, and invalid `opts.today` test gaps.
 
-未 commit，未 push，未进入 Phase 22.4。
+Not committed, not pushed, not entered Phase 22.4.

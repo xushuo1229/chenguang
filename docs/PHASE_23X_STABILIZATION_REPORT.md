@@ -1,142 +1,142 @@
-# Phase 23.x Stabilization Report
+# 第23.x阶段稳定性报告
 
-## 1. Executive Summary
+# 1. 执行摘要
 
-Phase 23.x stabilizes the Growth Intelligence, Retention, Habit Formation, Growth Memory, Daily Feedback, and Reflection working set into a named, tested baseline.
+第23.x阶段将增长智能、用户留存、习惯形成、增长记忆、每日反馈和反思工作集稳定到一个命名的、经过测试的基准。
 
-The two previously failing Workbench Daily Feedback tests were fixed by correcting an outdated test fixture. Reflection context ownership was hardened so behavior facts are derived server-side from authenticated user data instead of trusting client-submitted context.
+通过纠正过时的测试夹具，之前两个失败的工作台每日反馈测试已被修复。反射上下文的所有权被加强，因此行为事实是从经过身份验证的用户数据在服务器端得出，而不是信任客户端提交的上下文。
 
-All frontend tests, backend tests, and the production build now pass.
+所有前端测试、后端测试以及生产构建现在都通过了。
 
-## 2. Initial Working Tree
+# 2. 初始工作树
 
-- Branch: `codex/growth-intelligence`
-- Baseline HEAD: `e74fdc2 feat: add ai reflection feedback loop`
-- Initial raw working tree: 31 modified paths and 46 untracked paths.
-- Raw diff was inflated by CRLF changes.
-- Effective tracked diff after ignoring CR at EOL: 19 tracked files with 1,151 insertions and 111 deletions.
-- Frozen-file diffs were line-ending only.
+- 分支：`codex/growth-intelligence`
+- 基线 HEAD：`e74fdc2 feat: add ai reflection feedback loop`
+- 初始原始工作区：31 个已修改路径和 46 个未跟踪路径。
+- 原始差异因 CRLF 更改而膨胀。
+- 在忽略行尾 CR 后的有效跟踪差异：19 个跟踪文件，包含 1,151 次插入和 111 次删除。
+- 冻结文件的差异仅为行结束符更改。
 
-## 3. Working Set Classification
+# 3. 工作集分类
 
-| Group | Purpose |
+| 组 | 目的 |
 | --- | --- |
-| Growth / Retention / Timeline | Retention context, growth signals, growth timeline, milestone and narrative presentation |
-| Habit Formation | Habit contract and habit formation projection |
-| Growth Memory | Long-term growth patterns, confidence, relations, candidates, UX, and security |
-| Daily Feedback | Workbench daily feedback and bounded growth brief |
-| Reflection Remediation | Server-derived Reflection facts and authoritative context ownership |
-| Frontend Shell / Pages | Incremental integration without SPA rewrite |
-| Documentation | Phase 20–22 history, Phase 23 architecture/audit, current project state, and stabilization reports |
-| Tests | Unit and page regression for the above groups |
+| 增长 / 留存 / 时间表 | 留存背景、增长信号、增长时间表、里程碑和叙述展示 |
+| 习惯形成 | 习惯合同和习惯形成预测 |
+| 增长记忆 | 长期增长模式、信心、关系、候选人、用户体验和安全 |
+| 每日反馈 | 工作台每日反馈和有限增长简报 |
+| 反思补救 | 服务器来源的反思事实和权威性背景管理 |
+| 前端框架 / 页面 | 在不重写单页应用的情况下递增集成 |
+| 文档 | 第20–22阶段历史，第23阶段架构/审计，当前项目状态和稳定性报告 |
+| 测试 | 针对上述组的单元测试和页面回归测试 |
 
-## 4. Commit Grouping
+# 4. 提交分组
 
-The working set is delivered as one stabilization baseline because the Growth/Retention/Habit/Memory files and their regression tests form one interdependent feature set.
+工作集作为一个稳定基线交付，因为增长/保留/习惯/记忆文件及其回归测试构成了一个相互依赖的功能集。
 
-The commit is:
+提交是：
 
 ```text
 chore: stabilize phase 23.x baseline
 ```
 
-Temporary media and local tool settings are excluded.
+临时媒体和本地工具设置被排除在外。
 
-## 5. Test Failure Fix
+# 5. 测试失败修复
 
-### Finding
+## 发现
 
-`tests/workbenchDailyFeedback.test.js` used the fixed date `2026-09-15`, while Workbench behavior correctly uses the real current date.
+`tests/workbenchDailyFeedback.test.js` 使用了固定日期 `2026-09-15`，而 Workbench 的行为则正确地使用了实际的当前日期。
 
-### Root Cause
+## 根本原因
 
-The test fixture was date-dependent and became stale.
+测试夹具依赖于日期，并且变得过时。
 
-### Fix
+## Fix
 
-The test now imports `todayStr()` and derives its task dates from the same date helper used by the application.
+该测试现在导入 `todayStr()` 并从应用程序使用的相同日期助手中获取其任务日期。
 
-### Result
+## 结果
 
-The test file passes 5/5 without weakening assertions or changing production behavior.
+测试文件在不削弱断言或更改生产行为的情况下通过了 5/5。
 
-## 6. Reflection Context Audit
+# 6. 反思背景审计
 
-### Gap
+## Gap
 
-The Reflection endpoint previously accepted client-submitted behavior context as AI input. This created a prompt-injection and data-truthfulness risk.
+反思端点之前接受客户端提交的行为上下文作为 AI 输入。这带来了提示注入和数据真实性的风险。
 
-### Remediation
+## 补救
 
-Added `backend/src/services/reflectionContextSource.js`.
+已添加 `backend/src/services/reflectionContextSource.js`。
 
-The Reflection route now:
+反射路线现在：
 
-1. Uses authenticated `req.userId`.
-2. Loads that user's `user_data`.
-3. Derives bounded today/yesterday facts.
-4. Sanitizes the context through the existing allowlist.
-5. Treats client `userNote` as narrative input, not fact.
+1. 使用经过认证的`req.userId`。
+2. 加载该用户的`user_data`。
+3. 推导出有限的今天/昨天的事实。
+4. 通过现有允许列表清理上下文。
+5. 将客户端`userNote`视为叙述输入，而非事实。
 
-Response metadata marks the source as:
+响应元数据将源标记为：
 
 ```text
 authenticated-authoritative
 ```
 
-No frozen frontend or core data-layer file was semantically changed.
+没有冻结的前端或核心数据层文件被语义上更改。
 
-## 7. Memory and Feedback Boundaries
+# 7. 记忆与反馈边界
 
-### GrowthMemory
+## 成长记忆
 
-Purpose: long-term growth understanding.
+目的：长期增长理解。
 
-- Stored with user data through CGStore under `user.memory`.
-- Holds confirmed patterns, preferences, milestones, insights, and candidates.
-- Must not duplicate Analytics calculations.
-- Feeds compact, read-only projections to AI and relevant pages.
+- 通过 CGStore 在 `user.memory` 下与用户数据一起存储。
+- 保存已确认的模式、偏好、里程碑、见解和候选项。
+- 不得重复分析计算。
+- 向 AI 和相关页面提供紧凑的只读预测。
 
-### CoachMemory
+## 教练记忆
 
-Purpose: short- and medium-term coaching interaction context.
+目的：短期和中期教练互动背景。
 
-- Stored separately under `cg_ai_coach_memory_v1`.
-- Holds AI coaching interaction history and short-term coach context.
-- Must not become a second user-data system.
-- Must not override authoritative behavior facts.
+- 单独存储在 `cg_ai_coach_memory_v1` 下。
+- 保存 AI 教练交互历史和短期教练上下文。
+- 不得成为第二个用户数据系统。
+- 不得覆盖权威行为事实。
 
-### Reflection Feedback
+## 反思反馈
 
-Purpose: quality signal for Reflection output.
+目的：反思输出的质量信号。
 
-- Persisted server-side in Reflection feedback tables.
-- Records helpful / not-helpful binary feedback.
-- Must not be treated as business behavior data.
-- Must not mutate todos, goals, check-ins, sports, readings, English, courses, or focus records.
+- 在反思反馈表中服务器端持久保存。
+- 记录有用/无用的二进制反馈。
+- 不得将其视为业务行为数据。
+- 不得更改待办事项、目标、签到、运动、阅读、英语、课程或专注记录。
 
-### Feedback Analytics Boundary
+## 反馈分析边界
 
-Reflection feedback is currently a backend quality signal, not an Analytics metric. Analytics remains the canonical source for user behavior statistics. Any future feedback aggregate must be additive and clearly separated from behavioral Analytics.
+反思反馈目前是后端的质量信号，而不是分析指标。分析仍然是用户行为统计的权威来源。任何未来的反馈汇总必须是累加的，并且与行为分析清晰分开。
 
-## 8. Regression Verification
+# 8. 回归验证
 
-| Validation | Result |
+| 验证 | 结果 |
 | --- | --- |
-| Frontend `npm test` | 580/580 pass |
-| Backend `cd backend && npm test` | 85/85 pass |
-| Production build `npm run build` | Pass |
-| `git diff --check` | Pass |
+|前端 `npm test` |580/580 通行证 |
+|后端 `cd backend && npm test` |85/85 通行证 |
+|生产版本 `npm run build` |通过 |
+|[[代码0]] |通行 |
 
-No new regressions were found.
+未发现新的回归结果。
 
-## 9. Browser Validation Status
+# 9. 浏览器验证状态
 
-Browser validation was not run because the repository does not currently provide Playwright or equivalent browser automation infrastructure.
+未运行浏览器验证，因为该存储库当前不提供 Playwright 或等效的浏览器自动化基础设施。
 
-This is recorded as a known limitation, not a test failure.
+这是作为已知的限制记录的，而不是测试失败。
 
-## 10. Final Architecture
+# 10. 最终架构
 
 ```text
 CGStore / Backend user_data
@@ -156,19 +156,19 @@ AI Coach / Daily Reflection
 User Feedback
 ```
 
-## 11. Excluded Artifacts
+# 11. 排除的文物
 
-The following are intentionally not committed:
+以下内容故意未提交：
 
-- `tmp-video-frames/`
-- `tmp-video-seq/`
-- `.claude/settings.local.json`
+- [[代码0]]
+- [[代码0]]
+- [[代码0]]
 
-## 12. Baseline Decision
+# 12. 基线决策
 
 ```text
 Phase 23.x Stabilization:
 STABLE BASELINE READY
 ```
 
-The next phase may start only from this committed baseline. The next scope should be separately planned and must not mix Course Knowledge, Agent, Planner, or Tutor behavior into this baseline.
+下一阶段只能从这一已确定的基线开始。下一阶段的范围应单独规划，且不得将课程知识、代理、规划者或导师的行为混入这一基线中。

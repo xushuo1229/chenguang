@@ -1,12 +1,12 @@
 # Phase 22.2 习惯形成检测实施报告
 
-## 1. 实施摘要
+# 1. 实施摘要
 
-新增 `js/habitFormation.js` 纯函数模块，实现 Model B（Frequency + Consistency + Continuity）习惯形成检测。输入为 `Analytics.getTrend()` 返回的日序列 `[{date, value}]`，输出 `isHabitForming`、`habitScore`、`frequency`、`consistency`、`maxConsecutive` 和用户可理解的 `evidence`。
+新增 `js/habitFormation.js` 纯函数模块，实现 Model B（频率   一致性   连续性）习惯形成检测。输入为 `Analytics.getTrend()` 返回的日序列 `[{date, value}]`，输出 `isHabitForming`、`habitScore`、`frequency`、`consistency`、`maxConsecutive` 和用户可理解的 `evidence`。
 
-不修改 CGStore / Sync / Backend / Memory / AI Context / UI。
+Do not modify CGStore / Sync / Backend / Memory / AI Context / UI.
 
-## 2. 算法
+# 2. 算法
 
 ```
 habitScore = frequency × 0.35 + consistency × 0.30 + continuity × 0.35
@@ -19,32 +19,32 @@ isHabitForming = habitScore ≥ 0.5
 
 | 因子 | 公式 | 范围 |
 |---|---|---|
-| frequency | activeDays / windowDays | 0-1 |
-| consistency | 1 - CV（变异系数） | 0-1 |
-| continuity | maxConsecutive / windowDays | 0-1 |
+| 频率 | activeDays / windowDays | 0-1 |
+| 一致性 | 1 - CV（变异系数） | 0-1 |
+| 连续性 | maxConsecutive / windowDays | 0-1 |
 
-## 3. 冷启动
+# 3. 冷启动
 
-| 天数 | isHabitForming | 原因 |
+| 天数 | 是否易成瘾 | 原因 |
 |---|---|---|
 | 0 | false | activeDays < 3 |
 | 1 | false | activeDays < 3 |
 | 2 | false | activeDays < 3 |
-| 3 | 可能为 true | 3 天连续 + 稳定 + frequency ≥ 0.3 |
+| 3 | 可能为 true | 3 天连续 稳定 frequency ≥ 0.3 |
 | 7 | 合理判定 | 正常检测范围 |
 | 14+ | 稳定检测 | 长窗口提供更多证据 |
 
-## 4. 误报防护
+# 4. 误报防护
 
 | 场景 | 保护机制 |
 |---|---|
-| Single spike | activeDays < 3 → false |
-| Short trend（高波动值） | consistency 低 → habitScore < 0.5 → false |
-| Huge delta + insufficient data | activeDays < 3 → false |
-| Interruption | maxConsecutive 不跨越 gap |
-| Scattered days（无连续性） | maxConsecutive < 3 → false |
+| 单峰 | activeDays < 3 → 假 |
+| 短期趋势（高波动值） | consistency 低 → habitScore < 0.5 → 假 |
+| 巨大变化   数据不足 | activeDays < 3 → 假 |
+| 中断 | maxConsecutive 不跨越 gap |
+| 分散的日子（无连续性） | maxConsecutive < 3 → 假 |
 
-## 5. 领域处理
+# 5. 领域处理
 
 本阶段不实现领域差异（预留 Phase 22.3）。当前使用统一阈值：
 - minSamples = 3
@@ -52,60 +52,60 @@ isHabitForming = habitScore ≥ 0.5
 - minConsecutive = 3
 - minHabitScore = 0.5
 
-## 6. Memory 边界
+# 6. 内存边界
 
 - HabitFormation 是 **runtime projection**（系统推断）
 - **禁止**写入 `user.memory`
-- **禁止**生成 Memory candidate
-- **禁止**修改 Memory schema
+- **禁止**生成 内存候选
+- **禁止**修改 内存模式
 
-## 7. AI Context
+# 7. 人工智能上下文
 
-**UNCHANGED** — 不新增 `ctx.habits` / `ctx.habitFormation` / `ctx.growthSignals`。
+* *UNCHANGED** — 不新增 `ctx.habits` / `ctx.habitFormation` / `ctx.growthSignals`。
 
-## 8. 测试
+# 8. 测试
 
 | 项目 | 结果 |
 |---|---|
-| Frontend | **513/514 PASS**（1 个预存在失败见下方说明） |
-| Backend | PASS 68/68 |
-| Build | PASS（3.44s） |
-| git diff --check | PASS |
+| 前端 | **513/514 通过**（1 个预存失败，见下方说明） |
+| 后端 | 通过 68/68 |
+| 构建 | 通过（3.44秒） |
+| git diff --check | 通过 |
 
-### 预存在失败说明
+## 预存在失败说明
 
 `tests/workbenchDailyFeedback.test.js > adding focus updates Daily Feedback without replacing the existing toast copy` 失败。
 
-**原因：** 此前 Phase 21.x 累积修改 workbench.js 引入的预存在问题，与 Phase 22.2 新增文件无关。`js/habitFormation.js` 是零依赖纯函数，不影响任何已有模块。
+* *Reason:** The previous Phase 21.x cumulative modification of workbench.js introduced persistent issues, which are unrelated to the newly added files in Phase 22.2. `js/habitFormation.js` is a zero-dependency pure function and does not affect any existing modules.
 
-## 9. 性能
+# 9. 性能
 
-365 天模拟数据（200 iterations）：
+365 天模拟数据（200 次迭代）：
 
 | 指标 | 值 | 目标 |
 |---|---|---|
-| p50 | 0.015ms | <10ms ✅ |
-| p95 | 0.071ms | <10ms ✅ |
-| max | 2.794ms | <10ms ✅ |
+| p50 | 0.015毫秒 | <10毫秒 ✅ |
+| p95 | 0.071毫秒 | <10毫秒 ✅ |
+| 最大值 | 2.794毫秒 | <10毫秒 ✅ |
 
-## 10. 安全
+# 10. 安全
 
-- ✅ 无 Store 写入
-- ✅ 无 localStorage
-- ✅ 无 token / password / API key
-- ✅ 无 Memory mutation
+- ✅ No store writes
+- ✅ No localStorage
+- ✅ No token / password / API key
+- ✅ No memory mutation
 - ✅ 无 AI 自动写入
 - ✅ 无 DOM XSS
 
-## 11. 修改文件
+# 11. 修改文件
 
 | 文件 | 操作 |
 |---|---|
-| `js/habitFormation.js` | 新增 |
-| `tests/habitFormation.test.js` | 新增（22 条测试） |
-| `docs/PHASE_22_2_HABIT_FORMATION_IMPLEMENT_REPORT.md` | 新增 |
+|[[代码0]] |新增 |
+|[[代码0]] |新增（22 条测试） |
+|[[代码0]] |新增 |
 
-## 12. 剩余风险
+# 12. 剩余风险
 
 | 风险 | 级别 | 说明 |
 |---|---|---|

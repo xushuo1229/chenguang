@@ -1,46 +1,46 @@
-# Phase 23.2.1.1 Reflection Hardening Final
+# 阶段 23.2.1.1 反射硬化最终
 
-Date: 2026-09-17
-Baseline: `227665a feat: add AI daily reflection backend capability`
-Status: READY
+日期：2026-09-17
+基线：`227665a feat: add AI daily reflection backend capability`
+状态：准备就绪
 
-## 1. Implementation Summary
+# 1. 实施总结
 
-本阶段只处理 Phase 23.2.1 Audit Gate 提出的 Reflection 安全问题，不新增产品功能，不修改前端页面。
+This phase only addresses the Reflection security issues raised by Phase 23.2.1 Audit Gate, without adding new product features or modifying the frontend pages.
 
 主要变更：
 
-- 新增 Reflection Context Sanitizer，只允许 GrowthContext 数据字段进入 Prompt。
-- 移除客户端可控制的 `version` / `instruction` / `meta` / `system` / `history` / `performance` 等非数据字段。
-- 固定 Reflection Prompt 的 context 与 task version 为 `1.0`，阻断 version 注入。
-- 对 task、focus、streak、goal、signal、suggestion 字段做类型、长度、数组数量和数值范围限制。
-- 重新计算任务完成率，避免客户端提交自相矛盾的 completion rate。
-- Reflection Provider 请求显式设置 `max_tokens: 1200`。
-- 本地限制 AI reply 最大 8,000 字符。
-- 对 AI 输出的 `summary` / `insights` / `suggestions` 做字段类型、数量和长度限制。
-- `POST /api/ai/reflection` 绑定 `req.userId`，并在响应 meta 中标记 `contextSource`。
+- Added Reflection Context Sanitizer, only allowing GrowthContext data fields to enter the Prompt.
+- Removed client-controllable non-data fields such as `version` / `instruction` / `meta` / `system` / `history` / `performance`.
+- Fixed Reflection Prompt's context and task version to `1.0`, blocking version injection.
+- Applied type, length, array count, and value range restrictions to task, focus, streak, goal, signal, and suggestion fields.
+- Recalculated task completion rate to prevent clients from submitting contradictory completion rates.
+- Reflection Provider requests must explicitly set `max_tokens: 1200`.
+- Locally limit AI reply to a maximum of 8,000 characters.
+- Apply type, count, and length restrictions to AI output fields `summary` / `insights` / `suggestions`.
+- `POST /api/ai/reflection` is bound to `req.userId`, and `contextSource` is marked in the response meta.
 
-## 2. Security Risk Closure
+# 2. 安全风险关闭
 
-| Audit Finding | Result | Notes |
+|审计发现 |结果 |注释 |
 | --- | --- | --- |
-| F-001 Prompt Injection | CLOSED | `buildReflectionPrompt()` 不再使用客户端 version；Reflection task version 固定为 `1.0`。 |
-| F-002 Context Ownership | PARTIALLY CLOSED | API 绑定认证用户并标记 `authenticated-client-submitted`；因后端尚未实现 Analytics 的服务端重建，行为数据仍来自客户端提交的 GrowthContext。 |
-| F-003 Output Token Limit | CLOSED | Provider 请求包含 `max_tokens: 1200`；服务层另有 8,000 字符 reply 上限和字段长度限制。 |
-| F-004 Field Allowlist | CLOSED | Prompt 前只保留白名单内的 GrowthContext 数据字段。 |
-| F-006 Security Regression Tests | CLOSED | 新增 Reflection 安全回归测试覆盖 allowlist、prompt injection、fake performance、output limit、owner marker。 |
+|F-001 提示注入 |关闭 |`buildReflectionPrompt()` 不再使用客户端 version;Reflection task version 固定为 `1.0`。 |
+|F-002 Context Ownership |部分关闭 |API 绑定认证用户并标记 `authenticated-client-submitted`;因后端尚未实现 Analytics 的服务端重建，行为数据仍来自客户端提交的 GrowthContext。
+|F-003 输出令牌限制 |已关闭 |提供者请求包含 `max_tokens: 1200`;服务层另有 8,000 字符 回复 上限和字段长度限制。
+|F-004 现场许可名单 |已关闭 |提示 前只保留白名单内的 GrowthContext 数据字段。
+|F-006 安全回归测试 |关闭 |新增 Reflection 安全回归测试覆盖 允许列表、提示注入、假性能、输出限制、owner marker。|
 
-## 3. Modified Files
+# 3. 已修改的文件
 
 | 文件 | 说明 |
 | --- | --- |
-| `backend/src/services/reflectionContext.js` | 新增 Reflection Context Sanitizer 和固定 context version |
-| `backend/src/services/aiService.js` | 接入 sanitizer、输出限制、owner/source 处理 |
-| `backend/src/services/promptBuilder.js` | 固定 Reflection task/context version，阻断 version 注入 |
-| `backend/src/services/providers/openaiCompatible.js` | 支持 optional `maxTokens` 并转换为 Provider `max_tokens` |
-| `backend/src/routes/ai.js` | 传递 `req.userId`，返回 `contextSource` |
+| `backend/src/services/reflectionContext.js` | Added Reflection Context Sanitizer and fixed context version |
+| `backend/src/services/aiService.js` | Integrated sanitizer, output constraints, owner/source handling |
+| `backend/src/services/promptBuilder.js` | Fixed Reflection task/context version to block version injection |
+| `backend/src/services/providers/openaiCompatible.js` | Support optional `maxTokens` and convert to Provider `max_tokens` |
+| `backend/src/routes/ai.js` | Pass `req.userId` and return `contextSource` |
 | `backend/test/aiReflectionSecurity.test.js` | 新增安全回归测试 |
-| `docs/PHASE_23_2_1_1_REFLECTION_HARDENING_FINAL.md` | 本报告 |
+| `docs/PHASE_23_2_1_1_REFLECTION_HARDENING_FINAL.md` | This report |
 
 冻结文件均未修改：
 
@@ -55,7 +55,7 @@ today.html
 pages/today.js
 ```
 
-## 4. Data Flow
+# 4. 数据流
 
 ```text
 Authenticated request + req.userId
@@ -77,7 +77,7 @@ backend-generated performance
 Reflection response
 ```
 
-## 5. Tests
+# 5. 测试
 
 ```yaml
 Reflection Security:
@@ -107,23 +107,23 @@ git diff --check:
   result: PASS
 ```
 
-## 6. Remaining Risks
+# 6. 剩余风险
 
-### R-001: Client-submitted GrowthContext
+## R-001：客户提交的增长背景
 
 当前后端还没有可在 Node 环境直接复用的 Analytics / GoalEngine 执行层，无法在不复制统计逻辑的情况下完全从服务端原始数据重建 GrowthContext。
 
-因此 Reflection 的行为统计仍来自认证用户提交的 GrowthContext。API 现在通过 `req.userId` 绑定请求归属，并使用 `contextSource: authenticated-client-submitted` 明确暴露信任边界。
+Therefore, the behavioral statistics of Reflection still come from the GrowthContext submitted by authenticated users. The API now binds request attribution through `req.userId` and explicitly exposes the trust boundary using `contextSource: authenticated-client-submitted`.
 
-后续如需完全关闭，应新增服务端 Canonical GrowthContext Builder，复用或编译 Analytics / GoalEngine，而不是在路由里重复统计。
+If you need to completely shut it down later, you should add a server-side Canonical GrowthContext Builder, reuse or compile Analytics / GoalEngine, instead of repeating statistics in the routing.
 
-### R-002: Prompt injection cannot be fully eliminated by schema alone
+## R-002：仅靠模式无法完全消除提示注入
 
-Sanitizer、固定 version、System Prompt 优先级和输出 normalization 已降低风险，但 LLM 仍可能受到 context 中自然语言的影响。前端展示时必须继续区分：
+消毒剂、固定版本、系统提示优先级和输出规范化已降低风险，但大型语言模型仍可能受到上下文中自然语言的影响。前端展示时必须继续区分：
 
 - `performance`：后端数字事实
 - `summary` / `insights` / `suggestions`：AI 解释和建议
 
-## 7. Final Status
+# 7. 最终状态
 
-READY
+准备好了

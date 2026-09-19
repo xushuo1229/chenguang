@@ -1,6 +1,6 @@
-# UX Navigation Audit
+# 用户体验导航审计
 
-## 当前问题
+# 当前问题
 
 | 问题 | 文件 | 影响 | 优先级 |
 | - | - | - | - |
@@ -12,17 +12,17 @@
 | AI 面板同步构建上下文并渲染 | `pages/ai.js` | Context、Memory 与 Analytics 计算发生在 AI 界面显示之前 | P1 |
 | 同源静态资源使用 network-first | `service-worker.js` | 生产环境跳转可能等待已缓存资源重新协商 | P2 |
 
-## 根因分析
+# 根因分析
 
 项目没有 `startViewTransition`、SPA 路由系统或页面级 `translateX(100%)`。用户看到的“从右侧回到正常位置”是页面壳与卡片入场动画叠加布局渲染造成的感知：DOM 先进入透明或位移状态，随后在同一次页面装载中移动到最终位置。
 
-三个核心页面同时把 Analytics、GoalEngine、AIContext、CoachMemory 或 Chart.js 放在 Dashboard 可见之前执行，放大了首帧空白和后续补渲染的跳动。
+Three core pages simultaneously execute Analytics, GoalEngine, AIContext, CoachMemory, or Chart.js before being visible on the Dashboard, which enlarges the blank first frame and the jump during subsequent re-rendering.
 
-## 影响页面
+# 影响页面
 
-`workbench.html`、`goals.html`、`stats.html`、`ai.html` 都受页面壳动画影响；`goals.html`、`stats.html`、`ai.html` 另受各自首屏计算路径影响。
+`workbench.html`、`goals.html`、`stats.html`、`ai.html` 都受到页面壳动画的影响；`goals.html`、`stats.html`、`ai.html` 则受到各自首屏计算路径的影响。
 
-## 修复方案
+# 修复方案
 
 | 问题 | 修复方案 | 优先级 |
 | - | - | - |
@@ -33,6 +33,6 @@
 | 静态资源跳转 | 仅对同源带内容 hash 的 `/assets/*` 使用 cache-first，HTML 仍保持 network-first | P2 |
 | 375px 横向溢出 | 工作台主内容裁剪横向溢出，底部导航自身滚动，Toast 限制在视口内 | P1 |
 
-## 执行约束
+# 执行约束
 
 不修改 Store 数据模型、同步协议、后端 API、数据库结构和 AI Coach 架构；不引入 React、Vue 或 SPA 化改造。

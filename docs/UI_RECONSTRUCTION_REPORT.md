@@ -1,39 +1,39 @@
-# XINGZHIXING UI Reconstruction Report
+# XINGZHIXING 用户界面重建报告
 
-## Implementation strategy
+# 实施策略
 
-The migration uses an additive design layer instead of a framework rewrite. Every application page keeps its existing DOM contracts, modules, identifiers, and behavior. `assets/xingzhixing.css` loads after the legacy theme files and uses `body[data-brand="xingzhixing"]` to establish the new product surface while retaining compatibility with existing component names.
+迁移使用加法设计层而非框架重写。每个应用页面保留现有的DOM合同、模块、标识符和行为。`assets/xingzhixing.css` 在遗留主题文件之后加载，并使用 `body[data-brand="xingzhixing"]` 建立新的产品表面，同时保持与现有组件名称的兼容性。
 
-This approach allows the whole product to move to one brand without changing:
+这种方法允许整个产品迁移到一个品牌而不改变：
 
-- route behavior,
-- form logic,
-- local data ownership,
-- sync revision semantics,
-- chart rendering,
-- AI context construction,
-- authentication, or
-- accessibility behavior.
+- 路由行为，
+- 表单逻辑，
+- 本地数据所有权，
+- 同步修订语义，
+- 图表渲染，
+- 人工智能上下文构建，
+- 认证，或
+- 可访问性行为。
 
-## Page reconstruction
+# 页面重建
 
-| Page | Reconstruction focus |
+| 页 | 重建重点 |
 | --- | --- |
-| `login.html` | Dark AI brand pane, new logo, “理解自己，持续成长,” and assistant illustration |
-| `index.html` | New AI OS hero, updated module/Coach/growth-path illustrations, XINGZHIXING footer |
-| `workbench.html` | New icon, dashboard tokens, neutral surfaces, blue primary actions, AI coach rail |
-| `stats.html` | Data-first light system with growth/accent gradients and first-render stability |
-| `goals.html` | Growth system framing with calm cards and action-oriented primary controls |
-| `ai.html` | Context-first coach layout, AI purple/blue semantics, stable topbar and chat frame |
+| `login.html` | 深色 AI 品牌面板，全新标志，“理解自己，持续成长”，助手插图 |
+| `index.html` | 新的 AI 操作系统主界面，更新的模块/教练/成长路径插图，XINGZHIXING 底部 |
+| `workbench.html` | 新图标，仪表盘令牌，中性表面，蓝色主要操作，AI 教练栏 |
+| `stats.html` | 以数据为先的光明系统，具成长/强调渐变和首次渲染稳定性 |
+| `goals.html` | 成长系统框架，配以冷静卡片和面向操作的主要控件 |
+| `ai.html` | 以上下文为先的教练布局，AI 紫色/蓝色语义，稳定的顶部栏和聊天框 |
 
-## Layout stability
+# 布局稳定性
 
-The rebuild also resolves navigation and first-paint flicker:
+重建还解决了导航和首次渲染闪烁的问题：
 
-1. Dashboard scrollbars reserve stable space.
-2. The Stats dashboard is hidden until its first complete render.
-3. AI Coach topbar height is fixed.
-4. Entrance animation is disabled on dashboard shells.
-5. Expensive backdrop filtering is removed on first paint.
+1. 仪表板滚动条预留稳定空间。
+2. 统计仪表板在首次完整渲染之前是隐藏的。
+3. AI 教练顶部栏高度是固定的。
+4. 仪表盘壳上的入口动画被禁用了。
+5. 首次绘制时会移除昂贵的背景过滤。
 
-These changes were checked with headless Chrome layout-shift observations across Goals, Stats, and AI Coach.
+这些更改已通过无头 Chrome 在目标、统计和 AI 教练上的布局移动观察进行检查。

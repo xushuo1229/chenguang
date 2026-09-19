@@ -1,6 +1,6 @@
-# Phase 22.3 · Habit Formation Architecture Freeze
+# 阶段 22.3 · 习惯形成架构冻结
 
-## 1. 阶段目标
+# 1. 阶段目标
 
 Phase 22.3 只强化 Habit Formation 的契约确定性、输入边界、异常数据处理和结果可解释性。
 
@@ -12,9 +12,9 @@ Phase 22.3 只强化 Habit Formation 的契约确定性、输入边界、异常�
 Habit Formation v1.2
 ```
 
-## 2. 核心数据流
+# 2. 核心数据流
 
-Habit Formation 保持纯派生模块：
+习惯形成 保持纯派生模块：
 
 ```text
 Raw Observations
@@ -32,9 +32,9 @@ Evidence
 
 模块输出仍然是派生结果，不写入用户数据。
 
-## 3. Observation Contract
+# 3. 观察合同
 
-### 3.1 日期契约
+## 3.1 日期契约
 
 - 严格支持 `YYYY-MM-DD` 字符串。
 - 本地 `Date` 会转换为本地日期键。
@@ -42,31 +42,31 @@ Evidence
 - 无效日期不计入指标。
 - 当最终结果仍基于有效观察生成时，`evidence` 必须说明已排除无效记录。
 
-### 3.2 数值契约
+## 3.2 数值契约
 
 - `value` 通过 `Number()` 转换。
 - `NaN`、`Infinity`、`-Infinity` 按不活跃观察处理。
 - 只有 `value > 0` 计入活跃天数。
 - 非有限值不得污染 `frequency`、`consistency`、`habitScore`、`status`、`reason` 或 `evidence`。
 
-### 3.3 日期乱序
+## 3.3 日期乱序
 
 观察输入顺序不改变领域结果。实现必须先按日期键排序，再计算连续性和指标。
 
-### 3.4 重复日期
+## 3.4 重复日期
 
 重复日期按最后一条值合并。
 
 重复观察不得增加：
 
-- `activeDays`
-- `frequency`
-- `currentConsecutive`
-- `maxConsecutive`
+- [[代码0]]
+- [[代码0]]
+- [[代码0]]
+- [[代码0]]
 
 `evidence` 需要说明已合并重复记录。
 
-### 3.5 缺失日期
+## 3.5 缺失日期
 
 连续性按真实日历日期判断。缺失日期会中断 streak，不得静默视为连续数据。
 
@@ -78,7 +78,7 @@ coverageDays = max(windowDays, realDateSpan)
 
 这是预期日历语义。
 
-### 3.6 未来日期
+## 3.6 未来日期
 
 只有传入有效 `opts.today` 时，才过滤晚于 `today` 的观察。
 
@@ -86,7 +86,7 @@ coverageDays = max(windowDays, realDateSpan)
 
 如果未来记录被过滤，`evidence` 需要说明。
 
-## 4. Window Projection
+# 4. 窗口投影
 
 `windowDays` 定义观察窗口，所有习惯指标只从窗口内派生。
 
@@ -95,14 +95,14 @@ coverageDays = max(windowDays, realDateSpan)
 - `windowDays = 1`：只观察最后 1 条。
 - `windowDays = N`：只观察最后 N 条。
 - `windowDays > sequence.length`：窗口保持调用方指定值，实际只统计已有观察。
-- empty sequence：窗口为 `1`。
+- 空序列：窗口为 `1`。
 - `windowDays < 1`：回退到 `source.length || 1`。
 - `windowDays = NaN / Infinity / -Infinity`：回退到 `source.length || 1`。
 - 非整数：向下取整，最小为 `1`。
 
 禁止读取窗口外历史数据。
 
-## 5. Metrics Contract
+# 5. 指标合同
 
 窗口内继续派生：
 
@@ -130,7 +130,7 @@ frequency × 0.35
 
 禁止新增第二套评分系统。
 
-## 6. State Contract
+# 6. 国家合同
 
 状态字段：
 
@@ -141,9 +141,9 @@ status
 reason
 ```
 
-### 6.1 `isHabitForming`
+## 6.1 [[代码0]]
 
-保持 v1.0 backward-compatible 语义：
+保持 v1.0 向后兼容的语义：
 
 ```text
 habitScore >= 0.5
@@ -151,14 +151,14 @@ habitScore >= 0.5
 && maxConsecutive >= 3
 ```
 
-以下字段不得成为新的 breaking boolean gate：
+The following fields must not become new breaking boolean gates:
 
-- `currentConsecutive`
-- `consistency`
+- [[代码0]]
+- [[代码0]]
 
-### 6.2 `early`
+## 6.2 [[代码0]]
 
-`early` 是独立 observation stage，不等价于 `!isHabitForming`。
+`early` is an independent observation stage, not equivalent to `!isHabitForming`.
 
 允许：
 
@@ -167,7 +167,7 @@ early + isHabitForming=true
 early + isHabitForming=false
 ```
 
-### 6.3 `forming` / `stable`
+## 6.3 `forming` / `stable`
 
 以下状态只能在 `isHabitForming === true` 时出现：
 
@@ -176,7 +176,7 @@ forming
 stable
 ```
 
-## 7. Reason Precedence
+# 7. 理由优先
 
 `reason` 保持稳定优先级：
 
@@ -188,7 +188,7 @@ stable
 
 如果真正阻塞原因是 `habitScore` 不足，不得错误归因为 `low_frequency`。
 
-## 8. Evidence Contract
+# 8. 证据合同
 
 `evidence` 是派生解释，不是持久化数据，也不是第二套评分系统。
 
@@ -203,7 +203,7 @@ stable
 
 禁止输出内部技术字段名或敏感信息。
 
-## 9. `minFrequency` Contract
+# 9. `minFrequency` 合同
 
 `minFrequency` 使用包含边界的比较：
 
@@ -211,7 +211,7 @@ stable
 frequency >= minFrequency
 ```
 
-传入值会被 clamp 到 `0-1`。
+传入值会被限制到 `0-1`。
 
 必须保持以下边界行为：
 
@@ -226,29 +226,29 @@ frequency >= minFrequency
 
 `minFrequency` 只影响频率门槛及依赖该门槛的判断，不得改变核心指标计算公式。
 
-## 10. Frozen Boundaries
+# 10. 冰封的边界
 
 以下边界冻结：
 
-- CGStore 语义、写入方法、revision 行为和 schema 禁止修改。
-- Sync 协议、revision、冲突处理和同步 payload 禁止修改。
-- Analytics canonical truth 禁止迁移或重写。
-- Backend API、JWT、SQLite schema 和 payload contract 禁止修改。
-- AI Context、AI Provider 和 AI Prompt 架构禁止重构。
+- CGStore semantics, write methods, revision behavior, and schema are prohibited from modification.
+- Sync protocol, revision, conflict handling, and sync payload are prohibited from modification.
+- Analytics canonical truth is prohibited from migration or rewriting.
+- Backend API, JWT, SQLite schema, and payload contract are prohibited from modification.
+- AI Context, AI Provider, and AI Prompt architecture are prohibited from refactoring.
 - UI、页面结构、组件体系和交互流程禁止修改。
-- 数据库、数据模型、localStorage schema 和 Sync schema 禁止修改。
+- 数据库、数据模型、localStorage 模式和同步模式禁止修改。
 
-禁止把 Habit Formation 结果写入：
+禁止将 Habit Formation 结果写入：
 
-- `user.memory`
-- Store
+- [[代码0]]
+- 商店
 - localStorage
-- Backend
-- AI Context
+- 后端
+- 人工智能背景
 
-禁止自动写 Memory。AI 只读边界保持不变。
+禁止自动写入内存。AI 只读边界保持不变。
 
-## 11. Performance Constraint
+# 11. 性能约束
 
 投影必须受 `windowDays` 约束：
 
@@ -260,9 +260,9 @@ O(windowDays)
 
 365 天数据规模下，目标测试保持 p95 < 5ms。
 
-## 12. Phase Boundary
+# 12. 相界
 
-Phase 22.3 只做契约强化。
+Phase 22.3 Only do contract enhancements.
 
 禁止提前实现 Phase 22.4 或后续能力，包括：
 
@@ -271,7 +271,7 @@ Phase 22.3 只做契约强化。
 - 新 Memory 类型；
 - 新 AI Context 字段；
 - 新画像系统；
-- Embedding；
+- 嵌入
 - 向量数据库；
 - 通知系统；
 - 新持久化事件表。

@@ -1,136 +1,136 @@
-# Phase 18.3 Release Readiness Audit Report
+# 第18.3阶段发布准备审核报告
 
-## 1. Release Status
+# 1. 发布状态
 
-**READY**
+* *准备好了**
 
-No release blocker was found. The system can enter Phase 19 Product Expansion after the deployment checklist in the Release Recommendation section is completed.
+未发现发布阻塞项。在完成《发布建议》部分的部署清单后，系统可以进入第19阶段产品扩展。
 
-## 2. First Launch Audit
+# 2. 首次启动审核
 
-**PASS**
+* *通过**
 
-- The `index → login → authentication → CGStore initialization → Workbench` flow keeps authentication server-backed and does not create a local identity when the backend is unreachable.
-- Empty data uses the canonical empty structure and the existing page and AI tests verify that empty collections render without failure.
-- Login and registration errors display user-facing messages; failed authentication does not fake success.
-- New AI snapshot and page initialization tests confirm that navigation does not trigger duplicate sync and that AI startup does not mutate business data.
+- `index → login → authentication → CGStore initialization → Workbench` 流保持由认证服务器支持，并且在后台无法访问时不会创建本地身份。
+- 空数据使用规范的空结构，现有页面和 AI 测试验证空集合可以正常渲染而不会失败。
+- 登录和注册错误显示面向用户的消息；认证失败不会伪装成成功。
+- 新的 AI 快照和页面初始化测试确认导航不会触发重复同步，并且 AI 启动不会更改业务数据。
 
-Measured first-contentful timing on physical devices remains outside automated coverage and is listed as a deployment preflight item.
+在物理设备上测量首次有内容呈现时间仍然不在自动化覆盖范围内，并被列为部署预检项目。
 
-## 3. Authentication Audit
+# 3. 身份验证审计
 
-**PASS**
+* *通过**
 
-- Login handles normal login, wrong password, nonexistent user, network failure, and backend error paths with understandable messages.
-- The backend uses bcrypt password verification and JWT generation/verification.
-- Invalid, expired, malformed, or missing JWTs return `401`.
-- Login error messages are identical for wrong password and nonexistent user, and password hashes are never returned.
-- JWT expiry is configured through `JWT_EXPIRES_IN`; the default production lifetime is 30 days.
+- 登录处理正常登录、密码错误、用户不存在、网络故障以及后端错误路径，并以可理解的消息处理。
+- 后端使用bcrypt密码验证和JWT生成/验证。
+- 无效、过期、畸形或缺失的JWT返回`401`。
+- 错误密码和不存在用户的登录错误信息完全相同，密码哈希也从未返回。
+- JWT 的到期时间通过 `JWT_EXPIRES_IN` 配置;默认的生产寿命为 30 天。
 
-## 4. Recovery Audit
+# 4. 恢复审计
 
-**PASS**
+* *通过**
 
-Added `tests/recovery.audit.test.js` covers:
+添加的 `tests/recovery.audit.test.js` 包括：
 
-- Clearing local data and restoring cloud data after login.
-- Preserving local records and revision when startup occurs without network.
-- Retrying offline writes after the browser returns online.
-- Avoiding record duplication and revision loss during recovery.
+- 登录后清除本地数据并恢复云端数据。
+- 在启动时没有网络的情况下保留本地记录和修订。
+- 在浏览器重新联网后重试离线写入。
+- 在恢复过程中避免记录重复和修订丢失。
 
-## 5. Sync Audit
+# 5. 同步审计
 
-**PASS**
+* *通过**
 
-- Device A adding a todo and Device B adding a reading merges into both collections without loss.
-- Shared records are deduplicated by the existing merge key.
-- Cloud revision, `updatedAt`, and `deviceId` metadata are preserved when server data is adopted.
-- Backend optimistic concurrency still returns `409 SYNC_CONFLICT` with server revision/data for stale writes.
-- Local writes, remote writes, offline queueing, conflict merging, tombstones, and cross-tab behavior remain covered by existing sync tests.
+- 设备 A 添加一个待办事项，设备 B 添加一个读物，这些会合并到两个集合中而不会丢失。
+- 共享记录通过现有的合并键进行去重。
+- 当采用服务器数据时，云修订、`updatedAt` 和 `deviceId` 元数据会被保留。
+- 后端乐观并发在对陈旧写入进行操作时仍会返回 `409 SYNC_CONFLICT` 及服务器修订/数据。
+- 本地写入、远程写入、离线排队、冲突合并、墓碑以及跨标签行为仍由现有同步测试覆盖。
 
-## 6. AI Reliability Audit
+# 6. AI 可靠性审计
 
-**PASS**
+* *通过**
 
-- Provider failure, timeout, network failure, and empty provider responses return friendly backend errors without exposing upstream payloads or credentials.
-- Context size, history size, message length, and sensitive-key filtering are enforced.
-- AI Context is read-only against `CGStore`; sending a message does not change revision or business data.
-- Coach Memory remains isolated in `sessionStorage` and is not treated as business data.
-- Empty evidence produces zeroed context instead of fabricated records.
+- 提供者故障、超时、网络故障以及空的提供者响应会返回友好的后端错误，而不会暴露上游有效负载或凭据。
+- 上下文大小、历史记录大小、消息长度和敏感密钥过滤都受到限制。
+- AI 上下文对 `CGStore` 是只读的；发送消息不会更改修订或业务数据。
+- Coach Memory 保持在 `sessionStorage` 中隔离，不被视为业务数据。
+- 空的证据会产生归零的上下文，而不是伪造的记录。
 
-## 7. Frontend Stability Audit
+# 7. 前端稳定性审计
 
-**PASS**
+* *通过**
 
-- Page initialization tests cover AI, Goals, Stats, Workbench, navigation, and first-frame rendering order.
-- Goals, Stats, and AI do not trigger duplicate sync on page entry.
-- Stats renders structure before analytics calculations and destroys previous charts before rendering new ones.
-- Workbench re-renders only when revision changes.
-- Existing page tests assert no console errors in normal initialization paths and no read-only revision changes.
+- 页面初始化测试涵盖 AI、目标、统计、工作台、导航和首帧渲染顺序。
+- 目标、统计和 AI 在页面进入时不会触发重复同步。
+- 统计在分析计算之前渲染结构，并在渲染新图表之前销毁之前的图表。
+- 工作台仅在修订更改时重新渲染。
+- 现有页面测试断言在正常初始化路径中没有控制台错误，并且只读修订没有更改。
 
-## 8. Backend Release Audit
+# 8. 后端发布审核
 
-**PASS**
+* *通过**
 
-Added `backend/test/releaseReadiness.test.js` verifies API release behavior:
+添加的 `backend/test/releaseReadiness.test.js` 验证了 API 发布行为：
 
-- `401` for protected data without JWT.
-- `403` for unsafe requests without the required CSRF header.
-- `404` for unknown API routes.
-- `500` with a production-safe generic message for unknown errors.
+- `401` 用于没有 JWT 的受保护数据。
+- `403` 用于没有所需 CSRF 头的不安全请求。
+- `404` 用于未知的 API 路由。
+- `500` 对未知错误使用适合生产环境的通用消息。
 
-Existing backend tests also cover registration, login, user isolation, data whitelisting, partial/full sync, optimistic concurrency, AI failures, SSRF protection, and payload validation.
+现有的后端测试还涵盖了注册、登录、用户隔离、数据白名单、部分/完全同步、乐观并发、AI 失败、SSRF 保护和有效负载验证。
 
-## 9. Security Audit
+# 9. 安全审计
 
-**WARN — no release blocker**
+* *警告 — 无发布阻塞**
 
-PASS conditions:
+PASS 条件：
 
-- JWT protects data, AI, and course-import routes.
-- User data access is scoped by authenticated user ID.
-- Backend response sanitization removes password hashes and sensitive keys.
-- CORS is explicit in production, and `CORS_ORIGIN` is required when `NODE_ENV=production`.
-- The 2 MB JSON body limit remains enabled.
-- AI provider API keys remain server-side and are removed from context.
-- SSRF checks reject localhost, private IPv4/IPv6, IPv4-mapped IPv6, and untrusted redirect targets.
-- No hardcoded credential or API-key assignment was found in tracked source files.
-- The real backend `.env` file is not tracked by Git.
+- JWT 保护数据、人工智能和课程导入路由。
+- 用户数据访问由经过身份验证的用户ID限定。
+- 后端响应清理会移除密码哈希和敏感密钥。
+- 在生产环境中，CORS 是明确的，并且在 `NODE_ENV=production` 时需要 `CORS_ORIGIN`。
+- 2 MB 的 JSON 正文限制仍然启用。
+- 人工智能提供商的 API 密钥保持在服务器端，并从上下文中移除。
+- SSRF 检查会拒绝 localhost、私有 IPv4/IPv6、IPv4 映射的 IPv6 以及不受信任的重定向目标。
+- 在被跟踪的源文件中未发现硬编码的凭证或 API 密钥分配。
+- 真实的后端 `.env` 文件未被 Git 跟踪。
 
-Deployment warning:
+部署警告：
 
-- The backend permits startup with the default `JWT_SECRET` in production after a warning. This is acceptable for a test boot but must not be used for a public release. Rotate and set a unique production secret before exposing the service.
+- 后端允许在生产环境中在警告后使用默认的`JWT_SECRET`启动。这对于测试启动是可以接受的，但不得用于公开发布。在公开服务之前，请更换并设置唯一的生产密钥。
 
-## 10. Modified Files
+# 10. 修改文件
 
-| File | Reason |
+| 文件 | 原因 |
 | --- | --- |
-| `tests/recovery.audit.test.js` | Add release-critical regression tests for cloud restore, offline startup, network recovery, and multi-device merge. |
-| `backend/test/releaseReadiness.test.js` | Add API release checks for 401, 403, 404, and production-safe 500 behavior. |
-| `docs/superpowers/plans/2026-09-14-phase-18-3-release-readiness-audit.md` | Record the audit execution plan and constraints. |
-| `docs/RELEASE_READINESS_AUDIT.md` | Record release status, findings, risks, tests, and Phase 19 recommendation. |
+| `tests/recovery.audit.test.js` | 为云恢复、离线启动、网络恢复和多设备合并添加发布关键回归测试。 |
+| `backend/test/releaseReadiness.test.js` | 为 401、403、404 以及生产安全的 500 行为添加 API 发布检查。 |
+| `docs/superpowers/plans/2026-09-14-phase-18-3-release-readiness-audit.md` | 记录审计执行计划和约束条件。 |
+| `docs/RELEASE_READINESS_AUDIT.md` | 记录发布状态、发现、风险、测试和第 19 阶段建议。 |
 
-No product behavior, data model, sync protocol, Analytics calculation, authentication protocol, or AI architecture was changed.
+产品行为、数据模型、同步协议、分析计算、认证协议或人工智能架构均未被更改。
 
-## 11. Tests
+# 11. 测试
 
-| Check | Result |
+|检查 |结果 |
 | --- | --- |
-| Frontend | **PASS** — 32 files, 362 tests |
-| Backend | **PASS** — 66 tests |
-| Build | **PASS** |
-| Diff Check | **PASS** |
+| 前端 | **通过** — 32 个文件，362 个测试 |
+| 后端 | **通过** — 66 个测试 |
+| 构建 | **通过** |
+| 差异检查 | **通过** |
 
-## 12. Release Recommendation
+# 12. 发布推荐
 
-**Phase 19 Product Expansion may proceed.**
+* *第19阶段产品扩展可以进行。**
 
-Before a public production deployment, complete this preflight checklist:
+在公开生产部署之前，完成此预检清单：
 
-1. Set a unique production `JWT_SECRET`; never release with the development default.
-2. Set the exact production `CORS_ORIGIN` allowlist.
-3. Confirm `NODE_ENV=production`, database persistence, backup/restore, and log retention.
-4. Run one browser-level smoke pass on desktop and mobile to record first-load timing and Service Worker upgrade behavior.
-5. Monitor AI timeout, AI upstream failures, 409 conflicts, sync failure rate, and login failure rate after release.
+1. 设置唯一的生产 `JWT_SECRET`；切勿使用开发默认值发布。
+2. 设置精确的生产 `CORS_ORIGIN` 白名单。
+3. 确认 `NODE_ENV=production`、数据库持久性、备份/恢复以及日志保留。
+4. 在桌面和移动端运行一次浏览器级冒烟测试，以记录首次加载时间和服务工作线程升级行为。
+5. 发布后监控 AI 超时、AI 上游失败、409 冲突、同步失败率和登录失败率。
 
-No code blocker prevents Phase 19 planning and implementation.
+没有代码阻止程序可以阻止第19阶段的规划和实施。

@@ -1,14 +1,15 @@
-# Phase 21.4 · 里程碑叙事审计
+# 阶段 21.4 · 里程碑叙事审计
 
-Audit date: 2026-09-15
-Scope: read-only product and architecture audit.
-No business code, Store model, Memory model, Sync protocol, AI Context, or Backend schema was modified.
+审核日期：2026-09-15
+范围：只读产品和架构审核。
+未修改任何业务代码、存储模型、内存模型、同步协议、AI 上下文或后端模式。
 
-## 1. 当前状态
+# 1. 当前状态
 
-**RESULT: TIMELINE HAS RELIABLE EVENTS, BUT NOT YET A LONG-TERM NARRATIVE.**
+* *结果：时间线有可靠的事件，但还没有长期叙事。**
 
-The current Growth Timeline is a bounded runtime projection. It is no longer a raw data dump because each node has:
+当前的增长时间表是一个有界的运行时预测。它不再是原始数据转储，因为每个节点都有：
+
 
 ```text
 id
@@ -20,15 +21,17 @@ asOf
 confidence
 ```
 
-It uses fixed user-language copy, source and type whitelists, a maximum of 8 nodes, and avoids invented completion dates. This is a good foundation.
+它使用固定的用户语言复制、源代码和类型白名单，最多8个节点，并避免虚构的完成日期。这是一个很好的基础。
 
-However, the Timeline still answers:
+然而，时间线仍然回答：
+
 
 ```text
 What happened?
 ```
 
-It does not yet clearly answer:
+目前还没有明确回答：
+
 
 ```text
 What stage am I in?
@@ -36,128 +39,132 @@ Why do these events matter together?
 How does this connect to my recent direction?
 ```
 
-So the current experience is best described as:
+所以目前的体验最好描述为：
+
 
 ```text
 Milestone List
 ```
 
-rather than:
+而不是：
+
 
 ```text
 Long-term Growth Narrative
 ```
 
-The next step is not more data. The next step is a narrative projection that groups existing Timeline nodes into stages and meanings.
+下一步不是更多数据。下一步是叙事性投射，将现有时间线节点分组为阶段和意义。
 
-## 2. 时间线分析
+# 2. 时间线分析
 
-### 2.1 Current Event Sources
+## 2.1 当前事件来源
 
-`js/growthTimeline.js` currently derives nodes from:
+`js/growthTimeline.js` 当前从以下位置获取节点：
 
-| Source | Data used | Current node type |
+| 来源 | 使用的数据 | 当前节点类型 |
 | --- | --- | --- |
-| Analytics | First record date | `achievement` |
-| Analytics | Current streak | `milestone` |
-| Analytics | Completed courses | `achievement` |
-| Goals | Completed goal count | `achievement` |
-| GrowthIntelligence | 30-day learning / focus / reading / exercise summaries | `milestone` or `progress` |
-| GrowthIntelligence | Positive important changes | `progress` |
-| GrowthIntelligence | Active days over 30 days | `consistency` |
+| 分析 | 首次记录日期 | `achievement` |
+| 分析 | 当前连续天数 | `milestone` |
+| 分析 | 完成的课程 | `achievement` |
+| 目标 | 完成的目标数量 | `achievement` |
+| 成长智识 | 30天学习/专注/阅读/锻炼总结 | `milestone` 或 `progress` |
+| 成长智识 | 积极的重要变化 | `progress` |
+| 成长智识 | 30天内活跃天数 | `consistency` |
 
-Reports are not used directly as event sources. That is acceptable because Reports already derive from Analytics, Goals, and Growth Intelligence. Reports should remain narrative summaries, not duplicate event sources.
+报告不会直接作为事件来源使用。这是可以接受的，因为报告本身就来源于分析、目标和增长情报。报告应保持叙述性摘要，而非重复事件源。
 
-Memory is not used as a Timeline source. This is also correct for the current phase because Memory is a long-term confirmed pattern layer, while Timeline is a runtime projection.
+内存不会被用作时间线来源。这对当前阶段也是正确的，因为内存是长期确认的模式层，而时间线是运行时投影。
 
-### 2.2 Event Credibility
+## 2.2 事件可信度
 
-Current credibility controls are appropriate:
+当前的可信度控制是适当的：
 
-1. Source is limited to `Analytics`, `Goals`, and `GrowthIntelligence`.
-2. Type is limited to `achievement`, `milestone`, `progress`, and `consistency`.
-3. Confidence is bounded between 0 and 1.
-4. Stable IDs prevent duplicate nodes.
-5. The output is capped at 8 items.
-6. Goal completion uses `asOf` because no `completedAt` exists.
-7. Positive trends use language such as “数据显示”.
+1. 源仅限于 `Analytics`、`Goals` 和 `GrowthIntelligence`。
+2. 类型仅限于 `achievement`、`milestone`、`progress` 和 `consistency`。
+3. 置信度介于 0 和 1 之间。
+4. 稳定 ID 防止重复节点。
+5. 输出最多为 8 个项目。
+6. 目标完成使用 `asOf`，因为不存在 `completedAt`。
+7. 正面趋势使用诸如“数据显示”之类的语言。
 
-Current weaknesses:
+当前的弱点：
 
-1. Nodes are independent; there is no stage grouping.
-2. The user must infer the connection between first record, streak, accumulation, and achievement.
-3. Some nodes use milestone language without showing the broader phase.
-4. Trend and consistency nodes can feel repetitive if they are adjacent.
-5. The Timeline can show what happened, but not why the sequence matters.
+1. 节点是独立的；没有阶段分组。
+2. 用户必须推断第一条记录、连胜、累积和成就之间的联系。
+3. 有些节点使用里程碑语言，但没有显示更广泛的阶段。
+4. 如果趋势节点和一致性节点相邻，它们可能会感觉重复。
+5. 时间轴可以显示发生了什么，但无法说明这个顺序为什么重要。
 
-### 2.3 Is It Just A Data List?
+## 2.3 它只是一个数据列表吗？
 
-No. It is more than a raw data list because it already has fixed human-readable titles and descriptions.
+不。它不仅仅是一个原始数据列表，因为它已经有固定的可读标题和描述。
 
-But it is not yet a full narrative because it does not expose a progression such as:
+但它还不是一个完整的叙述，因为它没有展示出类似于以下的进展：
+
 
 ```text
 起点 → 稳定尝试 → 投入积累 → 阶段成果 → 当前方向
 ```
 
-The missing layer is not a new data source. It is a derived presentation and interpretation layer.
+缺失的层不是新的数据源。它是一个派生的展示和解释层。
 
-## 3. 里程碑分析
+# 3. 里程碑分析
 
-### 3.1 High-Value Milestones
+## 3.1 高价值里程碑
 
-These represent meaningful growth nodes and should remain central to the Timeline.
+这些节点代表了有意义的增长节点，应保持时间线的核心。
 
-| Milestone | Existing source | Narrative meaning |
+| 里程碑 | 现有来源 | 叙事含义 |
 | --- | --- | --- |
-| First growth record | Analytics `firstRecordDate` | The growth archive has a starting point. |
-| Streak reaches 7 days | Analytics current streak | The user is testing a repeatable rhythm. |
-| Streak reaches 30 days | Analytics current streak | A stable rhythm is forming. |
-| Streak reaches 90 days | Analytics current streak | Execution has become sustained. |
-| Learning reaches 600 minutes in 30 days | Growth Intelligence | Learning has moved from isolated actions to accumulated effort. |
-| Focus reaches 180 minutes in 30 days | Growth Intelligence | Attention investment has become measurable. |
-| First completed goal | GoalEngine | Intent has become a visible result. |
-| Multiple completed goals | GoalEngine | Goal completion is becoming a repeatable pattern. |
-| Course stage completed | Analytics course summary | Learning progress has reached a concrete stage. |
+| 第一次成长记录 | 分析 `firstRecordDate` | 成长档案有了起点。 |
+| 连续达成 7 天 | 分析 当前连胜 | 用户正在测试可重复的节奏。 |
+| 连续达成 30 天 | 分析 当前连胜 | 稳定的节奏正在形成。 |
+| 连续达成 90 天 | 分析 当前连胜 | 执行已变得持续。 |
+| 30 天内学习达到 600 分钟 | 成长智库 | 学习已从零散行为转向积累性努力。 |
+| 30 天内专注达到 180 分钟 | 成长智库 | 注意力投资已可量化。 |
+| 第一个完成的目标 | 目标引擎 | 意图已形成可见成果。 |
+| 多个完成的目标 | 目标引擎 | 目标完成正在成为可重复的模式。 |
+| 课程阶段完成 | 分析 课程总结 | 学习进度已达成具体阶段。 |
 
-These are high value because they require either repetition, accumulation, or completion.
+这些很有价值，因为它们需要重复、积累或完成。
 
-### 3.2 Medium-Value Events
+## 3.2 中等价值赛事
 
-These can support the narrative but should not dominate it.
+这些可以支持叙述，但不应主导叙述。
 
-| Event | Source | Caution |
+| 事件 | 来源 | 注意 |
 | --- | --- | --- |
-| Reading reaches 200 pages in 30 days | Growth Intelligence | Good accumulation signal, but lower stakes than learning or focus. |
-| Exercise reaches 300 minutes in 30 days | Growth Intelligence | Good lifestyle signal, but should not be framed as medical advice. |
-| English learning improves | Growth Intelligence | Useful direction signal if sustained. |
-| 90-day positive trend | Growth Intelligence | Important, but should remain a derived observation. |
-| Weekly report achievements | Growth Report | Good for narrative wording, but not a separate event source. |
-| Monthly report achievements | Growth Report | Useful for retrospective framing, not a new event stream. |
+| 30天阅读达到200页 | 成长智能 | 良好的积累信号，但相比学习或专注的投入较低。 |
+| 30天运动达到300分钟 | 成长智能 | 良好的生活方式信号，但不应作为医疗建议。 |
+| 英语学习有所提高 | 成长智能 | 如果持续，具有有用的方向性信号。 |
+| 90天正向趋势 | 成长智能 | 重要，但应保持为派生观察。 |
+| 每周报告成就 | 成长报告 | 有助于叙事表述，但不是独立的事件来源。 |
+| 每月报告成就 | 成长报告 | 对回顾性框架有用，但不是新的事件流。 |
 
-Medium-value events should be used to enrich a phase, not to create many separate Timeline cards.
+中等价值的事件应该用来丰富一个阶段，而不是创建许多独立的时间轴卡片。
 
-### 3.3 Ordinary Behavior Records
+## 3.3 日常行为记录
 
-These should usually remain in daily feedback or reports.
+这些通常应保留在日常反馈或报告中。
 
-| Event | Why it is not a milestone |
+|事件 |为什么这不是一个里程碑 |
 | --- | --- |
-| One check-in | Operationally useful, but too small for a long-term node. |
-| One completed todo | Task progress, not a growth stage. |
-| One sport session | Should feed accumulation, not be displayed as a milestone. |
-| Adding a goal | This is intent, not achievement. |
-| One positive day | Insufficient evidence for a narrative claim. |
-| A confirmed preference | Personal context, not a growth event. |
-| A candidate Memory | Unconfirmed trend; must not be treated as fact. |
+| 一次签到 | 在操作上有用，但对于长期节点来说太小。 |
+| 完成一项待办事项 | 任务进展，而不是成长阶段。 |
+| 一次运动 | 应该作为积累，而不是显示为里程碑。 |
+| 添加一个目标 | 这是意图，不是成就。 |
+| 一天积极 | 作为叙事依据的证据不足。 |
+| 确认的偏好 | 个人背景，而不是成长事件。 |
+| 一个候选记忆 | 未确认的趋势；不能视为事实。 |
 
-Ordinary records are still important, but they belong in the daily feedback layer.
+普通记录仍然很重要，但它们属于日常反馈层。
 
-## 4. 叙事设计
+# 4. 叙事设计
 
-### 4.1 Core Model
+## 4.1 核心模型
 
-A narrative layer can be built without new storage:
+叙事层可以在不新增存储的情况下构建：
+
 
 ```text
 Event
@@ -165,22 +172,23 @@ Event
 → Meaning
 ```
 
-The important addition is not another milestone calculation. It is grouping existing nodes by the stage they represent.
+重要的新增不是另一个里程碑计算，而是按它们所代表的阶段对现有节点进行分组。
 
-### 4.2 Recommended Stages
+## 4.2 推荐阶段
 
-| Stage | Contributing events | Narrative meaning |
+| 阶段 | 贡献事件 | 叙事意义 |
 | --- | --- | --- |
-| 起点 | First record | “你的成长档案开始形成。” |
-| 稳定尝试 | Streak reaches 7 days; active days building | “你开始把记录变成一种节奏。” |
-| 稳定节奏 | Streak reaches 30 days; active days strong | “连续执行正在变得更稳定。” |
-| 投入积累 | Learning 600 minutes; focus 180 minutes; reading or exercise totals | “记录开始转化为可观察的投入。” |
-| 阶段成果 | Completed goals; completed courses | “投入已经转化为阶段性结果。” |
-| 当前方向 | Positive 30 / 90 day trends | “数据显示当前节奏正在产生变化。” |
+|起点 |首个记录 |“你的成长档案开始形成。” |
+|稳定尝试 |连续日数达到7天;活跃天数正在积累|“你开始把记录变成一种节奏。” |
+|稳定节奏 |连续30天;活跃日数强劲 |“连续执行正在变得更稳定。” |
+|投入积累 |学习600分钟;专注180分钟;阅读或锻炼总量 |“记录开始转化为可观察的投入。” |
+|阶段成果 |完成的目标;已完成的课程 |“投入已经转化为阶段性结果。” |
+|当前方向 |积极的30天/90天趋势 |“数据显示当前节奏正在产生变化。” |
 
-### 4.3 Example Narrative Projection
+## 4.3 示例叙事投射
 
-A runtime narrative summary could look like:
+运行时叙述摘要可能如下所示：
+
 
 ```js
 {
@@ -212,11 +220,12 @@ A runtime narrative summary could look like:
 }
 ```
 
-This remains a projection. It should not be persisted unless a future phase explicitly discusses a new product model.
+这仍然是一个预测。除非未来阶段明确讨论新的产品模型，否则不应将其保留。
 
-### 4.4 Copy Boundary
+## 4.4 复制边界
 
-Allowed:
+允许：
+
 
 ```text
 你的成长档案开始形成。
@@ -225,7 +234,8 @@ Allowed:
 这些记录开始转化为阶段成果。
 ```
 
-Forbidden:
+禁止：
+
 
 ```text
 你已经彻底改变。
@@ -235,28 +245,29 @@ AI完全了解你。
 这是你的命运转折点。
 ```
 
-The narrative should feel encouraging, but it must not turn derived observations into absolute life conclusions.
+叙述应该让人感到鼓舞，但绝不能把推导出的观察结果变成绝对的人生结论。
 
-### 4.5 UI Versus AI Responsibility
+## 4.5 UI与AI责任的比较
 
-| Layer | Responsibility |
+| 层 | 责任 |
 | --- | --- |
-| UI Timeline | Show stage labels and short fixed meanings. |
-| UI Milestone node | Show factual evidence and `asOf`. |
-| Workbench | Show today plus at most one current stage hint. |
-| Stats | Own the long-term Timeline and narrative grouping. |
-| AI Coach | Explain the user’s current phase and connect it to risks, strengths, and next actions. |
-| AI Conversation | Answer personal questions using Context, without repeating a full Timeline card. |
+|UI时间线 |显示关卡标签和简短固定含义。|
+|UI里程碑节点 |显示事实证据和`asOf`。|
+|工作台 |今天节目加上最多一个当前阶段提示。|
+|统计 |拥有长期时间线和叙事分组。|
+|AI教练 |解释用户当前的阶段，并将其与风险、优势和下一步行动联系起来。|
+|AI对话 |使用上下文回答个人问题，无需重复整张时间线卡片。|
 
-The UI should provide the stable narrative scaffold. AI should provide interpretation and next-step meaning.
+用户界面应提供稳定的叙事框架。人工智能应提供解释和下一步的意义。
 
-## 5. UX 建议
+# 5. UX 建议
 
-### Workbench
+## 工作台
 
-Workbench should remain today-focused.
+工作台应保持以今天为中心。
 
-Recommended:
+推荐：
+
 
 ```text
 今日成长反馈
@@ -264,14 +275,16 @@ Recommended:
 最多一个里程碑提示
 ```
 
-Example:
+示例：
+
 
 ```text
 当前阶段：稳定尝试
 你已经开始连续记录。
 ```
 
-Avoid:
+避免：
+
 
 ```text
 完整成长轨迹
@@ -279,13 +292,14 @@ Avoid:
 多个 Timeline 卡片
 ```
 
-Workbench should make the user feel continuity, not overwhelm them with history.
+工作台应该让用户感受到连续性，而不是被历史信息淹没。
 
-### Stats
+## 统计
 
-Stats should own the long-term growth archive.
+统计部门应该拥有长期增长档案。
 
-Current Timeline section is useful, but it presents nodes linearly. A better structure would be:
+当前时间线部分很有用，但它以线性方式呈现节点。一个更好的结构是：
+
 
 ```text
 成长轨迹
@@ -300,21 +314,22 @@ Current Timeline section is useful, but it presents nodes linearly. A better str
    └─ 目标已完成
 ```
 
-Recommended UI rules:
+推荐的用户界面规则：
 
-1. Keep the section inside Stats.
-2. Keep the maximum at 8 nodes.
-3. Group nodes by stage.
-4. Show one short stage meaning, not a paragraph.
-5. Keep `asOf` visible.
-6. Keep source hidden by default.
-7. Use the same visual language as the existing insight cards.
+1. 把那部分放在统计里。
+2. 保持最大8个节点。
+3. 按阶段分组节点。
+4. 展示一个简短的舞台意义，而不是一段。
+5. 保持`asOf`可见。
+6. 默认隐藏源代码。
+7. 使用与现有洞察卡相同的视觉语言。
 
-### AI
+## AI
 
-AI should not display the full Timeline again.
+人工智能不应再次显示完整时间线。
 
-AI should answer:
+人工智能应该回答：
+
 
 ```text
 我最近在哪个阶段？
@@ -322,7 +337,8 @@ AI should answer:
 我应该怎么进入下一阶段？
 ```
 
-AI can connect:
+人工智能可以连接：
+
 
 ```text
 阶段性投入
@@ -331,7 +347,8 @@ AI can connect:
 → 下一阶段建议
 ```
 
-Example AI response:
+示例 AI 响应：
+
 
 ```text
 从记录看，你已经从“开始记录”进入“稳定尝试”阶段。
@@ -339,13 +356,14 @@ Example AI response:
 下一步可以继续保持当前节奏，并把它和一个小目标连接起来。
 ```
 
-This is narrative interpretation, not a new event source.
+这是叙事性解读，而不是新的事件来源。
 
-## 6. 数据影响
+# 6. 数据影响
 
-### 6.1 Current Projection Fields
+## 6.1 当前投影场
 
-The current node shape is sufficient for a Timeline list:
+当前节点形状足以用于时间线列表：
+
 
 ```js
 {
@@ -359,13 +377,14 @@ The current node shape is sufficient for a Timeline list:
 }
 ```
 
-It is also sufficient for a first narrative grouping layer because `id` and `type` can map nodes to stages.
+它对于第一个叙事分组层也是足够的，因为 `id` 和 `type` 可以将节点映射到阶段。
 
-### 6.2 `milestoneId`
+## 6.2 [[代码0]]
 
-Not required as a new persisted field.
+不需要作为新的持久化字段。
 
-The existing `id` already works as a stable milestone identifier:
+现有的`id`已经可以作为稳定的里程碑标识使用：
+
 
 ```text
 timeline:first_record
@@ -375,39 +394,41 @@ timeline:goal_completed_1
 timeline:focus_180_30d
 ```
 
-If a narrative stage is added, it can reference these IDs without changing the Store.
+如果添加了叙事阶段，它可以在不更改商店的情况下引用这些ID。
 
-### 6.3 `completedAt`
+## 6.3 `completedAt`
 
-Not recommended now.
+现在不推荐。
 
-Goal and course completion are currently derived from the current snapshot. Without a reliable historical timestamp, the Timeline correctly uses:
+目标和课程完成时间目前均基于当前快照。没有可靠的历史时间戳，时间线正确使用：
+
 
 ```text
 asOf
 ```
 
-Adding `completedAt` would require:
+添加 `completedAt` 将需要：
 
-1. A clear definition of completion time.
-2. A migration and compatibility plan.
-3. Sync conflict rules.
-4. Backend schema discussion.
-5. Rules for old records that have no timestamp.
+1. 完成时间的明确定义。
+2. 迁移和兼容性计划。
+3. 同步冲突规则。
+4. 后端架构讨论。
+5. 没有时间戳的旧记录的规则。
 
-This should not be introduced just to improve wording.
+这不应该只是为了改善措辞而引入。
 
-### 6.4 `createdAt`
+## 6.4 `createdAt`
 
-Not required.
+不需要。
 
-Timeline is runtime-only. If a narrative projection is generated on each Stats load, it does not need a persisted creation timestamp.
+时间线仅限运行时。如果每次 Stats 加载都生成叙事投影，则不需要持久的创建时间戳。
 
-### 6.5 Runtime Projection Sufficiency
+## 6.5 运行时投影充分性
 
-Runtime projection remains sufficient.
+运行时投影仍然足够。
 
-Recommended future runtime-only shape:
+推荐的未来仅运行时形状：
+
 
 ```js
 {
@@ -425,15 +446,16 @@ Recommended future runtime-only shape:
 }
 ```
 
-No Store, Memory, Sync, or Backend change is needed.
+不需要更改存储、内存、同步或后端。
 
-## 7. AI Context 影响
+# 7. AI 上下文影响
 
-### 7.1 Do We Need `ctx.growthTimeline` Now?
+## 7.1 我们现在需要[[代码0]]吗？
 
 No.
 
-AI already has enough material to explain growth:
+人工智能已经有足够的材料来解释增长：
+
 
 ```text
 ctx.overview
@@ -445,20 +467,22 @@ ctx.report
 ctx.dailyFeedback
 ```
 
-AI can already discuss streaks, completed goals, trends, strengths, risks, and reports. Adding the full Timeline now would likely duplicate Context and increase token cost.
+人工智能已经可以讨论连胜、已完成的目标、趋势、优势、风险和报告。现在添加完整的时间线可能会重复上下文并增加令牌成本。
 
-### 7.2 When A Context Field Becomes Justified
+## 7.2 当上下文字段变为两端对齐
 
-`ctx.growthTimeline` or `ctx.growthNarrative` becomes justified only if the product wants AI to answer dedicated questions such as:
+`ctx.growthTimeline` 或 `ctx.growthNarrative` 只有在产品希望 AI 回答专门问题时才变得合理，例如：
+
 
 ```text
 我处在哪个成长阶段？
 我的成长轨迹说明什么？
 ```
 
-Even then, the Context should not receive all 8 Timeline nodes.
+即便如此，Context 也不应接收所有 8 个时间线节点。
 
-Recommended future Context shape:
+推荐的未来上下文形状：
+
 
 ```js
 ctx.growthNarrative = {
@@ -468,76 +492,77 @@ ctx.growthNarrative = {
 };
 ```
 
-Rules:
+规则：
 
-1. Runtime-only.
-2. Maximum 3 stages.
-3. Each stage has one fixed meaning.
-4. Each stage references at most 2 existing Timeline IDs.
-5. No raw user content.
-6. No candidate Memory as fact.
-7. No persistence.
-8. Trim before Report and Memory.
+1. 仅限运行时。
+2. 最多3个阶段。
+3. 每个阶段只有一个固定含义。
+4. 每个阶段最多引用2个现有时间线ID。
+5. 不得包含原始用户内容。
+6. 不得将候选记忆视为事实。
+7. 不保留持久性。
+8. 在报告和记忆前进行裁剪。
 
-Estimated token cost:
+预计代币成本：
 
-| Design | Estimated increment |
+| 设计 | 预计增量 |
 | --- | --- |
-| 3 compact stages | About 180-260 tokens |
-| 5 stages with descriptions | About 300-420 tokens |
-| Full 8-node Timeline | Too redundant for AI Context |
+| 3 个紧凑阶段 | 大约 180-260 个标记 |
+| 5 个阶段及描述 | 大约 300-420 个标记 |
+| 完整 8 节点时间线 | 对 AI 上下文来说过于冗余 |
 
-### 7.3 Current Recommendation
+## 7.3 当前建议
 
-For P0, do not add AI Context.
+对于 P0，不要添加 AI 上下文。
 
-Build the narrative projection for Stats first. If real usage shows that users expect AI to explain the stage, add a compact `growthNarrative` runtime field in P1.
+首先为 Stats 构建叙事预测。如果实际使用显示用户期望 AI 解释该阶段，在 P1 中添加一个紧凑的 `growthNarrative` 运行时字段。
 
-## 8. 性能
+# 8. 性能
 
-The current Timeline projection is lightweight because it consumes:
+当前的时间线预测是轻量的，因为它消耗：
 
-1. Existing Growth Intelligence state.
-2. Existing Analytics `getPersonalBest()` result.
-3. Existing course summary.
-4. Existing goal summary.
+1. 现有的增长智能状态。
+2. 现有的分析 `getPersonalBest()` 结果。
+3. 现有课程摘要。
+4. 现有目标摘要。
 
-It does not call Analytics or Growth Intelligence again.
+它不会再次调用 Analytics 或 Growth Intelligence。
 
-The Phase 21.3 benchmark used synthetic 365-day data:
+Phase 21.3 基准使用了合成的 365 天数据：
 
-| Operation | Result |
+| 操作 | 结果 |
 | --- | --- |
-| Timeline projection, 1000 runs, p50 | About `0.0041ms` |
-| Timeline projection, 1000 runs, p95 | About `0.0109ms` |
+| 时间线预测，1000次运行，中位数(p50) | 约 `0.0041ms` |
+| 时间线预测，1000次运行，第95百分位(p95) | 约 `0.0109ms` |
 
-A narrative grouping layer should remain fast if it only groups the existing 8 Timeline nodes.
+如果叙事分组层只分组现有的 8 个时间轴节点，它应该保持快速。
 
-Performance rules:
+表演规则：
 
-1. Do not recompute Growth Intelligence for narrative.
-2. Do not call `getPersonalBest()` twice.
-3. Do not scan raw records in the narrative layer.
-4. Do not generate one node per active day.
-5. Keep UI grouped to the same 8-node maximum.
-6. Keep any future AI Context to 3 compact stages.
+1. 不要为叙述重新计算增长情报。
+2. 不要调用`getPersonalBest()`两次。
+3. 不要在叙述层扫描原始记录。
+4. 不要为每个活跃日生成一个节点。
+5. 保持界面分组为相同的最多8个节点。
+6. 将任何未来的AI上下文保持为3个紧凑阶段。
 
-## 9. 安全
+# 9. 安全
 
-### 9.1 Fabricated Growth
+## 9.1 虚构增长
 
-Current controls are strong:
+当前控制措施很强：
 
-1. Fixed source whitelist.
-2. Fixed type whitelist.
-3. Stable IDs.
-4. Bounded confidence.
-5. No historical date invention.
-6. No raw user text.
+1. 修正了源白名单。
+2. 修正了类型白名单。
+3. 稳定的ID。
+4. 有限的置信度。
+5. 不伪造历史日期。
+6. 不使用用户原始文本。
 
-A narrative layer must not introduce fabricated progress.
+叙事层不得引入虚构的进展。
 
-Allowed:
+允许：
+
 
 ```text
 数据显示投入正在增加。
@@ -545,7 +570,8 @@ Allowed:
 连续记录正在形成节奏。
 ```
 
-Forbidden:
+禁止：
+
 
 ```text
 你已经成为优秀的人。
@@ -553,31 +579,34 @@ Forbidden:
 AI保证你会进步。
 ```
 
-### 9.2 Trends As Facts
+## 9.2 趋势作为事实
 
-Trend-derived nodes must remain observations.
+由趋势导出的节点必须保持为观察值。
 
-Allowed:
+允许：
+
 
 ```text
 数据显示专注时长上升。
 近期出现改善信号。
 ```
 
-Forbidden:
+禁止：
+
 
 ```text
 你的专注习惯已经形成。
 你的学习问题已经解决。
 ```
 
-Only confirmed Memory may use stronger “你已经形成稳定习惯” language.
+只有确认的记忆才能使用更强烈的“你已经形成稳定习惯”的语言。
 
-### 9.3 Automatic Memory
+## 9.3 自动内存
 
-The narrative layer must not write Memory.
+叙事层不得写入记忆。
 
-Correct flow remains:
+正确流程如下：
+
 
 ```text
 Analytics
@@ -586,7 +615,8 @@ Analytics
 → UI
 ```
 
-and, for Memory:
+以及，关于记忆：
+
 
 ```text
 Growth Intelligence
@@ -596,41 +626,42 @@ Growth Intelligence
 → CGStore
 ```
 
-Timeline should never promote itself into Memory.
+时间轴绝不应将自己提升为内存。
 
-### 9.4 Sensitive Content
+## 9.4 敏感内容
 
-The narrative layer should avoid:
+叙事层应避免：
 
-1. Goal titles.
-2. Course names.
-3. Book names.
-4. Todo text.
-5. Chat content.
-6. Prompt content.
-7. Authentication fields.
+1. 目标标题。
+2. 课程名称。
+3. 书名。
+4. 待办事项文本。
+5. 聊天内容。
+6. 提示内容。
+7. 认证字段。
 
-Counts and fixed labels are safer than raw user content.
+计数和固定标签比原始用户内容更安全。
 
-If UI later displays a user-provided label, it must still be rendered with `textContent`, not HTML concatenation.
+如果界面随后显示用户提供的标签，它仍然必须使用 `textContent` 渲染，而不是 HTML 拼接。
 
-## 10. P0 / P1 / P2 计划
+# 10. P0 / P1 / P2 计划
 
-### P0: Narrative Stage Projection
+## P0：叙事阶段投影
 
-Goal: turn the current Timeline from a node list into a stage-based narrative.
+目标：将当前时间线从节点列表转变为基于阶段的叙事。
 
-Recommended scope:
+推荐范围：
 
-1. Keep `js/growthTimeline.js` as the only Timeline projection module.
-2. Add a runtime narrative grouping output, for example `buildNarrative()`.
-3. Map existing Timeline IDs to stages.
-4. Add one fixed meaning per stage.
-5. Show grouped stages only in Stats.
-6. Keep Workbench to today plus one current stage hint.
-7. Add tests for stage mapping, empty data, evidence IDs, confidence bounds, and copy safety.
+1. 保持 `js/growthTimeline.js` 为唯一的时间线投影模块。
+2. 添加运行时叙事分组输出，例如 `buildNarrative()`。
+3. 将现有时间线 ID 映射到阶段。
+4. 为每个阶段添加一个固定含义。
+5. 仅在统计中显示分组阶段。
+6. 工作台保持显示今天加一个当前阶段提示。
+7. 为阶段映射、空数据、证据 ID、置信区间和复制安全添加测试。
 
-P0 should not:
+P0 不应：
+
 
 ```text
 add AI Context
@@ -641,65 +672,67 @@ change Backend
 add exact completedAt
 ```
 
-### P1: Compact AI Narrative
+## P1：紧凑的AI叙事
 
-Goal: let AI explain the user’s current stage.
+目标：让人工智能解释用户的当前阶段。
 
-Recommended scope:
+推荐范围：
 
-1. Add runtime-only `ctx.growthNarrative`.
-2. Maximum 3 stages.
-3. Each stage has one short meaning.
-4. Each stage references at most 2 Timeline IDs.
-5. Trim before Report and Memory.
-6. AI can use it for interpretation and next-step advice.
+1. 添加仅在运行时有效的 `ctx.growthNarrative`。
+2. 最多 3 个阶段。
+3. 每个阶段有一个简短的含义。
+4. 每个阶段最多引用 2 个时间线 ID。
+5. 在报告和记忆前进行修剪。
+6. AI 可以使用它进行解释和下一步建议。
 
-Tests should cover:
+测试应涵盖：
 
-1. Context injection.
-2. Runtime-only behavior.
-3. Budget trimming.
-4. No candidate Memory as fact.
-5. No raw user text.
-6. No Store mutation.
+1. 上下文注入。
+2. 仅运行时行为。
+3. 预算削减
+4. 没有候选记忆作为事实。
+5. 没有原始用户文本。
+6. 未进行存储变更。
 
-### P2: Historical Event Semantics
+## P2：历史事件语义
 
-Goal: support exact historical dates such as:
+目标：支持精确的历史日期，例如：
+
 
 ```text
 2026-08-01 完成 3 个目标
 ```
 
-This should not be implemented now because it requires:
+现在不应实施，因为它需要：
 
-1. A historical event model.
-2. `completedAt` semantics.
-3. Backend schema changes.
-4. Sync conflict rules.
-5. Compatibility behavior for old records.
+1. 一个历史事件模型。
+2. `completedAt` 语义。
+3. 后端模式更改。
+4. 同步冲突规则。
+5. 旧记录的兼容性行为。
 
-This is a separate architecture discussion.
+这是一个独立的架构讨论。
 
-## 11. 最终建议
+# 11. 最终建议
 
-**CONDITIONAL GO FOR NARRATIVE LAYER, BUT NOT FOR AI CONTEXT YET.**
+* *条件性用于叙事层，但尚未用于人工智能环境。**
 
-The current Timeline is technically safe and bounded, but it is not yet a long-term narrative.
+当前时间线在技术上是安全且有限的，但它还不是一个长期叙事。
 
-Recommended next phase:
+推荐的下一阶段：
 
-1. Add a P0 runtime narrative grouping layer.
-2. Keep it inside `js/growthTimeline.js`.
-3. Show grouped stages only in Stats.
-4. Keep Workbench focused on today.
-5. Let AI interpret growth only after a compact runtime narrative field is justified.
-6. Do not add completedAt, createdAt, new storage, Memory extension, Sync changes, or Backend schema changes.
+1. 添加一个 P0 运行时叙事分组层。
+2. 将其保留在 `js/growthTimeline.js` 内。
+3. 仅在统计中显示分组阶段。
+4. 保持工作台关注今天。
+5. 只有在紧凑的运行时叙事字段得到验证后，才让 AI 解释增长。
+6. 不要添加 completedAt、createdAt、新存储、内存扩展、同步更改或后端架构更改。
 
-This creates the feeling of:
+这会产生以下感觉：
+
 
 ```text
 原来我已经走了这么远。
 ```
 
-while preserving honest data boundaries and the existing architecture.
+同时保持诚实的数据边界和现有的架构。

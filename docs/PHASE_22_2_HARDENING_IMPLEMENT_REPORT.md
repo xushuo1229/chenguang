@@ -1,6 +1,6 @@
-# Phase 22.2 Habit Formation 加固实施报告
+# 第22.2阶段 习惯形成 加固实施报告
 
-## 摘要
+# 摘要
 
 完成 Habit Formation v1.1 加固：
 
@@ -12,7 +12,7 @@
 - 保留 `isHabitForming`、`habitScore`、`frequency`、`consistency`、`maxConsecutive` 等旧字段。
 - 补充 365 天性能回归测试；实测 365 天数据 p50 约 0.012ms，p95 约 0.040ms。
 
-## 修改文件
+# 修改文件
 
 - `js/habitFormation.js`
   - 版本更新为 `1.1`。
@@ -25,15 +25,15 @@
   - 新增 API、状态、原因、阈值覆盖、极端值、兼容性和性能测试。
   - 目标模块测试结果：30/30 PASS。
 
-## 行为语义
+# 行为语义
 
 `isHabitForming` 现在必须同时满足：
 
-1. `habitScore >= 0.5`
-2. `frequency >= opts.minFrequency ?? 0.3`
-3. `maxConsecutive >= 3`
-4. `currentConsecutive >= 2`
-5. `consistency >= 0.1`
+1. [[代码0]]
+2. [[代码0]]
+3. [[代码0]]
+4. [[代码0]]
+5. [[代码0]]
 
 状态规则：
 
@@ -42,10 +42,10 @@
 | `insufficient` | 少于 3 条有效记录，不做判断 |
 | `not_forming` | 有数据但未达到形成条件 |
 | `early` | 已判定形成中，且当前连续不足 7 天 |
-| `forming` | 当前连续 7-13 天 |
+| `forming` | Current consecutive 7-13 days |
 | `stable` | 当前连续不少于 14 天，且频率与一致性达标 |
 
-## 架构影响
+# 架构影响
 
 - CGStore：未修改。
 - Sync：未修改。
@@ -53,70 +53,70 @@
 - Memory schema：未修改。
 - AI Context：未修改。
 - UI：未修改。
-- Analytics / GrowthIntelligence：未修改。
+- Analytics / GrowthIntelligence: 未修改。
 
-`habitFormation.js` 保持纯 runtime projection，无导入依赖，无副作用，不写入任何存储。
+`habitFormation.js` Keep pure runtime projection, no import dependencies, no side effects, no writes to any storage.
 
-## 兼容性
+# 兼容性
 
 - 旧布尔字段 `isHabitForming` 保留。
 - 旧数值字段和窗口字段保留。
-- 新增字段均为 additive。
+- All newly added fields are additive.
 - 默认频率阈值保持 `0.3`。
 - `isHabitForming` 语义有有意收紧：旧连续但当前已中断的行为不再返回 true。
 
-## 测试
+# 测试
 
-### Target Module
+## 目标模块
 
-- Command: `npx vitest run tests/habitFormation.test.js`
-- Result: PASS 30/30
+- 命令：`npx vitest run tests/habitFormation.test.js`
+- 结果：通过 30/30
 
-### Frontend
+## 前端
 
-- Command: `npm test`
-- Result: FAIL 1/522
-- Detail: `tests/workbenchDailyFeedback.test.js` 中 `adding focus updates Daily Feedback without replacing the existing toast copy` 失败。
+- 命令：`npm test`
+- 结果：失败 1/522
+- 详情：`tests/workbenchDailyFeedback.test.js` 中 `adding focus updates Daily Feedback without replacing the existing toast copy` 失败。
 - Note: 该失败是既有失败，不属于本阶段修改文件；按交接约束未修复。
 
-### Backend
+## 后端
 
-- Command: `cd backend && npm test`
-- Result: PASS 68/68
+- 命令：`cd backend && npm test`
+- 结果：通过 68/68
 
-### Build
+## 构建
 
-- Command: `npm run build`
-- Result: PASS
+- 命令：`npm run build`
+- 结果：通过
 
-### Diff Check
+## 差异检查
 
-- Command: `git diff --check`
-- Result: PASS（无 whitespace error；仅存在既有 LF/CRLF warning）
+- 命令：`git diff --check`
+- 结果：通过（无空白错误；仅存在原有的 LF/CRLF 警告）
 
-## 性能
+# 性能
 
 365 天模拟序列、500 次执行：
 
 - p50: 0.012ms
 - p95: 0.040ms
 - 目标: <10ms
-- Result: PASS
+- 结果：通过
 
 测试中另加入 200 次 365 天投影的 p95 回归断言，阈值 5ms。
 
-## 安全审查
+# 安全审查
 
-- 无 `CGStore` 写入。
-- 无 `localStorage` / `sessionStorage` 访问。
+- No `CGStore` written.
+- No `localStorage` / `sessionStorage` access.
 - 无网络请求。
-- 无 API Key、Token、Password、Secret、Authorization 处理。
+- No API Key, Token, Password, Secret, Authorization processing.
 - 无 UI 渲染逻辑，不存在 `innerHTML` 注入面。
 - 输出仅基于传入日序列与固定模板，不引入用户敏感内容。
 
-## 剩余风险
+# 剩余风险
 
-- `isHabitForming` 语义收紧是 intentional breaking change；下游未来接入时必须理解“当前正在形成”的含义。
+- `isHabitForming` 语义收紧是故意的破坏性更改；下游未来接入时必须理解“当前正在形成”的含义。
 - `minFrequency` 覆盖由调用方负责，本阶段未引入领域配置表，避免扩大范围。
-- 前端仍存在 1 个与本项目无关的既有 Workbench Daily Feedback 测试失败，需要独立修复。
+- The frontend still has one existing Workbench Daily Feedback test failure unrelated to this project, which needs to be fixed independently.
 - 当前模型仍使用固定规则阈值，不做基线对比、领域差异建模或长期中断恢复推断。

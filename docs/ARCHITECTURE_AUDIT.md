@@ -1,36 +1,36 @@
-# Phase 18.2 Architecture Audit
+# 第18.2阶段 架构审计
 
-## Summary
+# 摘要
 
-Phase 18.2 completed a focused architecture audit without changing product behavior. The audit verified that business data remains isolated behind `CGStore`, statistics remain centralized in `Analytics`, goal progress remains derived through `GoalEngine`, and the AI chain remains read-only. It also added focused regression coverage for architecture boundaries, sync lifecycle behavior, and security invariants.
+第18.2阶段完成了针对性的架构审计，且未改变产品行为。审计确认业务数据仍被`CGStore`隔离，统计数据集中于`Analytics`，目标进展通过`GoalEngine`得出，AI链仍为唯读。它还增加了针对架构边界、同步生命周期行为和安全不变量的聚焦回归覆盖。
 
-No data model, sync protocol, authentication flow, AI write boundary, framework, storage layer, or service-worker behavior was changed.
+没有更改任何数据模型、同步协议、身份验证流程、AI写入边界、框架、存储层或服务工作线程的行为。
 
-## Scope
+# 范围
 
-- `js/store.js`
-- `js/sync.js`
-- `js/analytics.js`
-- `js/goals.js`
-- `js/aiContext.js`
-- `js/aiDataRetrieval.js`
-- `js/aiToolRunner.js`
-- `pages/workbench.js`
-- `pages/goals.js`
-- `pages/stats.js`
-- `pages/ai.js`
-- `service-worker.js`
-- `backend/src`
+- [[代码0]]
+- [[代码0]]
+- [[代码0]]
+- [[代码0]]
+- [[代码0]]
+- [[代码0]]
+- [[代码0]]
+- [[代码0]]
+- [[代码0]]
+- [[代码0]]
+- [[代码0]]
+- [[代码0]]
+- [[代码0]]
 
-## Findings
+# 研究结果
 
-### 1. Data Architecture
+## 1. 数据架构
 
-**PASS**
+* *通过**
 
-- No page directly reads or writes the business storage key `chenguangData`.
-- All user business data flows through `CGStore`.
-- The canonical collections remain:
+- 没有页面直接读取或写入业务存储密钥 `chenguangData`。
+- 所有用户业务数据都通过 `CGStore` 流动。
+- 规范集合保持如下：
   - `checkins`
   - `sports`
   - `readings`
@@ -38,45 +38,45 @@ No data model, sync protocol, authentication flow, AI write boundary, framework,
   - `english`
   - `todos`
   - `focus`
-- No second business storage or parallel data model was introduced.
+- 没有引入第二个业务存储或平行数据模型。
 
-### 2. Store Revision Semantics
+## 2. 存储修订语义
 
-**PASS**
+* *过了**
 
-Every local write to a canonical collection bumps the local revision exactly once. Remote data application does not bump the revision, which prevents a write-after-pull feedback loop and avoids unnecessary re-pushes.
+每次本地对一个规范集合的写入都会准确增加本地版本一次。远程数据的应用不会增加版本，这可以防止拉取后的写入反馈循环，并避免不必要的重新推送。
 
-Regression coverage verifies the revision behavior for each canonical collection.
+回归覆盖验证每个典型集合的修订行为。
 
-### 3. Sync Lifecycle
+## 3. 同步生命周期
 
-**PASS**
+* *过了**
 
-- `workbench` is the only post-login sync entry point.
-- `goals`, `stats`, and `ai` do not trigger a duplicate sync when opened.
-- Remote application is guarded so it does not enqueue another push.
-- Local writes push once after completion.
-- Offline writes remain locally preserved and queued.
-- Network recovery retries queued writes.
-- `409 SYNC_CONFLICT` follows the existing server-merge and re-push flow.
+- `workbench` 是唯一的登录后同步入口。
+- `goals`、`stats` 和 `ai` 在打开时不会触发重复同步。
+- 远程应用受到保护，因此不会排队另一次推送。
+- 本地写入在完成后只推送一次。
+- 离线写入保持本地保存并排队。
+- 网络恢复会重试排队的写入。
+- `409 SYNC_CONFLICT` 遵循现有的服务器合并和重新推送流程。
 
-### 4. Analytics Boundary
+## 4. 分析边界
 
-**PASS**
+* *通过**
 
-`Analytics` remains the only statistics source. No page scans raw records directly, recomputes totals or streaks, or owns a separate statistics engine.
+`Analytics` 仍是唯一的统计来源。没有页面直接扫描原始记录，重新计算总数或连续记录，也没有拥有独立的统计引擎。
 
-### 5. Goals Boundary
+## 5. 目标边界
 
-**PASS**
+* *通过**
 
-`GoalEngine` derives progress through `Analytics` APIs such as date-range summaries and course summaries. It does not duplicate business calculations. Per-call range caching exists without introducing a second persistent cache layer.
+`GoalEngine` 通过 `Analytics` API（如日期范围总结和课程总结）获取进度。它不会重复业务计算。每次调用范围缓存存在，但不会引入第二个持久化缓存层。
 
-### 6. AI Boundary
+## 6. 人工智能边界
 
-**PASS**
+* *通过**
 
-The AI chain remains:
+AI 链保持不变：
 
 ```text
 User data
@@ -86,84 +86,84 @@ User data
 → AI Provider
 ```
 
-- AI reads user data through the existing read-only path.
-- AI does not directly mutate business collections.
-- AI page and AI context rendering do not change local revision or business data.
-- Coach Memory remains isolated under its dedicated key and is not treated as business data.
-- AI provider failures and upstream errors are sanitized before display.
+- AI通过现有的只读路径读取用户数据。
+- 人工智能不会直接改变企业催收。
+- AI页面和AI上下文渲染不会改变本地修订或业务数据。
+- Coach Memory 在其专用密钥下保持隔离，不被视为业务数据。
+- AI提供商的故障和上游错误在展示前会被净化处理。
 
-### 7. Initialization
+## 7. 初始化
 
-**PASS**
+* *通过**
 
-- Page initialization does not duplicate sync work on navigation.
-- The AI page builds its first snapshot once during initial startup.
-- Goals, stats, and AI pages render structure before filling derived data.
-- No new page-level cache or hidden state system was introduced.
+- 页面初始化不会重复同步导航工作。
+- AI 页面在初次启动时会构建其第一个快照。
+- 在填写派生数据之前，目标、统计和 AI 页面呈现结构。
+- 没有引入新的页面级缓存或隐藏状态系统。
 
-### 8. Service Worker
+## 8. 服务工作者
 
-**PASS**
+* *通过**
 
-- Cache version is derived from the build identifier hash.
-- API requests are excluded from cache handling.
-- Old caches are cleaned during activation.
-- Registration remains restricted to HTTP(S) and the production registration path.
+- 缓存版本来源于构建标识哈希值。
+- API 请求不包含在缓存处理范围内。
+- 旧缓存会在激活期间清理。
+- 注册仍然限制为 HTTP(S) 和生产注册路径。
 
-### 9. Security
+## 9. 安全
 
-**PASS**
+* *通过**
 
-- Protected data, AI, and course-import routes require JWT authentication.
-- No `eval` or `new Function` usage was found in AI page paths.
-- User-generated content is rendered as text rather than injected as executable HTML.
-- Backend request bodies are limited to 2 MB.
-- Course-import URL validation includes SSRF protection for localhost, private IPv4, private IPv6, IPv4-mapped IPv6, and redirect targets.
-- AI provider errors do not expose backend, provider, API key, or upstream response details.
+- 受保护的数据、人工智能和课程导入路径需要 JWT 认证。
+- 在人工智能页面路径中未发现 `eval` 或 `new Function` 的使用。
+- 用户生成的内容以文本形式呈现，而不是作为可执行的 HTML 注入。
+- 后端请求体限制为 2 MB。
+- 课程导入 URL 验证包括对 localhost、私有 IPv4、私有 IPv6、IPv4 映射 IPv6 以及重定向目标的 SSRF 保护。
+- 人工智能提供商的错误不会暴露后端、提供商、API 密钥或上游响应的详细信息。
 
-## Legacy Observations
+# 遗产观察
 
-The following items are compatibility observations, not defects requiring action in this phase:
+以下项目是兼容性观察，而不是在此阶段需要采取措施的缺陷：
 
-- `user.totalDays` and `user.continuousDays` remain as fallback fields for older local data. New flows do not actively write them.
-- Sports records can contain the legacy `min` field while migration preserves compatibility. Analytics reads `durationMinutes` from the normalized `duration` field.
-- The internal `__migrated` flag is used for migration housekeeping and is stripped before sync.
+- `user.totalDays` 和 `user.continuousDays` 仍作为旧本地数据的备用字段。新流不会主动写入这些数据。
+- 体育记录可以包含遗留的`min`字段，迁移则保持兼容性。分析数据从归一化的`duration`字段读取`durationMinutes`。
+- 内部的 `__migrated` 标志用于迁移维护，并在同步前被剥离。
 
-These fields should be cleaned up only in a future migration-focused phase after a dedicated compatibility audit.
+这些字段应在未来以迁移为重点的阶段，经过专门的兼容性审计后进行清理。
 
-## Added Regression Coverage
+# 已添加回归覆盖
 
-| File | Tests | Purpose |
+| 文件 | 测试 | 目的 |
 | --- | ---: | --- |
-| `tests/architecture.audit.test.js` | 3 | Protect data, analytics, goals, and AI architecture boundaries. |
-| `tests/sync.audit.test.js` | 4 | Protect local revision, push, pull, offline queue, and remote-write behavior. |
-| `tests/security.audit.test.js` | 4 | Protect dynamic-execution, rendering, authentication, and service-worker security invariants. |
+| `tests/architecture.audit.test.js` | 3 | 保护数据、分析、目标以及 AI 架构边界。 |
+| `tests/sync.audit.test.js` | 4 | 保护本地修订、推送、拉取、离线队列和远程写入行为。 |
+| `tests/security.audit.test.js` | 4 | 保护动态执行、渲染、认证和服务工作线程的安全不变量。 |
 
-## Verification
+# 验证
 
-| Check | Result |
+|检查 |结果 |
 | --- | --- |
-| Frontend tests | **PASS** — 31 files, 357 tests |
-| Backend tests | **PASS** — 62 tests |
-| Production build | **PASS** |
-| Git whitespace check | **PASS** |
+| 前端测试 | **通过** — 31 个文件，357 个测试 |
+| 后端测试 | **通过** — 62 个测试 |
+| 生产构建 | **通过** |
+| Git 空格检查 | **通过** |
 
-## Architecture Impact
+# 架构影响
 
-No runtime architecture changed. The audit increases regression protection without adding a cache layer, framework, route system, second state system, or new business feature.
+运行时架构没有改变。审计在不增加缓存层、框架、路由系统、第二状态系统或新业务功能的情况下，提高了回归保护。
 
-## Security Review
+# 安全审查
 
-**PASS**
+* *通过**
 
-The current implementation preserves user data isolation, authentication boundaries, safe rendering, backend payload limits, AI output sanitization, and course-import SSRF protection.
+当前的实现保留了用户数据隔离、身份验证边界、安全渲染、后端有效负载限制、AI 输出清理以及课程导入 SSRF 保护。
 
-## Remaining Risks
+# 剩余风险
 
-1. Legacy user and sports fields remain for compatibility and require a future migration plan.
-2. Page-level behavior tests cover initialization and data consistency, but browser-level timing measurements are still manual.
-3. Service-worker cache behavior should continue to be checked during release builds because cached static assets can delay user-visible upgrades if cache keys are changed incorrectly.
+1. 为了兼容性，旧用户和体育领域仍然存在，并且需要一个未来的迁移计划。
+2. 页面级行为测试涵盖初始化和数据一致性，但浏览器级别的时间测量仍然是手动的。
+3. 在发布版本中应继续检查 service-worker 的缓存行为，因为如果缓存键被错误更改，缓存的静态资源可能会延迟用户可见的升级。
 
-## Recommendation
+# 推荐
 
-Keep this audit suite as a permanent regression baseline. In a later phase, create a dedicated compatibility migration plan for legacy user and sports fields, then remove fallback fields only after verifying that all active clients and persisted local payloads have migrated.
+将此审计套件作为永久回归基线。在后期阶段，为传统用户和体育字段创建专门的兼容性迁移计划，然后仅在确认所有活跃客户端和已保存的本地有效载荷已迁移后，才移除回退字段。
