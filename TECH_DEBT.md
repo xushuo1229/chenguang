@@ -9,13 +9,15 @@
 2. **Windows 残留 node 进程占用 3000 端口**：TaskStop 不总杀干净，需 `taskkill //F //PID`。
    开发环境问题，不进产品。
 
-3. **移动端仅静态 + jsdom 验证**：未做真机/远程调试走查（Phase 15 候选 C）。
-   2026-09-12 静态走查 + Phase 15（f55cbcd，已交叉验收 271/271）后状态：
-   - ✅ 已修：3 个 P1（16px 输入字号全站、index 375px 顶栏溢出 + viewport maximum-scale、ai 页 100dvh + visualViewport --vvh）；
-     走查 P2 之 growthStreak 恒 0（continuousDays 全库无写入口）改用 Analytics.getStreaks() 口径；顺带修 P0：setText 裸 id 静默失效致工作台仪表盘冻结（dom.js）。
-   - ⏳ 未修（Phase 15 排序 4/5，仍是候选）：触控目标 ≥40px（modal-close 30px / onboard-close 26px / goals 操作按钮 ≈26px 且删除键间距 6px）；
-     交互兜底（modal 打开锁 body 滚动 + 不自动聚焦弹键盘、stats 热力图 tooltip 仅 hover 触屏不可用、ai 抽屉无 backdrop 点外不关、底部 tabbar 各页条目不一致）。
-   - 真机（iOS Safari 实机）走查仍未做。
+3. **移动端仅静态 + jsdom 验证**（Phase 15 候选 C）—— 2026-09-19 更新：iOS WebKit 引擎级走查已完成（见 docs/IOS_WEBKIT_WALKTHROUGH_REPORT.md）：
+   - ✅ 新修 3 个引擎级真 bug：today 勾选框 div→button（iOS 对 div tap 不合成 click，手指点勾选静默失效）、
+     today 输入框 14.4px、课程空间 select 13.76px（均 <16px 触发 iOS 聚焦缩放）；tabbar 触控目标 flex 等分保 ≥40px。
+   - ✅ 走查全绿项：9 页零异常/零 4xx/零溢出、表单控件 ≥16px、tabbar ≥40px、ai --vvh 兜底、touch 全流程交互与 auth 回跳。
+   - ⏳ 仍未修（历史遗留，非本轮范围）：modal-close/onboard-close/goals 操作按钮 <40px；stats 热力图 tooltip 仅 hover。
+   - ⏳ **真机（iOS Safari 实机）项仍 UNVERIFIED**：safe-area、软键盘遮挡实测、PWA 添加主屏、离线、真机性能
+     （真机清单见报告 §5，需真实 iPhone）。
+   2026-09-12 静态走查 + Phase 15（f55cbcd）已完成：3 个 P1（16px 输入字号全站、index 375px 顶栏溢出、ai 页 100dvh+--vvh）、
+   growthStreak 改用 Analytics 口径、setText 裸 id P0。
 
 4. **每日目标无「自定义结束日」入口**：习惯语义下 endDate 不参与过期（结束靠归档）。
    若未来用户需要「每日目标到某天结束」，给表单加可选结束日并在 deriveStatus 恢复 endDate 判定。
@@ -23,8 +25,12 @@
 5. **buildInsights 每日目标完全跳过风险规则**：目前合理（无截止概念）；
    若加了结束日（见 4），需同步引入「当天晚了还没做」类规则。
 
-6. **底部 tabbar 各页条目不一致**（2026-09-12 移动端走查）：workbench 7 项（多「我的」）、ai 无「管理」、stats/goals 各 6 项但组合不同。
-   统一成哪组入口是产品决策，修复前各页维持现状；决策后抽成 shared 组件渲染。
+6. ~~**底部 tabbar 各页条目不一致**~~（✅ 已解决，2026-09-19）：
+   **产品决策**：全部页面统一为同一组 7 项 tabbar：首页 / 目标 / 数据 / AI / 课程 / 管理 / 我的（顺序固定）；
+   「今日计划」与「Agent Home」为侧边栏专属入口，不进 tabbar（避免 8 项拥挤，且两者均有侧边栏对应项）。
+   workbench 页内切换项（home）保留 `#` 自引用 + JS preventDefault 秒切；其余项全部使用规范深链（`workbench.html?view=...`），
+   中键/新标签可直达对应视图。原 ai 页缺「管理」、goals 页缺「我的」已补齐。
+   契约由 `tests/navigation.test.js`「unified 7-item mobile tabbar」用例锁定（条目、顺序、href、active 状态逐页断言）。
 
 7. **工作台「成长趋势」季度参考值为硬编码**（UI-2 走查发现）：barSpecs 的 12 本 / 3,000 页 / 1,500 分钟 / 60 次等是写死的「本季参考」刻度，非用户可配置目标。UI-2 已把文案从「目标」改为「本季参考」以诚实化；正确解法是接入 Goal Engine 的目标体系或用户设置，属业务改动，未顺手做。
 
