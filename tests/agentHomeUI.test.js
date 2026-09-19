@@ -271,6 +271,9 @@ describe('agent home UI', () => {
   test('uses mobile-first responsive MPA shell without new frameworks', () => {
     expect(agentHomeHtml).toContain('name="viewport"');
     expect(agentHomeHtml).toContain('@media (max-width: 760px)');
+    expect(agentHomeHtml).toContain('mobile-tabbar');
+    expect(agentHomeHtml).toContain('/calm-dawn-1to1.css');
+    expect(agentHomeHtml).toContain('/xingzhixing.css');
     expect(agentHomeHtml).toContain('js/shellBootstrap.js');
     expect(agentHomeHtml).toContain('/js/agentHome.js');
     expect(agentHomeHtml).not.toMatch(/react|vue/i);
