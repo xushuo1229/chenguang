@@ -166,6 +166,7 @@ const config = {
   agentLlmModel: process.env.AGENT_LLM_MODEL || '',      // 空 → 回落 aiModel
   agentLlmTimeoutMs: parseInt(process.env.AGENT_LLM_TIMEOUT_MS, 10) || 15000, // 比 Coach 更紧（仪表盘语境）
   agentLlmMaxTokens: parseInt(process.env.AGENT_LLM_MAX_TOKENS, 10) || 1200, // 已验证输出另有 8192 字节硬顶
+  agentLlmPromptVersion: process.env.AGENT_LLM_PROMPT_VERSION || 'agent-llm-provider-prompt-v1', // 27.6.5 模板注册表活动版本
 
   // --- 课表导入（代理抓取外部课表 HTML） ---
   // 通过后端代理抓取学校课表页并解析课程，天然规避浏览器 CORS

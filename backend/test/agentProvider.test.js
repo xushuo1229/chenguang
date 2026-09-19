@@ -311,6 +311,7 @@ test('no database access: agentProvider 三模块依赖白名单（无 db/sqlite
     '../agentFirewall/contextFirewall',
     '../agentFirewall/contextContract',
     '../agentOutputValidator/outputContract',
+    '../agentPrompt/promptRegistry',
     '../providers/openaiCompatible',
     '../../config/env',
     '../../utils/ApiError',

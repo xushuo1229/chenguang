@@ -24,6 +24,7 @@ const crypto = require('node:crypto');
 
 const config = require('../../config/env');
 const sharedTransport = require('../providers/openaiCompatible');
+const promptRegistry = require('../agentPrompt/promptRegistry');
 const ApiError = require('../../utils/ApiError');
 const {
   FAIL_REASONS,
@@ -41,36 +42,13 @@ const DEFAULT_TEMPERATURE = 0.2;
 
 /**
  * 构建 Prompt（纯函数、确定性、可单测）。
+ * Phase 27.6.5：Prompt 收编为 agentPrompt 注册表的版本化模板（v1 与原内联实现
+ * 字节等价，golden 断言见 agentPrompt.test.js）；适配器只做委托。
  * System 描述目标 Schema 与硬规则；User 是投影 payload 的 JSON 文本。
  * Prompt 不含任何密钥/用户身份/指令类可写操作。
  */
 function buildProviderMessages(payload) {
-  const system = [
-    'You are the explanation generator of the ZHIXING agent home (read-only, insight_only).',
-    'You receive one JSON payload: a bounded learning context (agent-llm-context-v1) containing deterministic insights, evidence and reasoning.',
-    'Return ONLY one minified JSON object with EXACTLY this schema and nothing else:',
-    '{"schemaVersion":"agent-llm-output-v1","status":"validated","available":true,"fallback":null,',
-    '"explanations":[{"id":"exp-1","type":"fact|interpretation|suggestion|uncertainty","text":"<=240 chars","generationConfidence":0.0,',
-    '"evidenceRefs":[{"insightId":"...","evidenceId":"<insightId>:<index>","metric":"...","period":"..."}],',
-    '"reasoningRefs":[{"reasoningId":"reasoning:<insightId>","insightId":"..."}]}],',
-    '"suggestions":[],"uncertainties":[],"metadata":{"readOnly":true,"actionLevel":"insight_only","providerIndependent":true}}',
-    'Hard rules:',
-    '1. Use ONLY ids, evidence and reasoning present in the payload. Never invent references.',
-    '2. type "fact" and "interpretation" require evidenceRefs (max 3, resolvable in payload insights).',
-    '3. type "fact" requires exactly one reasoningRefs entry (max 1). type "suggestion" and "uncertainty" forbid evidenceRefs and reasoningRefs.',
-    '4. "fact" must NOT include generationConfidence. "interpretation" generationConfidence must not exceed the referenced reasoning confidence.',
-    '5. Max 5 explanations, max 3 suggestions, max 2 uncertainties. Text lengths: explanation<=240, suggestion<=180, uncertainty<=180. Use the user\'s language (Chinese).',
-    '6. Numbers and dates in text must come from the referenced evidence values or periods. No absolute claims about ability, intelligence or personality.',
-    '7. If the payload has no available insights (available=false) or you cannot ground a claim, return {"schemaVersion":"agent-llm-output-v1","status":"fallback","available":false,',
-    '"fallback":{"type":"deterministic_reasoning","reason":"llm_unsafe","source":"agent-reasoning-v1"},',
-    '"explanations":[],"suggestions":[],"uncertainties":[],"metadata":{"readOnly":true,"actionLevel":"insight_only","providerIndependent":true}}.',
-    '8. Output JSON only. No markdown, no code fence, no commentary.',
-  ].join('\n');
-
-  return [
-    { role: 'system', content: system },
-    { role: 'user', content: JSON.stringify(payload) },
-  ];
+  return promptRegistry.buildActiveMessages(payload);
 }
 
 /**
