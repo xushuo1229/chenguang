@@ -6,6 +6,7 @@
 import '../js/store.js';
 import '../js/analytics.js';
 import { todayStr, fmtDate } from '../js/utils/date.js';
+import { homeAuthHref } from '../js/utils/authNavigation.js';
 
 var $ = function (sel) { return document.querySelector(sel); };
 
@@ -22,7 +23,7 @@ function getStore() {
 function checkAuth() {
   var token = localStorage.getItem('cg_token');
   if (!token) {
-    setTimeout(function () { window.location.href = 'index.html'; }, 800);
+    setTimeout(function () { window.location.href = homeAuthHref('today.html'); }, 800);
     return false;
   }
   return true;

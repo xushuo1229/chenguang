@@ -23,6 +23,7 @@ import '../js/store.js';
 import '../js/sync.js';
 import Analytics from '../js/analytics.js';
 import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
+import { safeRelativeTarget } from '../js/utils/authNavigation.js';
 
 'use strict';
 
@@ -276,7 +277,9 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 setupServiceWorker();
 
 // 登录/注册成功后跳转的目标页面
-window.REDIRECT_AFTER_LOGIN = 'workbench.html';
+var redirectTarget = safeRelativeTarget(new URLSearchParams(window.location.search).get('next'));
+window.REDIRECT_AFTER_LOGIN = redirectTarget || 'workbench.html';
+if (!localStorage.getItem('cg_token') && redirectTarget) openModal('modalLogin');
 
 // ==================== 数字计数动画 ====================
 $$('.hero-stats-item .num').forEach(function(el) {

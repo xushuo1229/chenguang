@@ -8,6 +8,7 @@ import '../js/sync.js';
 import Analytics from '../js/analytics.js';
 import GoalEngine from '../js/goals.js';
 import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
+import { homeAuthHref } from '../js/utils/authNavigation.js';
 
 // ====================================================================
 // 知行 · 目标系统 (Goals)
@@ -38,7 +39,7 @@ var TYPE_ICON = {
 /* ---------- 认证检查 ---------- */
 function checkAuth() {
   var token = Store && Store.getToken ? Store.getToken() : localStorage.getItem('cg_token');
-  if (!token) { toast('请先登录', 'error'); setTimeout(function () { window.location.href = 'index.html'; }, 800); return false; }
+  if (!token) { toast('请先登录', 'error'); setTimeout(function () { window.location.href = homeAuthHref('goals.html'); }, 800); return false; }
   return true;
 }
 

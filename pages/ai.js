@@ -12,6 +12,7 @@ import CoachMemory from '../js/coachMemory.js';
 import GrowthReport from '../js/growthReport.js';
 import { formatEvidence, formatLifecycle, formatMemoryType } from '../js/ui/memoryCopy.js';
 import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
+import { homeAuthHref } from '../js/utils/authNavigation.js';
 
 // ====================================================================
 // 知行 · AI 教练页 (Phase 13 AI 2.0)
@@ -40,7 +41,7 @@ var AIContext = globalThis.CGAIContext || CGAIContext;
 /* ---------- 认证检查 ---------- */
 function checkAuth() {
   var token = Store && Store.getToken ? Store.getToken() : localStorage.getItem('cg_token');
-  if (!token) { toast('请先登录', 'error'); setTimeout(function () { window.location.href = 'index.html'; }, 800); return false; }
+  if (!token) { toast('请先登录', 'error'); setTimeout(function () { window.location.href = homeAuthHref('ai.html'); }, 800); return false; }
   return true;
 }
 

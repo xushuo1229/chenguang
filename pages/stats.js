@@ -12,6 +12,7 @@ import GrowthMemory from '../js/growthMemory.js';
 import GrowthTimeline from '../js/growthTimeline.js';
 import { formatConfidence, formatEvidence, formatLifecycle, formatMemoryType } from '../js/ui/memoryCopy.js';
 import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
+import { homeAuthHref } from '../js/utils/authNavigation.js';
 
 // ====================================================================
 // 知行 · 统计中心 (Stats Center)
@@ -38,7 +39,7 @@ var Store = globalThis.CGStore;
 /* ---------- 认证检查 ---------- */
 function checkAuth() {
   var token = Store && Store.getToken ? Store.getToken() : localStorage.getItem('cg_token');
-  if (!token) { toast('请先登录', 'error'); setTimeout(function () { window.location.href = 'index.html'; }, 800); return false; }
+  if (!token) { toast('请先登录', 'error'); setTimeout(function () { window.location.href = homeAuthHref('stats.html'); }, 800); return false; }
   return true;
 }
 
