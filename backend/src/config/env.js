@@ -157,6 +157,16 @@ const config = {
   aiMaxMsgLength: parseInt(process.env.AI_MAX_MSG_LENGTH, 10) || 8000, // 单条消息长度上限
   aiMaxContextChars: parseInt(process.env.AI_MAX_CONTEXT_CHARS, 10) || 24000, // Context JSON 字符上限（防超大请求）
 
+  // --- Agent LLM Provider（Phase 27.6.3 · LLM Provider Abstraction） ---
+  // Agent Home 解释链路专用 Provider 配置；未显式配置时回落到 ai* 同款服务。
+  // 密钥只存在于服务端，绝不下发浏览器、绝不进信封/日志/Prompt。
+  agentLlmProvider: process.env.AGENT_LLM_PROVIDER || 'openaiCompatible', // agentProvider 注册表名称
+  agentLlmBaseUrl: process.env.AGENT_LLM_BASE_URL || '', // 空 → 回落 aiBaseUrl
+  agentLlmApiKey: process.env.AGENT_LLM_API_KEY || '',   // 空 → 回落 aiApiKey
+  agentLlmModel: process.env.AGENT_LLM_MODEL || '',      // 空 → 回落 aiModel
+  agentLlmTimeoutMs: parseInt(process.env.AGENT_LLM_TIMEOUT_MS, 10) || 15000, // 比 Coach 更紧（仪表盘语境）
+  agentLlmMaxTokens: parseInt(process.env.AGENT_LLM_MAX_TOKENS, 10) || 1200, // 已验证输出另有 8192 字节硬顶
+
   // --- 课表导入（代理抓取外部课表 HTML） ---
   // 通过后端代理抓取学校课表页并解析课程，天然规避浏览器 CORS
   importTimeoutMs: parseInt(process.env.IMPORT_TIMEOUT_MS, 10) || 15000, // 抓取超时（毫秒）

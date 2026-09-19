@@ -39,6 +39,10 @@ async function chatCompletion(p) {
   const model = (p && p.model) || '';
   const timeoutMs = (p && p.timeoutMs) || 30000;
   const maxTokens = Number(p && p.maxTokens);
+  // Phase 27.6.3 附加式扩展：仅当调用方显式传入有限温度时才进请求体
+  //（AI Coach 从不传 → 行为不变；Agent Provider 传低温度以稳定解释输出）
+  const temperature = Number(p && p.temperature);
+  const hasTemperature = Number.isFinite(temperature) && temperature > 0 && temperature < 2;
 
   if (!apiKey) throw ApiError.internal('AI_NOT_CONFIGURED', 'AI 服务未配置，请稍后再试');
 
@@ -52,7 +56,15 @@ async function chatCompletion(p) {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + apiKey,
       },
-      body: JSON.stringify(maxTokens > 0 ? { model, messages, max_tokens: maxTokens } : { model, messages }),
+      body: JSON.stringify(
+        maxTokens > 0
+          ? (hasTemperature
+            ? { model, messages, max_tokens: maxTokens, temperature }
+            : { model, messages, max_tokens: maxTokens })
+          : (hasTemperature
+            ? { model, messages, temperature }
+            : { model, messages })
+      ),
       signal: controller.signal,
     });
 
@@ -82,7 +94,12 @@ async function chatCompletion(p) {
         throw ApiError.internal('AI_UNAUTHORIZED', 'AI 教练暂时不可用，请稍后再试。');
       }
       // 其余上游错误：统一兜底，不透出任何细节
-      throw ApiError.internal('AI_UPSTREAM_ERROR', `AI 服务暂时不可用（HTTP ${http}）`);
+      // Phase 27.6.3 附加式扩展：err.upstreamStatus 仅挂在错误实例上供服务端
+      // Provider 层做 429 精确分类；middleware/error.js 只序列化 code/message/details，
+      // 该属性绝不进入 API 响应。
+      const upstreamError = ApiError.internal('AI_UPSTREAM_ERROR', `AI 服务暂时不可用（HTTP ${http}）`);
+      upstreamError.upstreamStatus = http;
+      throw upstreamError;
     }
 
     const data = await res.json();
