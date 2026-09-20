@@ -63,8 +63,8 @@ function isBoundedString(value, maxLength) {
 
 /**
  * 校验 Provider 输入：{ context, task }
- * context 必须是防火墙产出的 agent-llm-context-v1；task 必须 ∈ TASKS。
- * 返回投影 payload（toProviderPayload 产物），供适配器构建 Prompt。
+ * context 必须是 toProviderPayload 产出的 agent-llm-context-v1 数据面投影；
+ * task 必须 ∈ TASKS。内部控制身份不属于 Provider 输入契约。
  */
 function validateProviderInput({ context, task }) {
   if (!isObject(context) || context.version !== FIREWALL_VERSION) {
@@ -72,10 +72,6 @@ function validateProviderInput({ context, task }) {
   }
   if (typeof task !== 'string' || !TASKS.has(task)) {
     throw invalid('PROVIDER_INPUT_INVALID_TASK');
-  }
-  const ownerUserId = context.ownerUserId;
-  if (typeof ownerUserId !== 'number' || !Number.isInteger(ownerUserId) || ownerUserId <= 0) {
-    throw invalid('PROVIDER_INPUT_INVALID_OWNER');
   }
   if (!isObject(context.metadata) || context.metadata.readOnly !== true) {
     throw invalid('PROVIDER_INPUT_NOT_READ_ONLY');

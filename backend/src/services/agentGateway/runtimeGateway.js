@@ -26,7 +26,7 @@
 
 const crypto = require('node:crypto');
 
-const { buildLlmContext } = require('../agentFirewall/contextFirewall');
+const { buildLlmContext, toProviderPayload } = require('../agentFirewall/contextFirewall');
 const providerRegistry = require('../agentProvider/providerRegistry');
 const outputContract = require('../agentOutputValidator/outputContract');
 const { validateEvidenceBinding, computeContextSnapshotId } = require('../agentEvidenceBinding/evidenceBindingContract');
@@ -93,6 +93,7 @@ async function runExplanation({ context, insights, reasoning, task, options = {}
 
   // 契约违规（调用方 bug）向上抛——防火墙校验是第一道闸
   const firewallContext = buildLlmContext({ context, insights, reasoning, task });
+  const providerPayload = toProviderPayload(firewallContext);
   const contextSnapshotId = computeContextSnapshotId(firewallContext);
 
   // Provider 解析：显式注入必须是合法适配器（形状违规 = 输入契约违规 → throw）；
@@ -131,7 +132,7 @@ async function runExplanation({ context, insights, reasoning, task, options = {}
   // 注入 provider 违约直接抛错时收敛为 llm_unavailable，维持 Gateway 全函数铁律。
   let envelope;
   try {
-    envelope = await provider.generateExplanation({ context: firewallContext, task });
+    envelope = await provider.generateExplanation({ context: providerPayload, task });
   } catch (_) {
     envelope = { status: 'failed', reason: 'llm_unavailable', provider: '', model: '', promptVersion: '' };
   }
@@ -167,6 +168,7 @@ async function runExplanation({ context, insights, reasoning, task, options = {}
     firewallContext,
     output: candidate,
     expectedSnapshotId: contextSnapshotId,
+    ownerUserId: context.userId,
   });
   if (!binding.valid) {
     return buildFallbackResult({ ...baseMeta, firewallContext, fallbackReason: 'llm_evidence_mismatch', startedAt });

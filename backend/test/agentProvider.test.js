@@ -16,6 +16,7 @@ const {
 } = require('../src/services/agentProvider/providerContract');
 const { getAgentProvider, resolveAgentProvider, REGISTRY } = require('../src/services/agentProvider/providerRegistry');
 const provider = require('../src/services/agentProvider/openaiCompatibleProvider');
+const { toProviderPayload } = require('../src/services/agentFirewall/contextFirewall');
 const { FALLBACK_REASONS, OUTPUT_SCHEMA_VERSION, validateOutputContract } = require('../src/services/agentOutputValidator/outputContract');
 const { validateEvidenceBinding } = require('../src/services/agentEvidenceBinding/evidenceBindingContract');
 const { validateSemanticValidation } = require('../src/services/agentSemanticValidator/semanticValidatorContract');
@@ -103,8 +104,8 @@ function clone(value) {
 
 // ---------- 1. provider contract validation ----------
 
-test('provider contract: 合法防火墙上下文 + 合法 task 通过校验', () => {
-  const context = buildFirewallContext();
+test('provider contract: 合法 Provider payload + 合法 task 通过校验', () => {
+  const context = toProviderPayload(buildFirewallContext());
   assert.equal(validateProviderInput({ context, task: 'explain_daily' }), true);
 });
 
@@ -120,11 +121,7 @@ test('provider contract: 拒绝非法 task（含未在 TASKS 白名单）', () =
   assert.throws(() => validateProviderInput({ context, task: undefined }), /PROVIDER_INPUT_INVALID_TASK/);
 });
 
-test('provider contract: 拒绝缺 ownerUserId / metadata 违规', () => {
-  const noOwner = buildFirewallContext();
-  delete noOwner.ownerUserId;
-  assert.throws(() => validateProviderInput({ context: noOwner, task: 'explain_daily' }), /PROVIDER_INPUT_INVALID_OWNER/);
-
+test('provider contract: 拒绝 metadata 违规', () => {
   const notReadOnly = buildFirewallContext();
   notReadOnly.metadata.readOnly = false;
   assert.throws(() => validateProviderInput({ context: notReadOnly, task: 'explain_daily' }), /PROVIDER_INPUT_NOT_READ_ONLY/);
@@ -391,6 +388,7 @@ test('chain integration: stub transport 全链绿色（Firewall → Provider →
     firewallContext,
     output: candidate,
     expectedSnapshotId: require('../src/services/agentEvidenceBinding/evidenceBindingContract').computeContextSnapshotId(firewallContext),
+    ownerUserId: 7,
   });
   assert.equal(binding.valid, true, JSON.stringify(binding.violations));
 

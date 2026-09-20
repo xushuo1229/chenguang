@@ -64,7 +64,7 @@ function reasoning() {
 test('builds a bounded provider-neutral firewall context', () => {
   const result = buildLlmContext({ context: context(), insights: insights(), reasoning: reasoning() });
   assert.equal(result.version, 'agent-llm-context-v1');
-  assert.equal(result.ownerUserId, 7);
+  assert.equal('ownerUserId' in result, false);
   assert.equal(result.available, true);
   assert.equal(result.metadata.actionLevel, 'insight_only');
   assert.deepEqual(result.metadata, { readOnly: true, actionLevel: 'insight_only', providerIndependent: true });

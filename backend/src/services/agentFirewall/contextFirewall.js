@@ -157,7 +157,6 @@ function buildLlmContext({ context, insights, reasoning, task = 'explain_daily' 
   const projectedReasoning = projectReasoning(reasoning);
   const result = {
     version: FIREWALL_VERSION,
-    ownerUserId: context.userId,
     task,
     available: projectedInsights.length > 0,
     truncated: false,
@@ -189,10 +188,23 @@ function toProviderPayload(firewallContext) {
     sources: firewallContext.sources,
     insights: firewallContext.insights,
     reasoning: firewallContext.reasoning,
-    constraints: firewallContext.constraints,
-    metadata: firewallContext.metadata,
+    constraints: {
+      maxBytes: firewallContext.constraints.maxBytes,
+      maxInsights: firewallContext.constraints.maxInsights,
+      maxEvidencePerInsight: firewallContext.constraints.maxEvidencePerInsight,
+      maxReasoning: firewallContext.constraints.maxReasoning,
+      maxTextChars: firewallContext.constraints.maxTextChars,
+      maxEvidenceTextChars: firewallContext.constraints.maxEvidenceTextChars,
+      maxSourceReferences: firewallContext.constraints.maxSourceReferences,
+    },
+    metadata: {
+      readOnly: firewallContext.metadata.readOnly === true,
+      actionLevel: firewallContext.metadata.actionLevel === 'insight_only' ? 'insight_only' : '',
+      providerIndependent: firewallContext.metadata.providerIndependent === true,
+    },
   };
 }
+
 
 module.exports = {
   CONSTRAINTS,

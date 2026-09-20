@@ -18,7 +18,6 @@ function metadata() {
 function firewallContext() {
   return {
     version: 'agent-llm-context-v1',
-    ownerUserId: 7,
     task: 'explain_daily',
     available: true,
     sources: [],
@@ -89,6 +88,7 @@ function bind(context = firewallContext(), candidate = output()) {
     firewallContext: context,
     output: candidate,
     expectedSnapshotId: computeContextSnapshotId(context),
+    ownerUserId: 7,
   });
 }
 

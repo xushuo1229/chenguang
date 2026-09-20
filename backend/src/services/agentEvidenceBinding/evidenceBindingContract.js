@@ -78,14 +78,14 @@ function validateReasoningReference(context, ref) {
   };
 }
 
-function validateUserOwnership(firewallContext, output) {
-  if (!isObject(firewallContext) || typeof firewallContext.ownerUserId !== 'number') {
+function validateUserOwnership(ownerUserId, output) {
+  if (typeof ownerUserId !== 'number' || !Number.isInteger(ownerUserId)) {
     return { verified: false, code: 'CONTEXT_OWNER_MISSING' };
   }
   if (output.ownerUserId === undefined) {
     return { verified: true, code: undefined };
   }
-  if (output.ownerUserId !== firewallContext.ownerUserId) {
+  if (output.ownerUserId !== ownerUserId) {
     return { verified: false, code: 'CROSS_USER_REFERENCE' };
   }
   return { verified: true, code: undefined };
@@ -139,7 +139,7 @@ function collectReferences(output) {
   return references;
 }
 
-function validateEvidenceBinding({ firewallContext, output, expectedSnapshotId }) {
+function validateEvidenceBinding({ firewallContext, output, expectedSnapshotId, ownerUserId }) {
   const violations = [];
   const verifiedReferences = [];
 
@@ -159,7 +159,7 @@ function validateEvidenceBinding({ firewallContext, output, expectedSnapshotId }
   }
 
   const ownership = isObject(firewallContext) && isObject(output)
-    ? validateUserOwnership(firewallContext, output)
+    ? validateUserOwnership(ownerUserId, output)
     : { verified: false, code: 'CONTEXT_OWNER_MISSING' };
   if (!ownership.verified) violations.push(invalid(ownership.code, 'output.ownerUserId'));
 

@@ -25,6 +25,7 @@ const crypto = require('node:crypto');
 const config = require('../../config/env');
 const sharedTransport = require('../providers/openaiCompatible');
 const promptRegistry = require('../agentPrompt/promptRegistry');
+const { toProviderPayload } = require('../agentFirewall/contextFirewall');
 const ApiError = require('../../utils/ApiError');
 const {
   FAIL_REASONS,
@@ -77,6 +78,7 @@ async function generateExplanation({ context, task, options = {} } = {}) {
 
   // 契约违规（程序性错误）→ throw；操作性失败 → failed 信封
   validateProviderInput({ context, task });
+  const providerPayload = toProviderPayload(context);
 
   const cfg = config || {};
   const baseUrl = options.baseUrl || cfg.agentLlmBaseUrl || cfg.aiBaseUrl || '';
@@ -99,7 +101,7 @@ async function generateExplanation({ context, task, options = {} } = {}) {
     try {
       result = await Promise.race([
         Promise.resolve(transport({
-          messages: buildProviderMessages(context),
+          messages: buildProviderMessages(providerPayload),
           baseUrl,
           apiKey,
           model,
