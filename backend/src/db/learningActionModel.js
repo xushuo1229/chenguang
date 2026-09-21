@@ -65,10 +65,23 @@ function countAttemptsBySource({ userId, sourceId }) {
   ).rows[0].count;
 }
 
+function listProposalsForWindow({ userId, courseId, from, limit }) {
+  return query(
+    `SELECT id, user_id, course_id, knowledge_node_id, kind, status, plan_id, block_id,
+            fingerprint, payload_json, created_at, updated_at
+       FROM learning_action_proposals
+      WHERE user_id = $1 AND course_id = $2 AND updated_at >= datetime($3)
+      ORDER BY updated_at ASC, id
+      LIMIT $4`,
+    [userId, courseId, from.toISOString(), limit],
+  ).rows;
+}
+
 module.exports = {
   countAttemptsBySource,
   findProposal,
   listProposals,
+  listProposalsForWindow,
   markStatus,
   upsertProposal,
 };

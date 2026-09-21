@@ -8,6 +8,7 @@ const adaptiveReviewService = require('../services/adaptiveReviewService');
 const plannerService = require('../services/learningPlannerService');
 const actionService = require('../services/learningActionService');
 const personalLearningAgentService = require('../services/personalLearningAgentService');
+const effectivenessService = require('../services/learningEffectivenessService');
 const { authRequired } = require('../middleware/auth');
 const { writeLimiter } = require('../middleware/rateLimit');
 
@@ -151,6 +152,18 @@ router.get('/actions', authRequired, async (req, res, next) => {
 router.get('/agent/:courseId/overview', authRequired, async (req, res, next) => {
   try {
     res.success(await personalLearningAgentService.buildOverview({
+      userId: req.userId,
+      courseId: req.params.courseId,
+      query: req.query,
+    }));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/effectiveness/:courseId', authRequired, async (req, res, next) => {
+  try {
+    res.success(await effectivenessService.buildEffectiveness({
       userId: req.userId,
       courseId: req.params.courseId,
       query: req.query,

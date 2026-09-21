@@ -23,4 +23,16 @@ function listAttempts({ userId, courseId, limit, offset }) {
   ).rows;
 }
 
-module.exports = { createAttempt, listAttempts };
+function listAttemptsForWindow({ userId, courseId, from, limit }) {
+  return query(
+    `SELECT id, user_id, course_id, knowledge_node_id, mode, score, duration_ms,
+            source_attempt_id AS sourceAttemptId, created_at AS createdAt
+       FROM student_practice_attempts
+      WHERE user_id = $1 AND course_id = $2 AND created_at >= datetime($3)
+      ORDER BY created_at ASC, id
+      LIMIT $4`,
+    [userId, courseId, from.toISOString(), limit],
+  ).rows;
+}
+
+module.exports = { createAttempt, listAttempts, listAttemptsForWindow };
