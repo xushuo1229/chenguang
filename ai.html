@@ -176,6 +176,44 @@
       color: var(--text-light);
     }
 
+    /* ===== AI Coach 工作区导航 ===== */
+    .coach-ia {
+      flex: 0 0 auto;
+      margin: 16px 24px 0;
+      padding: 14px 16px;
+    }
+    .coach-ia-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .coach-ia-head i { color: var(--primary); font-size: 13px; }
+    .coach-ia-head h3 { font-size: 13px; font-weight: 700; color: var(--text-dark); }
+    .coach-ia-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+      gap: 8px;
+    }
+    a.coach-ia-item {
+      min-height: 58px;
+      padding: 10px 12px;
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-lg);
+      background: var(--bg-soft);
+      color: var(--text-dark);
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 3px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    a.coach-ia-item:hover { border-color: var(--primary); background: var(--primary-light); }
+    a.coach-ia-item small { font-size: 10px; font-weight: 500; color: var(--text-muted); }
+
     /* 今日状态 */
     .today-grid {
       display: grid;
@@ -491,6 +529,7 @@
       .mobile-tabbar { display: flex; }
       .main { padding-bottom: 72px !important; }
       .topbar { padding: 10px 16px; }
+      .coach-ia { margin: 12px 12px 0; }
       .coach-layout { padding: 12px 12px 16px; }
       .msg { max-width: 94%; }
     }
@@ -555,6 +594,19 @@
     </div>
   </div>
 
+  <!-- ===== AI Coach 工作区导航 ===== -->
+  <nav class="coach-ia coach-card" aria-label="AI Coach 工作区">
+    <div class="coach-ia-head"><i class="fas fa-route"></i><h3>AI Coach Workspace</h3></div>
+    <div class="coach-ia-grid">
+      <a class="coach-ia-item" href="agent-home.html">Agent Home<small>学习状态与证据</small></a>
+      <a class="coach-ia-item" href="#coachConversation">Conversation<small>基于上下文解释</small></a>
+      <a class="coach-ia-item" href="#aiInsightPanels">Insight<small>发现、风险与趋势</small></a>
+      <a class="coach-ia-item" href="#cardToday">Today<small>今日完成与专注</small></a>
+      <a class="coach-ia-item" href="agent-home.html">Mastery<small>掌握状态与复习</small></a>
+      <a class="coach-ia-item" href="agent-home.html">Action<small>确认后的下一步</small></a>
+    </div>
+  </nav>
+
   <!-- 加载态 -->
   <div class="state-block" id="aiLoading" aria-live="polite">
     <div class="state-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
@@ -594,7 +646,7 @@
     </section>
 
     <!-- 左列：状态面板 -->
-    <section class="coach-col ai-analysis" aria-label="成长分析">
+    <section class="coach-col ai-analysis" id="aiInsightPanels" aria-label="成长分析">
       <div class="coach-card" id="cardToday">
         <div class="coach-card-head"><i class="fas fa-wave-square"></i><h3>今日总结</h3></div>
         <div class="today-grid" id="todayGrid"><!-- JS 渲染 --></div>
@@ -640,7 +692,7 @@
     </section>
 
     <!-- 右列：AI 对话 -->
-    <section class="coach-col ai-chat-col" aria-label="AI 对话">
+    <section class="coach-col ai-chat-col" id="coachConversation" aria-label="AI 对话">
       <div class="chat-col">
         <div class="quick-questions" role="group" aria-label="快捷问题">
           <button class="quick-q" data-q="我的成长情况">🌱 我的成长情况</button>
