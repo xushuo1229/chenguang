@@ -70,11 +70,18 @@ function notConfiguredProvider() {
 describe('learning conversation runtime', () => {
   test('runs the frozen query, selection, and gateway chain for a supported query', async () => {
     const owner = await prepareOwner('conversation-owner@example.com');
+    let providerPayload;
+    const provider = {
+      async generateExplanation(request) {
+        providerPayload = request.context;
+        return notConfiguredProvider().generateExplanation();
+      },
+    };
     const result = await runLearningConversation({
       userId: owner.userId,
       query: '解释 Promise',
       currentCourseLabel: 'JavaScript',
-      options: { provider: notConfiguredProvider() },
+      options: { provider },
     });
 
     assert.equal(result.version, RUNTIME_VERSION);
@@ -88,6 +95,10 @@ describe('learning conversation runtime', () => {
     assert.equal(result.explanation.status, 'fallback');
     assert.equal(result.explanation.fallback.reason, 'llm_not_configured');
     assert.equal(result.modeHint, 'concept_explanation');
+    assert.equal(providerPayload.sources.some((source) => source.key === 'behavior'), false);
+    assert.equal(providerPayload.insights.some((insight) => (
+      insight.evidence.some((evidence) => evidence.source === 'behavior_adapter')
+    )), false);
     assert.deepEqual(result.permissions.write, []);
     assert.equal(result.metadata.readOnly, true);
     assert.equal(result.metadata.actionLevel, 'insight_only');

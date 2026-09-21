@@ -162,6 +162,58 @@ function buildSources(context, ownerUserId) {
   return empty;
 }
 
+function projectSelectedContext(context, selection) {
+  const selectedItems = selection.selectedItems;
+  const selectedRecordIds = new Set(selectedItems.map((item) => item.provenance.recordId));
+  const selectedCourseIds = new Set(selectedItems
+    .map((item) => item.scope.courseId)
+    .filter(Boolean));
+
+  const selectedCourseKnowledge = context.courseKnowledge
+    ? {
+      ...context.courseKnowledge,
+      value: {
+        nodes: (context.courseKnowledge.value?.nodes || [])
+          .filter((node) => selectedRecordIds.has(`node:${node.knowledgeNodeId}`)),
+        evidence: (context.courseKnowledge.value?.evidence || [])
+          .filter((item) => selectedRecordIds.has(`evidence:${item.evidenceId}`)),
+      },
+    }
+    : null;
+
+  const selectedStates = [
+    ...(context.knowledgeStates?.value?.weakTopics || []),
+    ...(context.knowledgeStates?.value?.strongTopics || []),
+  ].filter((state) => selectedRecordIds.has(`state:${state.knowledgeNodeId}`));
+  const selectedKnowledgeStates = context.knowledgeStates
+    ? {
+      ...context.knowledgeStates,
+      value: {
+        weakTopics: selectedStates.filter((state) => state.state !== 'mastered'),
+        strongTopics: selectedStates.filter((state) => state.state === 'mastered'),
+        recentlyReviewed: selectedStates,
+      },
+    }
+    : null;
+
+  const selectedCourses = context.courses
+    ? {
+      ...context.courses,
+      value: (context.courses.value || []).filter((course) => selectedCourseIds.has(course.courseId)),
+    }
+    : null;
+
+  return {
+    ...context,
+    courses: selectedCourses,
+    behavior: null,
+    courseKnowledge: selectedCourseKnowledge,
+    knowledgeStates: selectedKnowledgeStates,
+    reflections: null,
+    memories: null,
+  };
+}
+
 async function runLearningConversation({ userId, query, currentCourseLabel, options = {} }) {
   const owner = Number(userId);
   if (!Number.isInteger(owner) || owner <= 0) {
@@ -206,11 +258,12 @@ async function runLearningConversation({ userId, query, currentCourseLabel, opti
     };
   }
 
-  const insights = agentInsightService.buildInsights(context);
-  const reasoning = reasoningEngine.buildReasoning({ context, insights });
+  const selectedContext = projectSelectedContext(context, selection.dataPlane);
+  const insights = agentInsightService.buildInsights(selectedContext);
+  const reasoning = reasoningEngine.buildReasoning({ context: selectedContext, insights });
   const task = TASK_BY_QUERY_TYPE.get(understanding.dataPlane.queryType.value) || 'summarize_learning_context';
   const explanation = await runtimeGateway.runExplanation({
-    context,
+    context: selectedContext,
     insights,
     reasoning,
     task,
