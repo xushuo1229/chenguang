@@ -106,6 +106,7 @@ function toState(row) {
     confidence: row.confidence,
     state: row.state,
     evidenceCount: row.evidence_count || 0,
+    assessmentEvidenceCount: row.assessment_evidence_count || 0,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

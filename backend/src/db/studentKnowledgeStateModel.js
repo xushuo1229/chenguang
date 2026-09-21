@@ -8,7 +8,10 @@ function findState({ userId, courseId, knowledgeNodeId }) {
             n.title AS node_title,
             n.kind AS node_kind,
             (SELECT COUNT(*) FROM student_knowledge_evidence e
-              WHERE e.user_id = s.user_id AND e.knowledge_state_id = s.id) AS evidence_count
+              WHERE e.user_id = s.user_id AND e.knowledge_state_id = s.id) AS evidence_count,
+            (SELECT COUNT(*) FROM student_knowledge_evidence e
+              WHERE e.user_id = s.user_id AND e.knowledge_state_id = s.id
+                AND e.source_type = 'assessment') AS assessment_evidence_count
        FROM student_knowledge_states s
        JOIN course_space_nodes n
          ON n.id = s.knowledge_node_id AND n.user_id = s.user_id
@@ -24,7 +27,10 @@ function listStates({ userId, courseId, limit, offset }) {
             n.title AS node_title,
             n.kind AS node_kind,
             (SELECT COUNT(*) FROM student_knowledge_evidence e
-              WHERE e.user_id = s.user_id AND e.knowledge_state_id = s.id) AS evidence_count
+              WHERE e.user_id = s.user_id AND e.knowledge_state_id = s.id) AS evidence_count,
+            (SELECT COUNT(*) FROM student_knowledge_evidence e
+              WHERE e.user_id = s.user_id AND e.knowledge_state_id = s.id
+                AND e.source_type = 'assessment') AS assessment_evidence_count
        FROM student_knowledge_states s
        JOIN course_space_nodes n
          ON n.id = s.knowledge_node_id AND n.user_id = s.user_id

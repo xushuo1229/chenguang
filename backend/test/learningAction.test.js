@@ -11,6 +11,7 @@ const courseSpaceService = require('../src/services/courseSpaceService');
 const plannerService = require('../src/services/learningPlannerService');
 const assessmentService = require('../src/services/learningAssessmentService');
 const actionService = require('../src/services/learningActionService');
+const { query } = require('../src/db');
 
 async function prepareCourse(email, courseId = 'course-1') {
   await authService.register({ email, password: 'Password123' });
@@ -118,5 +119,51 @@ describe('learning action confirmation', () => {
       proposalId: 'missing',
       body: { confirmed: false },
     }), (error) => error.code === 'USER_CONFIRMATION_REQUIRED');
+  });
+
+  test('rejects expired confirmation and remains idempotent for completed actions', async () => {
+    const owner = await prepareCourse('action-expiry@example.com');
+    const plan = await plannerService.buildLearningPlan({
+      userId: owner.userId,
+      courseId: owner.courseId,
+      query: { availableMinutes: 15 },
+    });
+    const confirmed = await actionService.confirmProposal({
+      userId: owner.userId,
+      body: {
+        courseId: owner.courseId,
+        planId: plan.planId,
+        blockId: plan.blocks[0].blockId,
+        availableMinutes: 15,
+      },
+    });
+    await assert.rejects(() => actionService.completeProposal({
+      userId: owner.userId,
+      proposalId: confirmed.proposal.id,
+      body: { confirmed: true },
+    }), (error) => error.code === 'ASSESSMENT_FEEDBACK_REQUIRED');
+
+    await query(
+      `UPDATE learning_action_proposals
+          SET updated_at = '2020-01-01T00:00:00.000Z'
+        WHERE id = $1`,
+      [confirmed.proposal.id],
+    );
+    await assert.rejects(() => actionService.completeProposal({
+      userId: owner.userId,
+      proposalId: confirmed.proposal.id,
+      body: { confirmed: true },
+    }), (error) => error.code === 'ACTION_EXPIRED');
+
+    const before = await actionService.listProposals({
+      userId: owner.userId,
+      query: { courseId: owner.courseId },
+    });
+    await assert.rejects(() => actionService.completeProposal({
+      userId: owner.userId,
+      proposalId: 'missing-proposal',
+      body: { confirmed: true },
+    }), (error) => error.code === 'ACTION_NOT_FOUND');
+    assert.equal(before.proposals.length > 0, true);
   });
 });

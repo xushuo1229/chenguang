@@ -10,6 +10,7 @@ const syncService = require('./syncService');
 const ACTION_VERSION = 'learning-action-v1';
 const STATUSES = new Set(['proposed', 'confirmed', 'completed', 'dismissed']);
 const MAX_ACTIONS = 50;
+const CONFIRMATION_TTL_MS = 24 * 60 * 60 * 1000;
 
 function requiredText(value, field, max = 200) {
   const text = String(value == null ? '' : value).trim();
@@ -58,6 +59,10 @@ function payloadForBlock(block) {
     reason: block.reason,
     minutes: block.minutes,
   });
+}
+
+function parseTimestamp(value) {
+  return value.includes('T') ? new Date(value) : new Date(`${value}Z`);
 }
 
 async function assertOwnedCourse(userId, courseId) {
@@ -150,6 +155,10 @@ async function completeProposal({ userId, proposalId, body }) {
   if (row.status === 'completed') return { version: ACTION_VERSION, proposal: toProposal(row) };
   if (row.status !== 'confirmed') {
     throw ApiError.badRequest('ACTION_NOT_CONFIRMED', '学习行动尚未确认');
+  }
+  const confirmedAt = parseTimestamp(row.updated_at).getTime();
+  if (!Number.isFinite(confirmedAt) || Date.now() - confirmedAt > CONFIRMATION_TTL_MS) {
+    throw ApiError.badRequest('ACTION_EXPIRED', '学习行动确认已过期，请重新确认');
   }
   if (row.kind === 'assessment') {
     const attemptCount = actionModel.countAttemptsBySource({ userId: owner, sourceId: row.id });

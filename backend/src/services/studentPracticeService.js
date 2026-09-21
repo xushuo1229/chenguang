@@ -2,13 +2,25 @@
 
 const crypto = require('node:crypto');
 const ApiError = require('../utils/ApiError');
+const { db } = require('../db');
 const model = require('../db/studentPracticeModel');
 const courseSpaceModel = require('../db/courseSpaceModel');
+const stateModel = require('../db/studentKnowledgeStateModel');
 const stateService = require('./studentKnowledgeStateService');
 const syncService = require('./syncService');
 
 const MODES = new Set(['recall', 'explanation', 'application']);
 const MAX_ATTEMPTS = 50;
+
+function toState(row) {
+  return {
+    masteryLevel: row.mastery_level,
+    confidence: row.confidence,
+    state: row.state,
+    evidenceCount: row.evidence_count || 0,
+    assessmentEvidenceCount: row.assessment_evidence_count || 0,
+  };
+}
 
 function requiredText(value, field, max) {
   const text = String(value == null ? '' : value).trim();
@@ -87,7 +99,19 @@ async function recordPracticeAttempt({ userId, body }) {
     throw ApiError.badRequest('INVALID_REFERENCE', '知识节点不存在或不属于当前课程');
   }
 
-  await model.createAttempt({
+  const evidenceData = JSON.stringify({ score, practice: true, mode });
+  const existing = stateModel.findState({ userId: owner, courseId, knowledgeNodeId });
+  const candidateEvidence = existing
+    ? stateModel.listEvidence({ userId: owner, knowledgeStateId: existing.id }).map((row) => ({
+      source_type: row.source_type,
+      evidence_data: row.evidence_data,
+    }))
+    : [];
+  candidateEvidence.push({ source_type: 'assessment', evidence_data: evidenceData });
+  const derived = stateService.aggregateEvidence(candidateEvidence);
+  const evidenceId = crypto.randomUUID();
+  const stateId = crypto.randomUUID();
+  const attempt = {
     id,
     userId: owner,
     courseId,
@@ -96,15 +120,27 @@ async function recordPracticeAttempt({ userId, body }) {
     score,
     durationMs,
     sourceAttemptId: id,
-  });
-  const state = await stateService.recordEvidence({
-    userId: owner,
-    courseId,
-    knowledgeNodeId,
-    sourceType: 'assessment',
-    sourceId: id,
-    evidenceData: { score, practice: true, mode },
-  });
+    sourceAttemptId: id,
+  };
+  const state = db.transaction(() => {
+    model.createAttempt(attempt);
+    return stateModel.recordEvidenceWithState({
+      stateId: existing ? existing.id : stateId,
+      userId: owner,
+      courseId,
+      knowledgeNodeId,
+      mastery: derived.mastery,
+      confidence: derived.confidence,
+      state: derived.state,
+      evidence: {
+        id: evidenceId,
+        user_id: owner,
+        source_type: 'assessment',
+        source_id: id,
+        evidence_data: evidenceData,
+      },
+    });
+  })();
   return {
     attempt: toAttempt({
       id,
@@ -115,12 +151,7 @@ async function recordPracticeAttempt({ userId, body }) {
       duration_ms: durationMs,
       created_at: state.updatedAt,
     }),
-    mastery: {
-      masteryLevel: state.masteryLevel,
-      confidence: state.confidence,
-      state: state.state,
-      evidenceCount: state.evidenceCount,
-    },
+    mastery: toState(state),
   };
 }
 

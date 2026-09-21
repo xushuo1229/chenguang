@@ -18,7 +18,7 @@ function evaluateState(state) {
     requirements: {
       masteryAtLeast75: state.masteryLevel >= 0.75,
       twoEvidenceItems: state.evidenceCount >= 2,
-      assessmentEvidencePresent: state.state === 'mastered',
+      assessmentEvidencePresent: state.assessmentEvidenceCount > 0,
     },
   };
 }
