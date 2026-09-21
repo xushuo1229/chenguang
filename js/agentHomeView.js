@@ -205,6 +205,7 @@ function createConversationCard(service) {
   const input = element('input', 'agent-conversation-input');
   input.type = 'text';
   input.name = 'query';
+  input.setAttribute('aria-label', '学习问题');
   input.placeholder = '例如：解释 Promise';
   input.maxLength = 1000;
   input.required = true;
@@ -246,6 +247,11 @@ function renderAgentOverview(output, overview) {
   output.replaceChildren(list, element('p', 'agent-confidence', '计划仅为推荐，执行前需要用户确认。'));
 }
 
+function resetLearningAgent(output, status) {
+  output.replaceChildren();
+  status.textContent = '已取消当前行动，未执行任何修改。';
+}
+
 function renderAssessmentForm(output, service, action) {
   const assessment = action.action.assessment;
   const form = element('form', 'agent-conversation-form agent-assessment-form');
@@ -256,6 +262,7 @@ function renderAssessmentForm(output, service, action) {
     const textarea = element('textarea', 'agent-conversation-input');
     textarea.maxLength = 2000;
     textarea.dataset.itemId = entry.itemId;
+    textarea.setAttribute('aria-label', `请作答：${entry.prompt}`);
     textarea.required = true;
     field.appendChild(textarea);
     form.appendChild(field);
@@ -304,10 +311,14 @@ function createLearningAgentCard(service, courseId) {
   loadButton.type = 'button';
   const nextButton = element('button', 'agent-conversation-button', '确认下一个行动');
   nextButton.type = 'button';
+  nextButton.setAttribute('aria-label', '确认执行下一个学习行动');
+  const cancelButton = element('button', 'agent-conversation-button', '取消');
+  cancelButton.type = 'button';
+  cancelButton.setAttribute('aria-label', '取消学习行动');
   const status = element('p', 'agent-status');
   status.setAttribute('role', 'status');
   const output = element('div');
-  actions.append(loadButton, nextButton);
+  actions.append(loadButton, nextButton, cancelButton);
   card.append(actions, status, output);
 
   loadButton.addEventListener('click', () => {
@@ -329,6 +340,9 @@ function createLearningAgentCard(service, courseId) {
       status.textContent = '学习行动暂时不可用。';
       output.replaceChildren();
     });
+  });
+  cancelButton.addEventListener('click', () => {
+    resetLearningAgent(output, status);
   });
   return card;
 }

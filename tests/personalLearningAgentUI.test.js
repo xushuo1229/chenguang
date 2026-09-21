@@ -91,4 +91,53 @@ describe('personal learning agent UI', () => {
       proposalId: 'proposal-1',
     }));
   });
+
+  test('provides accessible input and cancel safely without execution', async () => {
+    const service = {
+      load: vi.fn().mockResolvedValue(loadPayload()),
+      askLearningConversation: vi.fn(),
+      learningAgentOverview: vi.fn().mockResolvedValue(overview()),
+      confirmLearningNextAction: vi.fn().mockResolvedValue(confirmedAction()),
+      submitAssessment: vi.fn(),
+    };
+    const target = document.createElement('main');
+    document.body.appendChild(target);
+    const view = createAgentHomeView({ target, service });
+    await view.load();
+
+    expect(target.querySelector('input[name="query"]').getAttribute('aria-label')).toBe('学习问题');
+    [...target.querySelectorAll('button')].find((node) => node.textContent === '加载学习概览').click();
+    await vi.waitFor(() => expect(target.textContent).toContain('下一步：Promise'));
+    expect(target.querySelector('[aria-label="确认执行下一个学习行动"]')).toBeTruthy();
+    [...target.querySelectorAll('button')].find((node) => node.textContent === '确认下一个行动').click();
+    await vi.waitFor(() => expect(target.querySelector('textarea').getAttribute('aria-label')).toBe('请作答：请解释「Promise」。'));
+
+    [...target.querySelectorAll('button')].find((node) => node.textContent === '取消').click();
+    expect(target.textContent).toContain('已取消当前行动，未执行任何修改。');
+    expect(target.querySelector('textarea')).toBeNull();
+    expect(service.submitAssessment).not.toHaveBeenCalled();
+  });
+
+  test('shows friendly assessment failure without provider details', async () => {
+    const service = {
+      load: vi.fn().mockResolvedValue(loadPayload()),
+      learningAgentOverview: vi.fn().mockResolvedValue(overview()),
+      confirmLearningNextAction: vi.fn().mockResolvedValue(confirmedAction()),
+      submitAssessment: vi.fn().mockRejectedValue(new Error('Provider secret-detail')),
+    };
+    const target = document.createElement('main');
+    document.body.appendChild(target);
+    const view = createAgentHomeView({ target, service });
+    await view.load();
+
+    [...target.querySelectorAll('button')].find((node) => node.textContent === '加载学习概览').click();
+    await vi.waitFor(() => expect(target.textContent).toContain('下一步：Promise'));
+    [...target.querySelectorAll('button')].find((node) => node.textContent === '确认下一个行动').click();
+    await vi.waitFor(() => expect(target.querySelector('textarea')).toBeTruthy());
+    target.querySelector('textarea').value = 'It represents an eventual value.';
+    target.querySelector('.agent-assessment-form button').click();
+    await vi.waitFor(() => expect(target.textContent).toContain('评估提交暂时不可用，请稍后再试。'));
+    expect(target.textContent).not.toContain('Provider');
+    expect(target.textContent).not.toContain('secret-detail');
+  });
 });
