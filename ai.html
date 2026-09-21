@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI 教练 · 知行</title>
+  <title>个人 Agent · 知行</title>
   <meta name="theme-color" content="#0B1220">
-  <meta name="description" content="知行 XINGZHIXING AI 教练：数据理解、个性化建议、行动计划与复盘。">
+  <meta name="description" content="知行个人 Agent：理解学习状态、解释原因、推荐下一步并组织学习行动。">
   <link rel="icon" href="/brand/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/vendor/fontawesome/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="css/variables.css" as="style">
@@ -176,7 +176,7 @@
       color: var(--text-light);
     }
 
-    /* ===== AI Coach 工作区导航 ===== */
+    /* ===== Personal Agent 工作区导航 ===== */
     .coach-ia {
       flex: 0 0 auto;
       margin: 16px 24px 0;
@@ -213,6 +213,66 @@
     }
     a.coach-ia-item:hover { border-color: var(--primary); background: var(--primary-light); }
     a.coach-ia-item small { font-size: 10px; font-weight: 500; color: var(--text-muted); }
+
+    /* ===== Personal Agent Experience ===== */
+        .personal-agent-experience {
+      display: grid;
+      flex: 1;
+      gap: 14px;
+      margin: 16px 24px 0;
+      overflow: auto;
+      min-height: 0;
+    }
+    .personal-agent-status { min-height: 20px; font-size: 12px; color: var(--text-muted); }
+    .personal-agent-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-xl);
+      padding: 18px;
+      box-shadow: var(--shadow-xs);
+    }
+    .personal-agent-hero {
+      display: grid;
+      gap: 8px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(255, 248, 235, 0.86));
+      border-color: rgba(217, 152, 58, 0.18);
+    }
+    .personal-agent-hero-title { font-size: 24px; font-weight: 800; color: var(--text-dark); }
+    .personal-agent-hero-subtitle { font-size: 13px; color: var(--text-muted); }
+    .personal-agent-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+    }
+    .personal-agent-card-head { display: grid; gap: 4px; margin-bottom: 12px; }
+    .personal-agent-card-head h3 { font-size: 15px; font-weight: 750; color: var(--text-dark); }
+    .personal-agent-card-head p { font-size: 11px; color: var(--text-muted); }
+    .personal-agent-card-title { font-size: 16px; font-weight: 750; color: var(--text-dark); margin-bottom: 8px; }
+    .personal-agent-section-title { margin: 12px 0 6px; font-size: 11px; font-weight: 750; color: var(--primary); text-transform: uppercase; letter-spacing: 0.04em; }
+    .personal-agent-list { display: grid; gap: 6px; }
+    .personal-agent-list li { font-size: 12px; color: var(--text-dark); line-height: 1.55; }
+    .personal-agent-muted { font-size: 12px; color: var(--text-muted); line-height: 1.55; }
+    .personal-agent-empty { font-size: 12px; color: var(--text-muted); }
+    .personal-agent-reasoning, .personal-agent-recommendation { font-size: 12px; color: var(--text-dark); line-height: 1.6; }
+    .personal-agent-focus-item { padding: 12px; border-radius: var(--radius-lg); background: var(--bg-soft); display: grid; gap: 6px; }
+    .personal-agent-focus-item h4 { font-size: 13px; color: var(--text-dark); }
+    .personal-agent-button {
+      min-height: 32px; padding: 7px 12px; border: 1px solid var(--border-default); border-radius: var(--radius-full);
+      background: var(--bg-card); color: var(--text-dark); font-size: 12px; font-weight: 650; cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .personal-agent-button:hover { border-color: var(--primary); background: var(--primary-light); }
+    .personal-agent-button.primary { border-color: transparent; background: var(--brand-amber); color: var(--text-on-accent); }
+    .personal-agent-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .personal-agent-field { display: grid; gap: 6px; margin-top: 10px; }
+    .personal-agent-field span { font-size: 12px; color: var(--text-dark); line-height: 1.5; }
+    .personal-agent-field textarea {
+      min-height: 72px; padding: 10px 12px; border: 1px solid var(--border-default); border-radius: var(--radius-md);
+      background: var(--bg-soft); color: var(--text-dark); resize: vertical; font: inherit;
+    }
+    .personal-agent-assessment { margin-top: 12px; }
+    .personal-agent-output { margin-top: 14px; }
+    .personal-agent-feedback { border: 1px solid rgba(64, 145, 108, 0.22); background: rgba(64, 145, 108, 0.07); }
 
     /* 今日状态 */
     .today-grid {
@@ -528,6 +588,7 @@
       .mobile-menu-btn { display: flex; }
       .mobile-tabbar { display: flex; }
       .main { padding-bottom: 72px !important; }
+      .personal-agent-experience { margin: 12px 12px 16px; }
       .topbar { padding: 10px 16px; }
       .coach-ia { margin: 12px 12px 0; }
       .coach-layout { padding: 12px 12px 16px; }
@@ -562,7 +623,7 @@
   <a href="workbench.html?view=course" class="nav-item" data-nav="course"><i class="fas fa-graduation-cap"></i>课程</a>
   <a href="goals.html" class="nav-item" data-nav="goals"><i class="fas fa-bullseye"></i>目标</a>
   <a href="stats.html" class="nav-item" data-nav="stats"><i class="fas fa-chart-line"></i>统计</a>
-  <a href="ai.html" class="nav-item active" data-nav="ai"><i class="fas fa-compass"></i>AI 教练</a>
+  <a href="ai.html" class="nav-item active" data-nav="ai"><i class="fas fa-compass"></i>个人 Agent</a>
   <div class="nav-bottom">
     <a href="workbench.html?view=manage" class="nav-item" data-nav="manage"><i class="fas fa-cog"></i>管理</a>
     <a href="workbench.html?view=profile" class="nav-item" data-nav="profile"><i class="fas fa-user"></i>我的</a>
@@ -585,8 +646,8 @@
       <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="打开菜单"><i class="fas fa-bars"></i></button>
       <div class="topbar-avatar"><i class="fas fa-compass"></i></div>
       <div class="topbar-info">
-        <h2 id="topbarTitle">知行 AI 教练</h2>
-        <p>结合近期记录和目标，帮你找到下一步</p>
+        <h2 id="topbarTitle">个人 Agent</h2>
+        <p>理解学习状态，解释原因，推进下一步</p>
       </div>
     </div>
     <div class="topbar-actions">
@@ -594,9 +655,9 @@
     </div>
   </div>
 
-  <!-- ===== AI Coach 工作区导航 ===== -->
-  <nav class="coach-ia coach-card" aria-label="AI Coach 工作区">
-    <div class="coach-ia-head"><i class="fas fa-route"></i><h3>AI Coach Workspace</h3></div>
+  <!-- ===== Personal Agent 工作区导航 ===== -->
+  <nav class="coach-ia coach-card" aria-label="个人 Agent 工作区">
+    <div class="coach-ia-head"><i class="fas fa-route"></i><h3>Personal Agent Workspace</h3></div>
     <div class="coach-ia-grid">
       <a class="coach-ia-item" href="agent-home.html">Agent Home<small>学习状态与证据</small></a>
       <a class="coach-ia-item" href="#coachConversation">Conversation<small>基于上下文解释</small></a>
@@ -607,10 +668,12 @@
     </div>
   </nav>
 
+  <section id="personalAgentExperience" class="personal-agent-experience" aria-label="个人 Agent 核心体验"></section>
+
   <!-- 加载态 -->
   <div class="state-block" id="aiLoading" aria-live="polite">
     <div class="state-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
-    <h3>教练正在查看你的数据…</h3>
+    <h3>个人 Agent 正在查看你的数据…</h3>
     <p>正在汇总最近的学习、专注、运动与目标进度</p>
   </div>
 
@@ -625,18 +688,18 @@
   <!-- 空数据态 -->
   <div class="state-block" id="aiEmpty" hidden>
     <div class="state-icon"><i class="fas fa-seedling"></i></div>
-    <h3>数据还不够，教练先歇一会</h3>
-    <p>目前还没有足够的成长记录可以分析。先去工作台打卡、专注或记录几天，教练就能为你找出规律、提示目标风险了。</p>
+    <h3>数据还不够，个人 Agent 先歇一会</h3>
+    <p>目前还没有足够的成长记录可以分析。先去工作台打卡、专注或记录几天，个人 Agent 就能为你找出规律、提示目标风险了。</p>
     <button class="state-btn" id="aiGoWorkbench">去记录数据</button>
   </div>
 
-  <!-- ===== 教练仪表盘 ===== -->
+  <!-- ===== 个人 Agent 支撑分析 ===== -->
   <div class="coach-layout" id="coachDashboard" hidden>
-    <section class="coach-col ai-persona-col" aria-label="AI 人格介绍">
+    <section class="coach-col ai-persona-col" aria-label="个人 Agent 介绍">
       <div class="coach-card ai-persona-card">
         <div class="ai-persona-mark"><i class="fas fa-compass"></i></div>
-        <h2>成长伙伴</h2>
-        <p>你的长期成长教练。它理解你的学习、专注、运动和目标进度，只在真实数据上给洞察。</p>
+        <h2>个人 Agent</h2>
+        <p>你的个人学习 Agent。它理解你的学习、专注、运动和目标进度，只在真实数据上给洞察。</p>
         <ul class="ai-persona-list">
           <li><i class="fas fa-eye"></i>看见趋势与变化</li>
           <li><i class="fas fa-shield-halved"></i>提前提示风险</li>
@@ -673,7 +736,7 @@
       </div>
 
       <div class="coach-card" id="cardMemoryActivation" hidden>
-        <div class="coach-card-head"><i class="fas fa-seedling"></i><h3>AI发现可能的成长规律</h3></div>
+        <div class="coach-card-head"><i class="fas fa-seedling"></i><h3>Agent发现可能的成长规律</h3></div>
         <ul class="activation-list" id="memoryActivationList"></ul>
       </div>
 
@@ -703,15 +766,15 @@
         </div>
 
         <div class="chat-messages" id="chatMessages" aria-live="polite">
-          <div class="mini-empty" id="chatGreeting">你好，我是你的长期成长教练。左边是你最近的数据画像，记录越久，我越能看到趋势和风险。</div>
+          <div class="mini-empty" id="chatGreeting">你好，我是你的个人 Agent。左边是你最近的数据画像，记录越久，我越能看到趋势和风险。</div>
         </div>
 
         <div class="chat-input-area">
           <div class="chat-input-wrap">
-            <textarea class="chat-input" id="chatInput" placeholder="问问教练：我今天应该做什么？" rows="1" autocomplete="off" aria-label="输入你的问题"></textarea>
+            <textarea class="chat-input" id="chatInput" placeholder="问个人 Agent：我今天应该做什么？" rows="1" autocomplete="off" aria-label="输入你的问题"></textarea>
             <button class="chat-send" id="chatSend" aria-label="发送"><i class="fas fa-paper-plane"></i></button>
           </div>
-          <div class="chat-disclaimer">AI 教练只做分析与建议，不会修改你的任何数据；重要决策请自行判断</div>
+          <div class="chat-disclaimer">个人 Agent 只做分析与建议，不会修改你的任何数据；重要决策请自行判断</div>
         </div>
       </div>
     </section>

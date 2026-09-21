@@ -2,6 +2,8 @@ import '../js/utils/dom.js';
 import '../js/utils/date.js';
 import '../js/ui/toast.js';
 import '../js/apiClient.js';
+import { createAgentHomeService } from '../js/agentHomeService.js';
+import { createPersonalAgentExperience } from '../js/personalAgentExperience.js';
 import '../js/store.js';
 import '../js/sync.js';
 import Analytics from '../js/analytics.js';
@@ -423,7 +425,7 @@ function friendlyAIError(err) {
   var code = err && err.data && err.data.error && err.data.error.code;
   // 未配置 Provider：明确告知 AI 暂未启用，同时指出页面数据分析仍然可用
   if (code === 'AI_NOT_CONFIGURED') {
-    return 'AI 教练暂未启用，当前仍可以查看你的数据分析。';
+    return '个人 Agent 的对话能力暂未启用，当前仍可以查看你的数据分析。';
   }
   if (err && (err.name === 'AbortError' || /abort/i.test(msg))) {
     return 'AI 响应超时，请稍后再试。';
@@ -440,9 +442,9 @@ function friendlyAIError(err) {
     return 'AI 服务暂时不可用，请稍后再试。';
   }
   if (err && Number(err.status) >= 400 && msg) {
-    return 'AI 教练暂时不可用：' + msg;
+    return '个人 Agent 暂时不可用：' + msg;
   }
-  return 'AI 教练暂时不可用，请稍后再试。';
+  return '个人 Agent 暂时不可用，请稍后再试。';
 }
 
 function setBusy(on) {
@@ -569,6 +571,19 @@ function loadAll() {
   });
 }
 
+function loadPersonalAgentExperience() {
+  var target = $('#personalAgentExperience');
+  if (!target) return;
+  var hour = new Date().getHours();
+  var greeting = hour < 12 ? '早上好。' : hour < 18 ? '下午好。' : '晚上好。';
+  createPersonalAgentExperience({
+    target,
+    service: createAgentHomeService(),
+    greeting,
+    availableMinutes: 60,
+  }).load();
+}
+
 /* ---------- 事件绑定 ---------- */
 function setupEvents() {
   var send = $('#chatSend'); if (send) send.addEventListener('click', function () { sendMessage($('#chatInput') ? $('#chatInput').value : ''); });
@@ -643,6 +658,7 @@ if (checkAuth()) {
   setupEvents();
   loadAll();
   loadHistory();
+  loadPersonalAgentExperience();
 }
 
 /* visualViewport 高度 → --vvh：iOS 键盘弹出时视口缩小，

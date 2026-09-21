@@ -28,7 +28,7 @@ describe('XINGZHIXING brand integration', () => {
     expect(loginHtml).toContain('理解自己，');
     expect(indexHtml).toContain('XINGZHIXING');
     expect(indexHtml).toContain('/design/xz-hero.svg');
-    expect(aiHtml).toContain('知行 AI 教练');
+    expect(aiHtml).toContain('个人 Agent');
     for (const [, html] of [[null, workbenchHtml], [null, statsHtml], [null, goalsHtml], [null, aiHtml]]) {
       expect(html).toContain('/brand/logo-icon.svg');
       expect(html).toContain('AI Personal Growth OS');

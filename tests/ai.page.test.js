@@ -204,7 +204,7 @@ test('AI 失败 → 友好系统提示，不透出原始错误堆栈', async () 
 
   const sys = [...document.querySelectorAll('#chatMessages .msg-system .msg-bubble')];
   expect(sys.length).toBeGreaterThan(0);
-  expect(sys[sys.length - 1].textContent).toContain('AI 教练暂时不可用');
+  expect(sys[sys.length - 1].textContent).toContain('个人 Agent 暂时不可用');
 });
 
 test('快捷问题点击 → 直接以固定问题发起对话', async () => {
