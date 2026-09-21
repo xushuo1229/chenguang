@@ -580,6 +580,22 @@ var CGAPI = {
       learningConversation: function (payload) {
         return request('POST', '/agent-home/learning-conversation', payload, { timeoutMs: 30000 });
       }
+    },
+
+    /* ===== Personal Learning Agent 2.0 ===== */
+    learningAgent: {
+      overview: function (courseId, availableMinutes) {
+        const params = new URLSearchParams();
+        if (availableMinutes) params.set('availableMinutes', String(availableMinutes));
+        const suffix = params.toString();
+        return request('GET', `/learning/agent/${encodeURIComponent(courseId)}/overview${suffix ? `?${suffix}` : ''}`, null, { timeoutMs: 15000 });
+      },
+      confirmNextAction: function (courseId) {
+        return request('POST', `/learning/agent/${encodeURIComponent(courseId)}/next-action`, { confirmed: true }, { timeoutMs: 15000 });
+      },
+      submitAssessment: function (payload) {
+        return request('POST', '/learning/assessment/attempts', payload, { timeoutMs: 20000 });
+      }
     }
   };
 

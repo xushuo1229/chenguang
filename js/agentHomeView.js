@@ -232,6 +232,107 @@ function createConversationCard(service) {
   return card;
 }
 
+function renderAgentOverview(output, overview) {
+  const counts = overview.perception.stateCounts || {};
+  const plan = overview.plan || {};
+  const list = element('ul', 'agent-list');
+  appendItems(list, [
+    `薄弱状态：${counts.weak || 0} · 学习中：${counts.learning || 0} · 已掌握：${counts.mastered || 0}`,
+    `计划行动：${(plan.blocks || []).length} 个`,
+    overview.perception.nextBestRecommendation
+      ? `下一步：${overview.perception.nextBestRecommendation.nodeTitle} · ${overview.perception.nextBestRecommendation.recommendedMode}`
+      : '下一步：暂无推荐',
+  ], (item) => item);
+  output.replaceChildren(list, element('p', 'agent-confidence', '计划仅为推荐，执行前需要用户确认。'));
+}
+
+function renderAssessmentForm(output, service, action) {
+  const assessment = action.action.assessment;
+  const form = element('form', 'agent-conversation-form agent-assessment-form');
+  form.className = 'agent-assessment-form';
+  assessment.items.forEach((entry) => {
+    const field = element('div', 'agent-insight');
+    field.appendChild(element('p', null, entry.prompt));
+    const textarea = element('textarea', 'agent-conversation-input');
+    textarea.maxLength = 2000;
+    textarea.dataset.itemId = entry.itemId;
+    textarea.required = true;
+    field.appendChild(textarea);
+    form.appendChild(field);
+  });
+  const button = element('button', 'agent-conversation-button', '提交评估');
+  button.type = 'submit';
+  form.appendChild(button);
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    button.disabled = true;
+    const answers = [...form.querySelectorAll('textarea')].map((textarea) => ({
+      itemId: textarea.dataset.itemId,
+      response: textarea.value,
+    }));
+    service.submitAssessment({
+      confirmed: true,
+      courseId: assessment.courseId,
+      knowledgeNodeId: assessment.knowledgeNodeId,
+      proposalId: action.proposal.id,
+      answers,
+    }).then((result) => {
+      output.replaceChildren(element('p', 'agent-confidence', `评估完成：得分 ${result.assessment.score.toFixed(2)}，掌握状态 ${result.mastery.state}`));
+    }).catch(() => {
+      button.disabled = false;
+      output.appendChild(element('p', 'agent-empty', '评估提交暂时不可用，请稍后再试。'));
+    });
+  });
+  output.appendChild(form);
+}
+
+function renderConfirmedAction(output, service, action) {
+  const proposal = action.proposal || {};
+  const summary = element('p', 'agent-confidence', `已确认：${proposal.nodeTitle || ''} · ${proposal.kind || ''}`);
+  output.replaceChildren(summary);
+  if (action.action && action.action.type === 'start_assessment') {
+    renderAssessmentForm(output, service, action);
+  } else {
+    output.appendChild(element('p', 'agent-empty', action.action ? action.action.instruction : '暂无可执行行动。'));
+  }
+}
+
+function createLearningAgentCard(service, courseId) {
+  const card = sectionCard('Personal Learning Agent 2.0', '感知 → 计划 → 用户确认 → 评估反馈', 'deterministic_orchestration', 'user_confirmed_action');
+  const actions = element('div', 'agent-conversation-form');
+  const loadButton = element('button', 'agent-conversation-button', '加载学习概览');
+  loadButton.type = 'button';
+  const nextButton = element('button', 'agent-conversation-button', '确认下一个行动');
+  nextButton.type = 'button';
+  const status = element('p', 'agent-status');
+  status.setAttribute('role', 'status');
+  const output = element('div');
+  actions.append(loadButton, nextButton);
+  card.append(actions, status, output);
+
+  loadButton.addEventListener('click', () => {
+    status.textContent = '正在读取学习概览...';
+    service.learningAgentOverview(courseId, 60).then((overview) => {
+      status.textContent = '';
+      renderAgentOverview(output, overview);
+    }).catch(() => {
+      status.textContent = '学习概览暂时不可用。';
+      output.replaceChildren();
+    });
+  });
+  nextButton.addEventListener('click', () => {
+    status.textContent = '等待确认后启动行动...';
+    service.confirmLearningNextAction(courseId).then((result) => {
+      status.textContent = '';
+      renderConfirmedAction(output, service, result);
+    }).catch(() => {
+      status.textContent = '学习行动暂时不可用。';
+      output.replaceChildren();
+    });
+  });
+  return card;
+}
+
   function createAgentHomeView({ target, service }) {
   ensureStyles();
   const root = element('div', 'agent-home');
@@ -277,9 +378,15 @@ function createConversationCard(service) {
     const conversationCard = typeof service.askLearningConversation === 'function'
       ? createConversationCard(service)
       : null;
+    const courseOptions = context.courses && Array.isArray(context.courses.value) ? context.courses.value : [];
+    const agentCourseId = courseOptions.find((course) => course && course.courseId)?.courseId || null;
+    const agentCard = agentCourseId && typeof service.learningAgentOverview === 'function'
+      ? createLearningAgentCard(service, agentCourseId)
+      : null;
 
     content.replaceChildren(...[
       conversationCard,
+      agentCard,
       overview,
       courses,
       knowledge,

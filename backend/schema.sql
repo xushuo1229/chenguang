@@ -199,3 +199,24 @@ CREATE TABLE IF NOT EXISTS student_practice_attempts (
 
 CREATE INDEX IF NOT EXISTS idx_student_practice_attempts_owner_node
   ON student_practice_attempts(user_id, course_id, knowledge_node_id, created_at DESC);
+
+-- ---------- Learning Action Proposals ----------
+-- Phase 31 additive layer: user-confirmed action boundary for Learning Planner.
+CREATE TABLE IF NOT EXISTS learning_action_proposals (
+  id                 TEXT PRIMARY KEY,
+  user_id            INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  course_id          TEXT NOT NULL,
+  knowledge_node_id  TEXT NOT NULL,
+  kind               TEXT NOT NULL CHECK (kind IN ('assessment', 'review', 'consolidate')),
+  status             TEXT NOT NULL DEFAULT 'proposed' CHECK (status IN ('proposed', 'confirmed', 'completed', 'dismissed')),
+  plan_id            TEXT NOT NULL,
+  block_id           TEXT NOT NULL,
+  fingerprint        TEXT NOT NULL,
+  payload_json       TEXT NOT NULL DEFAULT '{}',
+  created_at         TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at         TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, fingerprint)
+);
+
+CREATE INDEX IF NOT EXISTS idx_learning_action_proposals_owner_course
+  ON learning_action_proposals(user_id, course_id, updated_at DESC);

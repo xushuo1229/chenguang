@@ -92,6 +92,32 @@ function normalizeLearningConversation(response) {
   return result;
 }
 
+function normalizeLearningAgentOverview(response) {
+  const overview = isObject(response) && isObject(response.data) ? response.data : null;
+  if (!overview || overview.version !== 'personal-learning-agent-v2'
+    || !isObject(overview.metadata) || overview.metadata.readOnly !== true
+    || overview.metadata.autonomous !== false) {
+    throw new Error('INVALID_LEARNING_AGENT_OVERVIEW');
+  }
+  return overview;
+}
+
+function normalizeLearningAction(response) {
+  const result = isObject(response) && isObject(response.data) ? response.data : null;
+  if (!result || result.version !== 'personal-learning-agent-v2' || result.metadata.userConfirmed !== true) {
+    throw new Error('INVALID_LEARNING_ACTION');
+  }
+  return result;
+}
+
+function normalizeAssessmentResponse(response) {
+  const result = isObject(response) && isObject(response.data) ? response.data : null;
+  if (!result || !isObject(result.assessment) || result.assessment.version !== 'assessment-result-v1') {
+    throw new Error('INVALID_ASSESSMENT_RESULT');
+  }
+  return result;
+}
+
 function createAgentHomeService(options) {
   const client = (options && options.client) || CGAPI;
   return {
@@ -107,6 +133,15 @@ function createAgentHomeService(options) {
     async askLearningConversation(payload) {
       return client.agentHome.learningConversation(payload).then(normalizeLearningConversation);
     },
+    learningAgentOverview(courseId, availableMinutes) {
+      return client.learningAgent.overview(courseId, availableMinutes).then(normalizeLearningAgentOverview);
+    },
+    confirmLearningNextAction(courseId) {
+      return client.learningAgent.confirmNextAction(courseId).then(normalizeLearningAction);
+    },
+    submitAssessment(payload) {
+      return client.learningAgent.submitAssessment(payload).then(normalizeAssessmentResponse);
+    },
   };
 }
 
@@ -119,4 +154,7 @@ export {
   normalizeInsights,
   normalizeReasoning,
   normalizeLearningConversation,
+  normalizeLearningAgentOverview,
+  normalizeLearningAction,
+  normalizeAssessmentResponse,
 };
