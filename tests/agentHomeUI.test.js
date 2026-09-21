@@ -122,12 +122,33 @@ function reasoningResponse() {
   };
 }
 
+function conversationResponse() {
+  return {
+    data: {
+      version: 'learning-conversation-v1',
+      userId: 1,
+      readOnly: true,
+      status: 'fallback',
+      modeHint: 'concept_explanation',
+      queryUnderstanding: { intent: { value: 'explain' } },
+      contextSelection: { status: 'selected' },
+      explanation: {
+        status: 'fallback',
+        explanations: [{ title: 'Promise 学习解释', why: '基于已有课程知识解释。', evidenceRefs: [] }],
+      },
+      permissions: { read: ['learning_context'], write: [] },
+      metadata: { readOnly: true, actionLevel: 'insight_only' },
+    },
+  };
+}
+
 function createClient() {
   return {
     agentHome: {
       context: vi.fn().mockResolvedValue(contextResponse()),
       insights: vi.fn().mockResolvedValue(insightsResponse()),
       reasoning: vi.fn().mockResolvedValue(reasoningResponse()),
+      learningConversation: vi.fn().mockResolvedValue(conversationResponse()),
     },
   };
 }
@@ -144,6 +165,16 @@ describe('agent home service', () => {
     vi.clearAllMocks();
     document.body.textContent = '';
     document.head.querySelectorAll('#agent-home-view-style').forEach((node) => node.remove());
+  });
+
+  test('loads learning conversation with read-only permission enforcement', async () => {
+    const client = createClient();
+    const service = createAgentHomeService({ client });
+    const result = await service.askLearningConversation({ query: '解释 Promise' });
+    expect(client.agentHome.learningConversation).toHaveBeenCalledWith({ query: '解释 Promise' });
+    expect(result.version).toBe('learning-conversation-v1');
+    expect(result.readOnly).toBe(true);
+    expect(result.permissions.write).toEqual([]);
   });
 
   test('loads context and insights through the Agent API only', async () => {
@@ -218,6 +249,28 @@ describe('agent home UI', () => {
     expect(text).toContain('来自确定性洞察 · insight_only');
     expect(target.querySelectorAll('button')).toHaveLength(0);
     expect(target.querySelectorAll('form')).toHaveLength(0);
+  });
+
+  test('renders learning conversation output with context transparency', async () => {
+    const ask = vi.fn().mockResolvedValue(conversationResponse().data);
+    const service = { load: vi.fn().mockResolvedValue({
+      context: contextResponse().data,
+      insights: insightsResponse().data,
+      reasoning: reasoningResponse().data,
+    }), askLearningConversation: ask };
+    const { target, view } = mount(service);
+    await view.load();
+    const input = target.querySelector('.agent-conversation-input');
+    const button = target.querySelector('.agent-conversation-button');
+    input.value = '解释 Promise';
+    button.click();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(ask).toHaveBeenCalledWith({ query: '解释 Promise' });
+    expect(target.textContent).toContain('Learning Conversation');
+    expect(target.textContent).toContain('Context transparency · selected · intent explain · learning mode concept_explanation');
   });
 
   test('falls back safely when reasoning API is unavailable', async () => {

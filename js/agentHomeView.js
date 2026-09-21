@@ -50,10 +50,13 @@ function ensureStyles() {
     .agent-insight:first-child { border-top: 0; padding-top: 0; }
     .agent-reasoning { padding: 14px 0; border-top: 1px solid var(--border-soft); }
     .agent-reasoning:first-child { border-top: 0; padding-top: 0; }
+    .agent-conversation-form { display: flex; gap: 10px; margin: 12px 0 10px; }
+    .agent-conversation-input { flex: 1; min-width: 0; padding: 10px 12px; border: 1px solid var(--border-soft); border-radius: var(--r-md); background: var(--bg-elev); color: var(--text-hi); }
+    .agent-conversation-button { padding: 10px 14px; border: 0; border-radius: var(--r-md); background: var(--accent, var(--primary)); color: var(--text-inverse, #fff); font-weight: 600; cursor: pointer; }
     .agent-confidence { margin: 5px 0 0; color: var(--text-muted); font-size: .78rem; }
     .agent-evidence { margin: 9px 0 0; padding-left: 18px; color: var(--text-muted); font-size: .78rem; }
     .agent-status { min-height: 22px; color: var(--text-muted); font-size: .86rem; }
-    @media (max-width: 760px) { .agent-grid { grid-template-columns: 1fr; } .agent-card { padding: 16px; } }
+    @media (max-width: 760px) { .agent-grid { grid-template-columns: 1fr; } .agent-card { padding: 16px; } .agent-conversation-form { flex-direction: column; } }
   `;
   document.head.appendChild(style);
 }
@@ -168,7 +171,68 @@ function renderReasoning(host, reasoning) {
   });
 }
 
-function createAgentHomeView({ target, service }) {
+function renderConversationResult(host, result) {
+  host.replaceChildren();
+  if (result.status === 'clarification_required') {
+    host.appendChild(element('p', 'agent-empty', '需要补充课程或知识点后才能生成学习解释。'));
+    return;
+  }
+  const explanation = result.explanation || {};
+  const explanations = Array.isArray(explanation.explanations) ? explanation.explanations : [];
+  if (!explanations.length) {
+    host.appendChild(element('p', 'agent-empty', '暂无可解释的学习内容。'));
+    return;
+  }
+  explanations.slice(0, 3).forEach((item) => {
+    const article = element('article', 'agent-insight');
+    article.appendChild(element('h4', null, item.title || item.text || '学习解释'));
+    article.appendChild(element('p', null, item.why || item.text || ''));
+    const evidence = element('ul', 'agent-evidence');
+    (item.evidenceRefs || []).slice(0, 3).forEach((ref) => {
+      evidence.appendChild(element('li', null, [ref.metric, ref.period].filter(Boolean).join(' · ') || '已绑定证据'));
+    });
+    article.appendChild(evidence);
+    host.appendChild(article);
+  });
+  const understanding = result.queryUnderstanding || {};
+  const selection = result.contextSelection || {};
+  host.appendChild(element('p', 'agent-confidence', `Context transparency · ${selection.status || 'unknown'} · intent ${understanding.intent ? understanding.intent.value : 'unknown'} · learning mode ${result.modeHint || 'unknown'}`));
+}
+
+function createConversationCard(service) {
+  const card = sectionCard('Learning Conversation', '基于已选上下文解释，不执行操作', 'learning_conversation_runtime', 'read_only');
+  const form = element('form', 'agent-conversation-form');
+  const input = element('input', 'agent-conversation-input');
+  input.type = 'text';
+  input.name = 'query';
+  input.placeholder = '例如：解释 Promise';
+  input.maxLength = 1000;
+  input.required = true;
+  const button = element('button', 'agent-conversation-button', '获取解释');
+  button.type = 'submit';
+  const status = element('p', 'agent-status');
+  status.setAttribute('role', 'status');
+  const output = element('div');
+  form.append(input, button);
+  card.append(form, status, output);
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const query = input.value.trim();
+    if (!query) return;
+    status.textContent = '正在生成学习解释...';
+    service.askLearningConversation({ query }).then((result) => {
+      status.textContent = '';
+      renderConversationResult(output, result);
+    }).catch(() => {
+      status.textContent = '学习解释暂时不可用，请稍后再试。';
+      output.replaceChildren();
+    });
+  });
+  return card;
+}
+
+  function createAgentHomeView({ target, service }) {
   ensureStyles();
   const root = element('div', 'agent-home');
   root.setAttribute('aria-label', 'Agent Home');
@@ -206,12 +270,23 @@ function createAgentHomeView({ target, service }) {
     renderStates(knowledge, states);
     const growthCard = sectionCard('Growth Context', '长期成长上下文，不作为事实', growth.source, growth.authority);
     renderGrowth(growthCard, growth);
-    const insightCard = sectionCard('AI Insights', '结构化学习观察', insights.metadata ? 'agent_insight' : 'agent_insight', 'insight_only');
+  const insightCard = sectionCard('AI Insights', '结构化学习观察', insights.metadata ? 'agent_insight' : 'agent_insight', 'insight_only');
     renderInsights(insightCard, insights);
     const reasoningCard = sectionCard('Reasoning Explanation', '解释已有洞察，不新增事实', 'deterministic_insights', 'insight_only');
     renderReasoning(reasoningCard, reasoning);
+    const conversationCard = typeof service.askLearningConversation === 'function'
+      ? createConversationCard(service)
+      : null;
 
-    content.replaceChildren(overview, courses, knowledge, growthCard, insightCard, reasoningCard);
+    content.replaceChildren(...[
+      conversationCard,
+      overview,
+      courses,
+      knowledge,
+      growthCard,
+      insightCard,
+      reasoningCard,
+    ].filter(Boolean));
   }
 
   function load() {

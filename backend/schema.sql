@@ -179,3 +179,23 @@ CREATE INDEX IF NOT EXISTS idx_student_knowledge_states_owner_course_updated
 
 CREATE INDEX IF NOT EXISTS idx_student_knowledge_evidence_owner_state
   ON student_knowledge_evidence(user_id, knowledge_state_id, created_at DESC);
+
+-- ---------- Practice Foundation ----------
+-- Additive attempt log. Mastery remains derived only from Student Knowledge Evidence.
+CREATE TABLE IF NOT EXISTS student_practice_attempts (
+  id                 TEXT PRIMARY KEY,
+  user_id            INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  course_id          TEXT NOT NULL,
+  knowledge_node_id  TEXT NOT NULL,
+  mode               TEXT NOT NULL DEFAULT 'recall',
+  score              REAL NOT NULL,
+  duration_ms        INTEGER NOT NULL DEFAULT 0,
+  confirmed          INTEGER NOT NULL DEFAULT 1,
+  source_attempt_id  TEXT NOT NULL DEFAULT '',
+  created_at         TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CHECK (score >= 0 AND score <= 1),
+  CHECK (confirmed = 1)
+);
+
+CREATE INDEX IF NOT EXISTS idx_student_practice_attempts_owner_node
+  ON student_practice_attempts(user_id, course_id, knowledge_node_id, created_at DESC);

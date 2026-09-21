@@ -576,6 +576,9 @@ var CGAPI = {
       },
       reasoning: function () {
         return request('GET', '/agent-home/reasoning', null, { timeoutMs: 15000 });
+      },
+      learningConversation: function (payload) {
+        return request('POST', '/agent-home/learning-conversation', payload, { timeoutMs: 30000 });
       }
     }
   };

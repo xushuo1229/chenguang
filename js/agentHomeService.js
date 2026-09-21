@@ -83,6 +83,15 @@ function createReasoningFallback(context) {
   };
 }
 
+function normalizeLearningConversation(response) {
+  const result = isObject(response) && isObject(response.data) ? response.data : null;
+  if (!result || result.version !== 'learning-conversation-v1' || result.readOnly !== true
+    || !isObject(result.permissions) || result.permissions.write.length > 0) {
+    throw new Error('INVALID_LEARNING_CONVERSATION');
+  }
+  return result;
+}
+
 function createAgentHomeService(options) {
   const client = (options && options.client) || CGAPI;
   return {
@@ -95,6 +104,9 @@ function createAgentHomeService(options) {
         .catch(() => createReasoningFallback(context))
         .then((reasoning) => ({ context, insights, reasoning })));
     },
+    async askLearningConversation(payload) {
+      return client.agentHome.learningConversation(payload).then(normalizeLearningConversation);
+    },
   };
 }
 
@@ -106,4 +118,5 @@ export {
   normalizeContext,
   normalizeInsights,
   normalizeReasoning,
+  normalizeLearningConversation,
 };
