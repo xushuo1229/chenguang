@@ -65,10 +65,10 @@ Build: PASS
 
 ## Findings
 
-Critical: 0  
-High: 0  
-Medium: 0  
-Low: 0  
+Critical: 0
+High: 0
+Medium: 0
+Low: 0
 Info: Runtime v1 只覆盖 bounded lexical learning query，不做 multi-turn negotiation。
 
 ## Final Verdict

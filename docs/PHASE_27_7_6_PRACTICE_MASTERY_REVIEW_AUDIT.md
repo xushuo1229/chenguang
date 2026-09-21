@@ -70,10 +70,10 @@ Build: PASS
 
 ## Findings
 
-Critical: 0  
-High: 0  
-Medium: 0  
-Low: 0  
+Critical: 0
+High: 0
+Medium: 0
+Low: 0
 Info: Review Queue v1 只按掌握状态与练习证据排序，不含 spaced repetition。
 
 ## Final Verdict
