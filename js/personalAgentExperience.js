@@ -6,6 +6,13 @@ const MODE_LABELS = {
   consolidate: '巩固',
 };
 
+const MEMORY_CATEGORY_LABELS = {
+  patterns: '规律',
+  milestones: '里程碑',
+  preferences: '偏好',
+  insights: '洞察',
+};
+
 const STATE_LABELS = {
   no_state: '未开始',
   weak: '薄弱',
@@ -35,6 +42,10 @@ function stateLabel(value) {
 
 function modeLabel(value) {
   return MODE_LABELS[value] || value || '学习';
+}
+
+function memoryCategoryLabel(value) {
+  return MEMORY_CATEGORY_LABELS[value] || value || '成长记忆';
 }
 
 function factsList(items, emptyText) {
@@ -187,6 +198,49 @@ function renderProposalCard(host, overview) {
   return proposalCard;
 }
 
+function renderMemoryCard(context) {
+  const memoryCard = card('Growth Memory', '只显示用户确认的成长记忆投影。');
+  const boundary = context.memories && context.memories.growth;
+  const memory = boundary && boundary.value;
+  const items = memory && Array.isArray(memory.items) ? memory.items.slice(0, 3) : [];
+  if (!items.length) {
+    memoryCard.appendChild(element('p', 'personal-agent-empty', '暂无已确认的成长记忆。'));
+    return memoryCard;
+  }
+  items.forEach((item) => {
+    const row = element('article', 'personal-agent-focus-item');
+    row.append(
+      element('h4', null, memoryCategoryLabel(item.category)),
+      element('p', null, item.content || ''),
+      element('p', 'personal-agent-muted', `置信度 ${Number(item.confidence || 0).toFixed(2)} · 更新于 ${item.updatedAt || '未知时间'}`),
+    );
+    memoryCard.appendChild(row);
+  });
+  return memoryCard;
+}
+
+function renderTimelineCard(context) {
+  const timelineCard = card('Learning Timeline', '来自 Learning State 的最近更新。');
+  const boundary = context.knowledgeStates;
+  const states = boundary && boundary.value && Array.isArray(boundary.value.recentlyReviewed)
+    ? boundary.value.recentlyReviewed.slice(0, 5)
+    : [];
+  if (!states.length) {
+    timelineCard.appendChild(element('p', 'personal-agent-empty', '暂无学习状态更新。'));
+    return timelineCard;
+  }
+  states.forEach((item) => {
+    const row = element('article', 'personal-agent-focus-item');
+    row.append(
+      element('h4', null, item.title || '学习节点'),
+      element('p', 'personal-agent-muted', `${stateLabel(item.state)} · 掌握度 ${Number(item.masteryLevel || 0).toFixed(2)} · 证据 ${Number(item.evidenceCount || 0)} 条`),
+      element('p', 'personal-agent-muted', `更新于 ${item.updatedAt || '未知时间'}`),
+    );
+    timelineCard.appendChild(row);
+  });
+  return timelineCard;
+}
+
 function renderReady(host, payload, options, actions) {
   const { context, reasoning, overview } = payload;
   host.replaceChildren(
@@ -196,6 +250,8 @@ function renderReady(host, payload, options, actions) {
     renderStateCard(host, overview, context),
     renderFocusCard(host, overview, actions.confirmProposal),
     renderProposalCard(host, overview),
+    renderMemoryCard(context),
+    renderTimelineCard(context),
   );
   renderStatus(host, '个人 Agent 已就绪。');
 }

@@ -60,7 +60,7 @@ async function bootAi() {
 test('AI 首屏一次快照并复用今日统计', async () => {
   const { getSpy, revisionBefore, consoleErrorSpy } = await bootAi();
 
-  expect(document.getElementById('coachDashboard').hidden).toBe(false);
+  expect(document.getElementById('agentWorkspace').hidden).toBe(false);
   expect(document.querySelectorAll('#todayGrid .today-stat')).toHaveLength(6);
   expect(getSpy).toHaveBeenCalledTimes(1);
   expect(globalThis.CGStore.getRevision()).toBe(revisionBefore);
@@ -77,7 +77,7 @@ test('AI 页面刷新后保持数据一致并恢复仪表盘', async () => {
   await import('../pages/ai.js');
   await new Promise((resolve) => setTimeout(resolve, 30));
 
-  expect(document.getElementById('coachDashboard').hidden).toBe(false);
+  expect(document.getElementById('agentWorkspace').hidden).toBe(false);
   expect(document.getElementById('aiError').hidden).toBe(true);
   expect(document.querySelectorAll('#todayGrid .today-stat')).toHaveLength(6);
   expect(JSON.parse(localStorage.getItem('chenguangData'))._meta.revision).toBe(5);

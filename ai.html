@@ -144,6 +144,7 @@
       overflow: hidden;
       min-height: 0;
     }
+    .coach-layout[hidden] { display: none; }
     .coach-col {
       display: flex;
       flex-direction: column;
@@ -273,6 +274,46 @@
     .personal-agent-assessment { margin-top: 12px; }
     .personal-agent-output { margin-top: 14px; }
     .personal-agent-feedback { border: 1px solid rgba(64, 145, 108, 0.22); background: rgba(64, 145, 108, 0.07); }
+
+    /* ===== Agent Workspace ===== */
+    .agent-workspace {
+      flex: 1;
+      display: grid;
+      grid-template-columns: minmax(220px, 280px) minmax(360px, 1fr) minmax(260px, 340px);
+      gap: 16px;
+      margin: 16px 24px 0;
+      overflow: hidden;
+      min-height: 0;
+    }
+    .agent-panel {
+      min-height: 0;
+      overflow-y: auto;
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+    .agent-panel-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-xl);
+      padding: 16px;
+      box-shadow: var(--shadow-xs);
+      display: grid;
+      gap: 10px;
+    }
+    .agent-panel-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 750; color: var(--text-dark); }
+    .agent-context-item { display: grid; gap: 4px; padding: 10px; border-radius: var(--radius-lg); background: var(--bg-soft); }
+    .agent-context-label { font-size: 11px; font-weight: 750; color: var(--primary); text-transform: uppercase; }
+    .agent-context-value { font-size: 12px; color: var(--text-dark); line-height: 1.55; white-space: pre-line; }
+    .agent-history-item { padding: 8px 10px; border-radius: var(--radius-md); background: var(--bg-soft); font-size: 12px; color: var(--text-dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .agent-mode-row { display: flex; gap: 8px; }
+    .agent-mode-btn { flex: 1; min-height: 30px; border: 1px solid var(--border-default); border-radius: var(--radius-full); background: var(--bg-card); color: var(--text-dark); font-size: 11px; font-weight: 650; cursor: pointer; }
+    .agent-mode-btn.active { border-color: transparent; background: var(--brand-amber); color: var(--text-on-accent); }
+    .agent-evidence { margin-top: 8px; border: 1px solid var(--border-soft); border-radius: var(--radius-md); padding: 8px; background: var(--bg-soft); }
+    .agent-evidence summary { cursor: pointer; font-size: 12px; color: var(--text-dark); }
+    .agent-evidence-item { margin-top: 8px; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+    .agent-action-proposal { margin-top: 8px; padding: 10px; border: 1px solid rgba(217, 152, 58, .24); border-radius: var(--radius-md); background: rgba(255, 248, 235, .76); }
+    .agent-action-proposal p { font-size: 12px; color: var(--text-dark); line-height: 1.5; margin-bottom: 8px; }
 
     /* 今日状态 */
     .today-grid {
@@ -582,6 +623,8 @@
     @media (max-width: 1024px) {
       .coach-layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; overflow-y: auto; }
       .coach-col { overflow: visible; }
+      .agent-workspace { grid-template-columns: 1fr; overflow: visible; }
+      .agent-panel { overflow: visible; }
       .chat-col { min-height: 480px; }
     }
     @media (max-width: 860px) {
@@ -660,7 +703,7 @@
     <div class="coach-ia-head"><i class="fas fa-route"></i><h3>Personal Agent Workspace</h3></div>
     <div class="coach-ia-grid">
       <a class="coach-ia-item" href="agent-home.html">Agent Home<small>学习状态与证据</small></a>
-      <a class="coach-ia-item" href="#coachConversation">Conversation<small>基于上下文解释</small></a>
+      <a class="coach-ia-item" href="#agentConversationPanel">Conversation<small>基于上下文解释</small></a>
       <a class="coach-ia-item" href="#aiInsightPanels">Insight<small>发现、风险与趋势</small></a>
       <a class="coach-ia-item" href="#cardToday">Today<small>今日完成与专注</small></a>
       <a class="coach-ia-item" href="agent-home.html">Mastery<small>掌握状态与复习</small></a>
@@ -669,6 +712,43 @@
   </nav>
 
   <section id="personalAgentExperience" class="personal-agent-experience" aria-label="个人 Agent 核心体验"></section>
+
+  <section id="agentWorkspace" class="agent-workspace" aria-label="Agent Workspace">
+    <aside id="agentHistoryPanel" class="agent-panel" aria-label="Conversation History">
+      <div class="agent-panel-card">
+        <div class="agent-panel-title"><i class="fas fa-clock-rotate-left"></i> Conversation History</div>
+        <button type="button" class="personal-agent-button primary" id="newAgentChat">New Chat</button>
+        <div id="conversationHistory" class="personal-agent-list"></div>
+      </div>
+    </aside>
+
+    <section id="agentConversationPanel" class="agent-panel" aria-label="Agent Conversation Workspace">
+      <div class="agent-panel-card">
+        <div class="agent-panel-title"><i class="fas fa-compass"></i> Agent Conversation</div>
+        <div class="agent-mode-row" role="group" aria-label="回答模式">
+          <button type="button" class="agent-mode-btn active" id="agentModePersonal" aria-pressed="true">Personal</button>
+          <button type="button" class="agent-mode-btn" id="agentModeGeneral" aria-pressed="false">General</button>
+        </div>
+      </div>
+      <div class="agent-panel-card">
+        <div class="chat-messages" id="agentMessages" aria-live="polite"></div>
+        <div class="chat-input-area">
+          <div class="chat-input-wrap">
+            <textarea class="chat-input" id="agentInput" placeholder="问个人 Agent：我今天应该做什么？" rows="1" autocomplete="off" aria-label="输入你的问题"></textarea>
+            <button class="chat-send" id="agentSend" aria-label="发送"><i class="fas fa-paper-plane"></i></button>
+          </div>
+          <div class="chat-disclaimer">Personal Agent 只做分析与建议；行动需要你的确认。</div>
+        </div>
+      </div>
+    </section>
+
+    <aside id="agentContextPanel" class="agent-panel" aria-label="Context / Learning State">
+      <div class="agent-panel-card">
+        <div class="agent-panel-title"><i class="fas fa-layer-group"></i> Context</div>
+        <div id="agentContextItems" class="personal-agent-list"></div>
+      </div>
+    </aside>
+  </section>
 
   <!-- 加载态 -->
   <div class="state-block" id="aiLoading" aria-live="polite">
@@ -754,30 +834,6 @@
       </div>
     </section>
 
-    <!-- 右列：AI 对话 -->
-    <section class="coach-col ai-chat-col" id="coachConversation" aria-label="AI 对话">
-      <div class="chat-col">
-        <div class="quick-questions" role="group" aria-label="快捷问题">
-          <button class="quick-q" data-q="我的成长情况">🌱 我的成长情况</button>
-          <button class="quick-q" data-q="生成我的本周成长报告">📈 生成我的本周成长报告</button>
-          <button class="quick-q" data-q="我应该改善什么">🧭 我应该改善什么</button>
-          <button class="quick-q" data-q="哪个目标最危险？">🎯 哪个目标最危险？</button>
-          <button class="quick-q" data-q="制定下一步计划">🗓️ 制定下一步计划</button>
-        </div>
-
-        <div class="chat-messages" id="chatMessages" aria-live="polite">
-          <div class="mini-empty" id="chatGreeting">你好，我是你的个人 Agent。左边是你最近的数据画像，记录越久，我越能看到趋势和风险。</div>
-        </div>
-
-        <div class="chat-input-area">
-          <div class="chat-input-wrap">
-            <textarea class="chat-input" id="chatInput" placeholder="问个人 Agent：我今天应该做什么？" rows="1" autocomplete="off" aria-label="输入你的问题"></textarea>
-            <button class="chat-send" id="chatSend" aria-label="发送"><i class="fas fa-paper-plane"></i></button>
-          </div>
-          <div class="chat-disclaimer">个人 Agent 只做分析与建议，不会修改你的任何数据；重要决策请自行判断</div>
-        </div>
-      </div>
-    </section>
   </div>
 </main>
 
@@ -786,7 +842,7 @@
   <a href="workbench.html" data-nav="home"><i class="fas fa-home"></i>首页</a>
   <a href="goals.html" data-nav="goals"><i class="fas fa-bullseye"></i>目标</a>
   <a href="stats.html" data-nav="stats"><i class="fas fa-chart-line"></i>数据</a>
-  <a href="ai.html" class="active" data-nav="ai"><i class="fas fa-compass"></i>AI</a>
+  <a href="ai.html" class="active" data-nav="ai"><i class="fas fa-compass"></i>Agent</a>
   <a href="workbench.html?view=course" data-nav="course"><i class="fas fa-book"></i>课程</a>
   <a href="workbench.html?view=manage" data-nav="manage"><i class="fas fa-cog"></i>管理</a>
   <a href="workbench.html?view=profile" data-nav="profile"><i class="fas fa-user"></i>我的</a>

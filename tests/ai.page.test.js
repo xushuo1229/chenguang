@@ -101,19 +101,18 @@ beforeEach(() => {
 test('有数据：仪表盘渲染，今日状态 6 格、快捷问题 5 个、目标风险出现', async () => {
   await boot(seedData());
 
-  expect(document.getElementById('coachDashboard').hidden).toBe(false);
+  expect(document.getElementById('agentWorkspace').hidden).toBe(false);
   expect(document.getElementById('aiLoading').hidden).toBe(true);
   expect(document.getElementById('aiEmpty').hidden).toBe(true);
   expect(document.getElementById('aiError').hidden).toBe(true);
 
   // 今日状态 6 格
   expect(document.querySelectorAll('#todayGrid .today-stat')).toHaveLength(6);
-  // 快捷问题（成长教练入口，共 5 个）
-  const qs = [...document.querySelectorAll('.quick-q')].map((b) => b.getAttribute('data-q'));
-  expect(qs).toEqual([
-    '我的成长情况', '生成我的本周成长报告', '我应该改善什么',
-    '哪个目标最危险？', '制定下一步计划'
-  ]);
+  expect(document.getElementById('agentWorkspace')).toBeTruthy();
+  expect(document.getElementById('agentHistoryPanel')).toBeTruthy();
+  expect(document.getElementById('agentConversationPanel')).toBeTruthy();
+  expect(document.getElementById('agentContextPanel')).toBeTruthy();
+  expect(document.getElementById('agentModePersonal').classList.contains('active')).toBe(true);
   // 目标风险：即将到期 + 进度低 → 有 high 项
   const riskTexts = [...document.querySelectorAll('#riskList .ii-text')].map((n) => n.textContent);
   expect(riskTexts.length).toBeGreaterThan(0);
@@ -133,90 +132,120 @@ test('未登录：不渲染仪表盘', async () => {
   expect(document.getElementById('coachDashboard').hidden).toBe(true);
 });
 
-/* ==================== AI 对话 ==================== */
+/* ==================== Agent Workspace ==================== */
 
-test('发送问题 → AI 回复 textContent 渲染，HTML 不被注入', async () => {
+function agentContextPayload() {
+  return {
+    data: {
+      context: {
+        courses: { value: [{ courseId: 'c1', name: '高等数学' }] },
+        behavior: { value: { taskSummary: { completed: 2, total: 4 }, focusSummary: { minutes: 45 } } },
+        knowledgeStates: { value: { weakTopics: [{ title: 'Promise' }], strongTopics: [] } },
+      },
+      previousInsights: [{ id: 'i1', title: '学习一致性提高' }],
+      review: { nextBestRecommendation: { nodeTitle: 'Promise' } },
+    },
+  };
+}
+
+test('Personal 回复 textContent 渲染，HTML 不被注入', async () => {
   await boot(seedData());
-  const malicious = '<img src=x onerror="window.__cgXss=1">你好，这是 AI 回复';
+  globalThis.CGAPI.personalAgent.context = vi.fn().mockResolvedValue(agentContextPayload());
+  const malicious = '<img src=x onerror="window.__cgXss=1">你好，这是 Agent 回复';
   window.__cgXss = 0;
-  globalThis.CGAPI.ai.chat = vi.fn().mockResolvedValue({
-    data: { reply: malicious, mode: 'coach', suggestions: [{ type: 'goal_risk', severity: 'high', text: '建议专注目标进度' }], actions: [] }
+  globalThis.CGAPI.personalAgent.chat = vi.fn().mockResolvedValue({
+    data: { answer: malicious, mode: 'personal', evidence: [], insights: [], confidence: 0.8, actions: [] }
   });
 
-  const input = document.getElementById('chatInput');
+  const input = document.getElementById('agentInput');
   input.value = '我今天应该做什么？';
-  document.getElementById('chatSend').click();
+  document.getElementById('agentSend').click();
   await settle(); await settle();
 
-  // AI 回复以纯文本渲染：读到原始字符串，无 <img> 节点
-  const bubbles = [...document.querySelectorAll('#chatMessages .msg-ai .msg-bubble')];
-  expect(bubbles.length).toBeGreaterThan(0);
+  const bubbles = [...document.querySelectorAll('#agentMessages .msg-ai .msg-bubble')];
   expect(bubbles[bubbles.length - 1].textContent).toBe(malicious);
-  expect(document.querySelector('#chatMessages img')).toBeNull();
+  expect(document.querySelector('#agentMessages img')).toBeNull();
   expect(window.__cgXss).toBe(0);
-  // chat 被调用时带 context 与 contextVersion
-  expect(globalThis.CGAPI.ai.chat).toHaveBeenCalledTimes(1);
-  const arg = globalThis.CGAPI.ai.chat.mock.calls[0][0];
+  expect(globalThis.CGAPI.personalAgent.chat).toHaveBeenCalledTimes(1);
+  const arg = globalThis.CGAPI.personalAgent.chat.mock.calls[0][0];
   expect(arg.message).toBe('我今天应该做什么？');
-  expect(arg.contextVersion).toBe('1.0');
-  expect(arg.context.version).toBe('1.0');
-  // 输入框清空、恢复可用
+  expect(arg.mode).toBe('personal');
+  expect(arg.conversationId).toMatch(/^agent-/);
   expect(input.value).toBe('');
   expect(input.disabled).toBe(false);
 });
 
-test('回复 suggestions 渲染为建议条；actions 只允许 navigate 且白名单外丢弃', async () => {
+test('Personal 回复渲染 Evidence Answer', async () => {
   await boot(seedData());
-  globalThis.CGAPI.ai.chat = vi.fn().mockResolvedValue({
+  globalThis.CGAPI.personalAgent.chat = vi.fn().mockResolvedValue({
     data: {
-      reply: '建议如下',
-      suggestions: [{ type: 'goal_risk', severity: 'high', text: '优先补目标' }],
-      actions: [
-        { type: 'navigate', target: 'goals' },
-        { type: 'navigate', target: 'javascript:alert(1)' },  // 非法目标 → 丢弃
-        { type: 'delete', target: 'goals' }                    // 非 navigate → 丢弃
-      ]
-    }
+      answer: '发现：学习一致性提高。',
+      evidence: [{ id: 'e1', title: '连续 3 天学习', source: 'student_knowledge_states' }],
+      insights: [],
+      actions: [],
+    },
   });
-
-  document.getElementById('chatInput').value = '哪个目标最危险？';
-  document.getElementById('chatSend').click();
+  document.getElementById('agentInput').value = '为什么最近数学下降？';
+  document.getElementById('agentSend').click();
   await settle(); await settle();
-
-  // 建议条
-  const chips = [...document.querySelectorAll('#chatMessages .sugg-chip')];
-  expect(chips.length).toBe(1);
-  expect(chips[0].textContent).toContain('优先补目标');
-  // actions：只剩 1 个合法导航按钮
-  const btns = [...document.querySelectorAll('#chatMessages .action-btn')];
-  expect(btns).toHaveLength(1);
-  expect(btns[0].textContent).toBe('查看目标');
+  expect(document.querySelector('#agentMessages details summary').textContent).toBe('基于你的学习记录');
+  expect(document.querySelector('#agentMessages .agent-evidence-item').textContent).toContain('连续 3 天学习');
 });
 
-test('AI 失败 → 友好系统提示，不透出原始错误堆栈', async () => {
+test('Action Proposal 需要确认，确认后才调用既有执行接口', async () => {
   await boot(seedData());
-  const err = new Error('AI 服务未配置，请在后端环境变量设置 AI_API_KEY');
-  globalThis.CGAPI.ai.chat = vi.fn().mockRejectedValue(err);
-
-  document.getElementById('chatInput').value = '测试失败提示';
-  document.getElementById('chatSend').click();
+  globalThis.CGAPI.personalAgent.chat = vi.fn().mockResolvedValue({
+    data: {
+      answer: '建议评估 Promise。',
+      evidence: [], insights: [],
+      actions: [{ id: 'a1', type: 'learning_action', title: '评估 Promise', courseId: 'c1', status: 'proposal', requiresConfirmation: true }],
+    },
+  });
+  globalThis.CGAPI.learningAgent.confirmNextAction = vi.fn().mockResolvedValue({
+    status: 'action_ready', metadata: { userConfirmed: true },
+  });
+  document.getElementById('agentInput').value = '下一步做什么';
+  document.getElementById('agentSend').click();
   await settle(); await settle();
-
-  const sys = [...document.querySelectorAll('#chatMessages .msg-system .msg-bubble')];
-  expect(sys.length).toBeGreaterThan(0);
-  expect(sys[sys.length - 1].textContent).toContain('个人 Agent 暂时不可用');
+  expect(document.querySelector('#agentMessages .agent-action-proposal p').textContent).toContain('需要你确认');
+  document.querySelector('#agentMessages .agent-action-proposal button').click();
+  await settle(); await settle();
+  expect(globalThis.CGAPI.learningAgent.confirmNextAction).toHaveBeenCalledWith('c1');
+  expect(document.getElementById('agentMessages').textContent).toContain('行动已确认');
 });
 
-test('快捷问题点击 → 直接以固定问题发起对话', async () => {
+test('General 模式不请求个人上下文执行链', async () => {
   await boot(seedData());
-  globalThis.CGAPI.ai.chat = vi.fn().mockResolvedValue({
-    data: { reply: '好的', suggestions: [], actions: [] }
+  globalThis.CGAPI.personalAgent.chat = vi.fn().mockResolvedValue({
+    data: { answer: '量子力学是描述微观运动的物理理论。', mode: 'general', evidence: [], insights: [], actions: [] },
   });
-  const qBtn = document.querySelector('.quick-q[data-q="制定下一步计划"]');
-  qBtn.click();
+  document.getElementById('agentModeGeneral').click();
+  document.getElementById('agentInput').value = '解释量子力学';
+  document.getElementById('agentSend').click();
   await settle(); await settle();
-  expect(globalThis.CGAPI.ai.chat).toHaveBeenCalledTimes(1);
-  expect(globalThis.CGAPI.ai.chat.mock.calls[0][0].message).toBe('制定下一步计划');
+  expect(globalThis.CGAPI.personalAgent.chat.mock.calls[0][0].mode).toBe('general');
+  expect(document.querySelector('#agentMessages details')).toBeNull();
+});
+
+test('Provider 失败时展示安全兜底提示', async () => {
+  await boot(seedData());
+  globalThis.CGAPI.personalAgent.chat = vi.fn().mockResolvedValue({
+    data: { answer: '当前学习上下文不足。', metadata: { fallback: true, reason: 'llm_not_configured' }, actions: [] },
+  });
+  document.getElementById('agentInput').value = '我的学习怎么样';
+  document.getElementById('agentSend').click();
+  await settle(); await settle();
+  expect(document.getElementById('agentMessages').textContent).toContain('Provider 暂不可用');
+});
+
+test('网络失败提示不暴露内部错误', async () => {
+  await boot(seedData());
+  globalThis.CGAPI.personalAgent.chat = vi.fn().mockRejectedValue(new Error('secret-stack'));
+  document.getElementById('agentInput').value = '测试失败';
+  document.getElementById('agentSend').click();
+  await settle(); await settle();
+  expect(document.getElementById('agentMessages').textContent).toContain('个人 Agent 暂时不可用');
+  expect(document.getElementById('agentMessages').textContent).not.toContain('secret-stack');
 });
 
 /* ==================== 只读 / 历史 ==================== */
@@ -226,11 +255,11 @@ test('只读：渲染 + 对话后 revision 与数据不变', async () => {
   const revBefore = globalThis.CGStore.getRevision();
   const snapBefore = JSON.stringify(globalThis.CGStore.get());
 
-  globalThis.CGAPI.ai.chat = vi.fn().mockResolvedValue({
-    data: { reply: 'ok', suggestions: [], actions: [] }
+  globalThis.CGAPI.personalAgent.chat = vi.fn().mockResolvedValue({
+    data: { answer: 'ok', actions: [] }
   });
-  document.getElementById('chatInput').value = '问题';
-  document.getElementById('chatSend').click();
+  document.getElementById('agentInput').value = '问题';
+  document.getElementById('agentSend').click();
   await settle(); await settle();
 
   expect(globalThis.CGStore.getRevision()).toBe(revBefore);
@@ -243,67 +272,59 @@ test('性能：刷新与对话复用同一页面快照，不重复读取 Store',
   window.dispatchEvent(new Event('chenguang:update'));
   await settle(); await settle();
 
-  globalThis.CGAPI.ai.chat = vi.fn().mockResolvedValue({
-    data: { reply: 'ok', suggestions: [], actions: [] }
+  globalThis.CGAPI.personalAgent.chat = vi.fn().mockResolvedValue({
+    data: { answer: 'ok', actions: [] }
   });
-  document.getElementById('chatInput').value = '我的成长情况';
-  document.getElementById('chatSend').click();
+  document.getElementById('agentInput').value = '我的成长情况';
+  document.getElementById('agentSend').click();
   await settle(); await settle();
 
   expect(getSpy).toHaveBeenCalledTimes(1);
 });
 
-test('AI 报告意图：本周报告基于 Context 本地返回，不调用 Provider', async () => {
+test('Context 面板展示 Today State、Learning State 与 Insights', async () => {
   await boot(seedData());
-  const provider = vi.fn();
-  globalThis.CGAPI.ai.chat = provider;
-
-  document.getElementById('chatInput').value = '生成我的本周成长报告';
-  document.getElementById('chatSend').click();
+  globalThis.CGAPI.personalAgent.context = vi.fn().mockResolvedValue(agentContextPayload());
+  window.dispatchEvent(new Event('chenguang:update'));
   await settle(); await settle();
 
-  expect(provider).not.toHaveBeenCalled();
-  const bubbles = [...document.querySelectorAll('#chatMessages .msg-ai .msg-bubble')];
-  const reply = bubbles[bubbles.length - 1].textContent;
-  expect(reply).toContain('本周成长报告');
-  expect(reply).toContain('成果');
+  const labels = [...document.querySelectorAll('#agentContextItems .agent-context-label')].map((n) => n.textContent);
+  expect(labels).toEqual(['Today State', 'Learning State', 'Course', 'Review', 'Insights']);
+  expect(document.getElementById('agentContextItems').textContent).toContain('2/4 任务');
+  expect(document.getElementById('agentContextItems').textContent).toContain('学习一致性提高');
 });
 
-test('AI 报告意图：月度总结基于 Context 本地返回', async () => {
+test('New Chat 清空内存历史但不写业务数据', async () => {
   await boot(seedData());
-  const provider = vi.fn();
-  globalThis.CGAPI.ai.chat = provider;
-
-  document.getElementById('chatInput').value = '总结我的这个月';
-  document.getElementById('chatSend').click();
+  globalThis.CGAPI.personalAgent.chat = vi.fn().mockResolvedValue({ data: { answer: '回答', actions: [] } });
+  document.getElementById('agentInput').value = '你好';
+  document.getElementById('agentSend').click();
   await settle(); await settle();
+  document.getElementById('newAgentChat').click();
+  await settle();
 
-  expect(provider).not.toHaveBeenCalled();
-  const bubbles = [...document.querySelectorAll('#chatMessages .msg-ai .msg-bubble')];
-  expect(bubbles[bubbles.length - 1].textContent).toContain('月度成长报告');
+  expect(JSON.parse(sessionStorage.getItem('cg_ai_coach_history') || '[]')).toHaveLength(0);
+  expect(document.getElementById('agentMessages').textContent).toContain('新会话已开始');
 });
 
-test('AI 报告意图：最近变化返回成长摘要', async () => {
+test('Conversation History 只使用 sessionStorage', async () => {
   await boot(seedData());
-  const provider = vi.fn();
-  globalThis.CGAPI.ai.chat = provider;
-
-  document.getElementById('chatInput').value = '我最近有什么变化';
-  document.getElementById('chatSend').click();
+  globalThis.CGAPI.personalAgent.chat = vi.fn().mockResolvedValue({ data: { answer: '回答', actions: [] } });
+  document.getElementById('agentInput').value = '你好';
+  document.getElementById('agentSend').click();
   await settle(); await settle();
 
-  expect(provider).not.toHaveBeenCalled();
-  const bubbles = [...document.querySelectorAll('#chatMessages .msg-ai .msg-bubble')];
-  expect(bubbles[bubbles.length - 1].textContent).toContain('本周');
+  expect(JSON.parse(sessionStorage.getItem('cg_ai_coach_history'))).toHaveLength(2);
+  expect(document.getElementById('conversationHistory').textContent).toContain('你好');
 });
 
 test('对话历史 memory-first：存 sessionStorage，不写 chenguangData', async () => {
   await boot(seedData());
-  globalThis.CGAPI.ai.chat = vi.fn().mockResolvedValue({
-    data: { reply: '回答', suggestions: [], actions: [] }
+  globalThis.CGAPI.personalAgent.chat = vi.fn().mockResolvedValue({
+    data: { answer: '回答', actions: [] }
   });
-  document.getElementById('chatInput').value = '你好';
-  document.getElementById('chatSend').click();
+  document.getElementById('agentInput').value = '你好';
+  document.getElementById('agentSend').click();
   await settle(); await settle();
 
   const hist = JSON.parse(sessionStorage.getItem('cg_ai_coach_history') || '[]');
@@ -324,7 +345,7 @@ test('响应式：断点与自适应结构存在（390/768/1440 视口对应规�
 });
 
 test('无障碍：快捷问题分组有 role/aria-label，输入区与发送按钮有 aria-label', () => {
-  expect(aiHtml).toContain('role="group" aria-label="快捷问题"');
+  expect(aiHtml).toContain('role="group" aria-label="回答模式"');
   expect(aiHtml).toContain('aria-label="输入你的问题"');
   expect(aiHtml).toContain('aria-label="发送"');
   expect(aiHtml).toContain('aria-live="polite"');

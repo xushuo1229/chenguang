@@ -582,6 +582,21 @@ var CGAPI = {
       }
     },
 
+    /* ===== Personal Agent Workspace ===== */
+    personalAgent: {
+      context: function () {
+        return request('GET', '/personal-agent/context', null, { timeoutMs: 15000 });
+      },
+      chat: function (payload) {
+        const p = payload || {};
+        return request('POST', '/personal-agent/chat', {
+          message: p.message || '',
+          mode: p.mode || 'personal',
+          conversationId: p.conversationId || ''
+        }, { timeoutMs: 35000 });
+      }
+    },
+
     /* ===== Personal Learning Agent 2.0 ===== */
     learningAgent: {
       overview: function (courseId, availableMinutes) {

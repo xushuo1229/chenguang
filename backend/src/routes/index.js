@@ -35,6 +35,7 @@ const ai = require('./ai');
 const courseSpace = require('./courseSpace');
 const knowledgeState = require('./knowledgeState');
 const agentHome = require('./agentHome');
+const personalAgent = require('./personalAgent');
 const learning = require('./learning');
 const { authRequired } = require('../middleware/auth');
 const { writeLimiter } = require('../middleware/rateLimit');
@@ -78,5 +79,9 @@ router.use('/learning', learning);
 
 // ===== Agent Home Context（只读） =====
 router.use('/agent-home', agentHome);
+
+// ===== Personal Agent 工作区 =====
+// 只读上下文 + 双模式对话。Action 仍然由既有确认接口执行。
+router.use('/personal-agent', personalAgent);
 
 module.exports = router;

@@ -13,11 +13,37 @@ function context() {
     },
     courseKnowledge: { value: { nodes: [], evidence: [] }, source: 'course_space', authority: 'source' },
     knowledgeStates: {
-      value: { weakTopics: [{ title: 'Promise' }], strongTopics: [] },
+      value: {
+        weakTopics: [{ title: 'Promise' }],
+        strongTopics: [],
+        recentlyReviewed: [{
+          title: 'Async review',
+          state: 'learning',
+          masteryLevel: 0.45,
+          evidenceCount: 2,
+          updatedAt: '2026-09-21T15:00:00.000Z',
+        }],
+      },
       source: 'student_knowledge_states',
       authority: 'source',
     },
-    memories: { growth: { value: { available: false, items: [] }, source: 'cgstore.user.memory', authority: 'derived_memory' } },
+    memories: {
+      growth: {
+        value: {
+          available: true,
+          items: [{
+            id: 'memory-1',
+            category: 'patterns',
+            type: 'focus',
+            content: '上午专注完成率更高。',
+            confidence: 0.8,
+            updatedAt: '2026-09-21T14:00:00.000Z',
+          }],
+        },
+        source: 'cgstore.user.memory',
+        authority: 'derived_memory',
+      },
+    },
   };
 }
 
@@ -113,6 +139,10 @@ describe('personal agent experience', () => {
     expect(host.textContent).toContain('Promise');
     expect(host.textContent).toContain('任务完成：2/4');
     expect(host.textContent).toContain('Action Proposal');
+    expect(host.textContent).toContain('Growth Memory');
+    expect(host.textContent).toContain('上午专注完成率更高。');
+    expect(host.textContent).toContain('Learning Timeline');
+    expect(host.textContent).toContain('Async review');
   });
 
   test('confirms an action and submits assessment feedback explicitly', async () => {

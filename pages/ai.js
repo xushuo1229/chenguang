@@ -17,7 +17,7 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
 import { homeAuthHref } from '../js/utils/authNavigation.js';
 
 // ====================================================================
-// 知行 · AI 教练页 (Phase 13 AI 2.0)
+// 知行 · 个人 Agent 页 (Phase 13 AI 2.0)
 // ====================================================================
 // 架构（Phase 13 冻结）：
 //
@@ -66,7 +66,11 @@ function hideAll() {
 function showLoading() { hideAll(); if (loadingEl) loadingEl.hidden = false; }
 function showError() { hideAll(); if (errorEl) errorEl.hidden = false; }
 function showEmpty() { hideAll(); if (emptyEl) emptyEl.hidden = false; }
-function showDash() { hideAll(); if (dashEl) dashEl.hidden = false; }
+function showDash() {
+  hideAll();
+  if ($('#agentWorkspace')) return;
+  if (dashEl) dashEl.hidden = false;
+}
 
 /* ====================================================================
    上下文（AIContext Builder 产物，只读）
@@ -76,6 +80,8 @@ var currentContext = null;
 var currentSnapshot = null;
 var currentCoachContext = null;
 var suppressNextMemoryUpdate = false;
+var agentMode = 'personal';
+var agentConversationId = 'agent-' + Math.random().toString(36).slice(2, 10);
 
 function buildContext(store) {
   store = (store && typeof store === 'object') ? store : Store.get();
@@ -219,7 +225,7 @@ function renderAdvice(suggestions) {
   var items = lastSuggestions.map(function (s) {
     return { type: 'opportunity', severity: s.severity || 'low', reason: s.text || s.reason || '' };
   });
-  renderInsightList($('#adviceList'), items, '和教练聊聊，这里会显示针对你的建议。');
+  renderInsightList($('#adviceList'), items, '与个人 Agent 对话，这里会显示针对你的建议。');
 }
 
 function renderCoachMemory() {
@@ -327,10 +333,145 @@ function loadHistory() {
   } catch (_) { chatHistory = []; }
   // 回放历史到界面
   chatHistory.forEach(function (m) { appendMsg(m.role, m.content); });
+  renderConversationHistory();
 }
 
 function saveHistory() {
   try { sessionStorage.setItem(HISTORY_KEY, JSON.stringify(chatHistory.slice(-MAX_HISTORY))); } catch (_) {}
+}
+
+function renderConversationHistory() {
+  var container = $('#conversationHistory');
+  if (!container) return;
+  container.innerHTML = '';
+  var recent = chatHistory.filter(function (m) { return m.role === 'user'; }).slice(-5).reverse();
+  if (!recent.length) {
+    container.appendChild(el('div', 'agent-history-item', '暂无历史会话。'));
+    return;
+  }
+  recent.forEach(function (message) {
+    var text = String(message.content || '');
+    container.appendChild(el('div', 'agent-history-item', text.length > 48 ? text.slice(0, 48) + '…' : text));
+  });
+}
+
+function appendAgentMessage(role, text) {
+  var box = $('#agentMessages');
+  if (!box) return null;
+  var wrap = el('div', 'msg msg-' + (role === 'user' ? 'user' : 'ai'));
+  var content = el('div', 'msg-content');
+  content.appendChild(el('div', 'msg-bubble', String(text == null ? '' : text)));
+  wrap.appendChild(content);
+  box.appendChild(wrap);
+  box.scrollTop = box.scrollHeight;
+  return content;
+}
+
+function appendAgentTyping() {
+  return appendAgentMessage('assistant', '正在理解你的问题...');
+}
+
+function renderAgentEvidence(content, evidence) {
+  if (!Array.isArray(evidence) || !evidence.length || !content) return;
+  var details = el('details', 'agent-evidence');
+  details.appendChild(el('summary', null, '基于你的学习记录'));
+  evidence.slice(0, 5).forEach(function (item) {
+    details.appendChild(el('p', 'agent-evidence-item', item.title + ' · ' + item.source));
+  });
+  content.appendChild(details);
+}
+
+function renderAgentActions(content, actions) {
+  if (!Array.isArray(actions) || !actions.length || !content) return;
+  actions.forEach(function (action) {
+    if (!action || action.status !== 'proposal' || action.requiresConfirmation !== true) return;
+    var proposal = el('div', 'agent-action-proposal');
+    proposal.appendChild(el('p', null, action.title + '（需要你确认）'));
+    var button = el('button', 'personal-agent-button primary', '确认行动');
+    button.type = 'button';
+    button.addEventListener('click', function () {
+      button.disabled = true;
+      globalThis.CGAPI.learningAgent.confirmNextAction(action.courseId).then(function (result) {
+        appendAgentMessage('assistant', result && result.status === 'action_ready'
+          ? '行动已确认，可以在 Agent Home 继续学习。'
+          : '当前没有可确认的学习行动。');
+      }).catch(function () {
+        button.disabled = false;
+        appendAgentMessage('assistant', '行动确认暂时不可用，请稍后再试。');
+      });
+    });
+    proposal.appendChild(button);
+    content.appendChild(proposal);
+  });
+}
+
+function sendAgentMessage(text) {
+  text = String(text || '').trim();
+  if (!text || sending) return;
+  appendAgentMessage('user', text);
+  var input = $('#agentInput');
+  if (input) input.value = '';
+  var typing = appendAgentTyping();
+  setBusy(true);
+  globalThis.CGAPI.personalAgent.chat({
+    message: text,
+    mode: agentMode,
+    conversationId: agentConversationId
+  }).then(function (response) {
+    typing.remove();
+    var data = response && response.data ? response.data : {};
+    var content = appendAgentMessage('assistant', data.answer || '当前没有生成回答。');
+    if (agentMode === 'personal') renderAgentEvidence(content, data.evidence);
+    renderAgentActions(content, data.actions);
+    if (data.metadata && data.metadata.fallback) {
+      appendAgentMessage('assistant', 'Provider 暂不可用，已使用安全兜底回答。');
+    }
+    chatHistory.push({ role: 'user', content: text });
+    chatHistory.push({ role: 'assistant', content: data.answer || '' });
+    chatHistory = chatHistory.slice(-MAX_HISTORY);
+    saveHistory();
+    renderConversationHistory();
+  }).catch(function (err) {
+    typing.remove();
+    appendAgentMessage('assistant', friendlyAIError(err));
+  }).finally(function () {
+    setBusy(false);
+  });
+}
+
+function renderAgentContextItem(container, label, value) {
+  var item = el('div', 'agent-context-item');
+  item.appendChild(el('p', 'agent-context-label', label));
+  item.appendChild(el('p', 'agent-context-value', value));
+  container.appendChild(item);
+}
+
+function renderAgentContext(context) {
+  var container = $('#agentContextItems');
+  if (!container) return;
+  container.innerHTML = '';
+  var behavior = context.context && context.context.behavior && context.context.behavior.value || {};
+  var task = behavior.taskSummary || {};
+  var focus = behavior.focusSummary || {};
+  var knowledge = context.context && context.context.knowledgeStates && context.context.knowledgeStates.value || {};
+  var course = context.context && context.context.courses && context.context.courses.value && context.context.courses.value[0];
+  renderAgentContextItem(container, 'Today State', (task.completed || 0) + '/' + (task.total || 0) + ' 任务 · ' + (focus.minutes || 0) + ' 分钟专注');
+  renderAgentContextItem(container, 'Learning State', (knowledge.weakTopics || []).length + ' 个薄弱 · ' + (knowledge.strongTopics || []).length + ' 个已掌握');
+  renderAgentContextItem(container, 'Course', course ? course.name : '暂无课程');
+  renderAgentContextItem(container, 'Review', context.review && context.review.nextBestRecommendation
+    ? context.review.nextBestRecommendation.nodeTitle || '待复习'
+    : '暂无复习项');
+  renderAgentContextItem(container, 'Insights', context.previousInsights.length
+    ? context.previousInsights.map(function (item) { return item.title; }).join('；')
+    : '暂无结构化洞察');
+}
+
+function loadAgentContext() {
+  return globalThis.CGAPI.personalAgent.context().then(function (response) {
+    renderAgentContext(response && response.data ? response.data : {});
+  }).catch(function () {
+    renderAgentContext({ context: {}, previousInsights: [] });
+  });
 }
 
 function clearGreeting() {
@@ -449,11 +590,9 @@ function friendlyAIError(err) {
 
 function setBusy(on) {
   sending = on;
-  var input = $('#chatInput'); var send = $('#chatSend');
+  var input = $('#agentInput'); var send = $('#agentSend');
   if (input) input.disabled = on;
   if (send) send.disabled = on;
-  var qs = document.querySelectorAll('.quick-q');
-  Array.prototype.forEach.call(qs, function (b) { b.disabled = on; });
 }
 
 function detectReportRequest(text) {
@@ -516,7 +655,7 @@ function sendMessage(text) {
   call.then(function (res) {
     typing.remove();
     var d = (res && res.data) ? res.data : (res || {});
-    var reply = typeof d.reply === 'string' && d.reply ? d.reply : '（教练这次没有给出回复，换个问法试试？）';
+    var reply = typeof d.reply === 'string' && d.reply ? d.reply : '（个人 Agent 这次没有给出回复，换个问法试试？）';
     var content = appendMsg('assistant', reply);       // textContent 渲染
 
     renderSuggestionsInto(content, d.suggestions);
@@ -569,6 +708,7 @@ function loadAll() {
       console.warn('[AI] load failed:', e);
     }
   });
+  loadAgentContext();
 }
 
 function loadPersonalAgentExperience() {
@@ -586,11 +726,11 @@ function loadPersonalAgentExperience() {
 
 /* ---------- 事件绑定 ---------- */
 function setupEvents() {
-  var send = $('#chatSend'); if (send) send.addEventListener('click', function () { sendMessage($('#chatInput') ? $('#chatInput').value : ''); });
-  var input = $('#chatInput');
+  var send = $('#agentSend'); if (send) send.addEventListener('click', function () { sendAgentMessage($('#agentInput') ? $('#agentInput').value : ''); });
+  var input = $('#agentInput');
   if (input) {
     input.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input.value); }
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgentMessage(input.value); }
     });
     // 自适应高度
     input.addEventListener('input', function () {
@@ -599,9 +739,25 @@ function setupEvents() {
     });
   }
 
-  // 快捷问题（5 个固定问题）
-  Array.prototype.forEach.call(document.querySelectorAll('.quick-q'), function (b) {
-    b.addEventListener('click', function () { sendMessage(b.getAttribute('data-q') || ''); });
+  var newChat = $('#newAgentChat');
+  if (newChat) newChat.addEventListener('click', function () {
+    chatHistory = [];
+    saveHistory();
+    renderConversationHistory();
+    var messages = $('#agentMessages');
+    if (messages) messages.replaceChildren(el('div', 'mini-empty', '新会话已开始。'));
+  });
+  var personalMode = $('#agentModePersonal');
+  var generalMode = $('#agentModeGeneral');
+  if (personalMode) personalMode.addEventListener('click', function () {
+    agentMode = 'personal';
+    personalMode.classList.add('active'); personalMode.setAttribute('aria-pressed', 'true');
+    generalMode.classList.remove('active'); generalMode.setAttribute('aria-pressed', 'false');
+  });
+  if (generalMode) generalMode.addEventListener('click', function () {
+    agentMode = 'general';
+    generalMode.classList.add('active'); generalMode.setAttribute('aria-pressed', 'true');
+    personalMode.classList.remove('active'); personalMode.setAttribute('aria-pressed', 'false');
   });
 
   var refresh = $('#refreshBtn'); if (refresh) refresh.addEventListener('click', function () { loadAll(); toast('已刷新数据分析', 'success'); });

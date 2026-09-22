@@ -20,7 +20,7 @@ describe('Personal Agent workspace IA', () => {
     ]);
     expect(items.map((item) => item.getAttribute('href'))).toEqual([
       'agent-home.html',
-      '#coachConversation',
+      '#agentConversationPanel',
       '#aiInsightPanels',
       '#cardToday',
       'agent-home.html',
@@ -43,7 +43,7 @@ describe('Personal Agent workspace IA', () => {
 
     expect(document.getElementById('cardToday')).toBeTruthy();
     expect(document.getElementById('aiInsightPanels')).toBeTruthy();
-    expect(document.getElementById('coachConversation')).toBeTruthy();
+    expect(document.getElementById('agentConversationPanel')).toBeTruthy();
     expect(aiHtml).toContain('@media (max-width: 860px)');
     expect(aiHtml).not.toMatch(/react|vue|tailwind/i);
   });

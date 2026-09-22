@@ -224,13 +224,16 @@ async function bootAi() {
   await boot(aiHtml, '../pages/ai.js', { data: seedAiData() });
 }
 function chatBubbles() {
-  return [...document.querySelectorAll('#chatMessages .msg-system .msg-bubble')];
+  return [...document.querySelectorAll('#agentMessages .msg-ai .msg-bubble')];
 }
 async function sendAndCatch(errLike) {
-  globalThis.CGAPI.ai = { chat: vi.fn().mockRejectedValue(errLike) };
-  const input = document.getElementById('chatInput');
+  globalThis.CGAPI.personalAgent = {
+    context: vi.fn().mockResolvedValue({ data: {} }),
+    chat: vi.fn().mockRejectedValue(errLike),
+  };
+  const input = document.getElementById('agentInput');
   input.value = '我今天应该做什么？';
-  document.getElementById('chatSend').click();
+  document.getElementById('agentSend').click();
   await settle(); await settle();
 }
 
@@ -242,9 +245,9 @@ test('AI_NOT_CONFIGURED：用户文案不泄露内部配置，仪表盘仍然可
   expect(bubble).toContain('仍可以查看');
   for (const p of LEAK_PATTERNS) expect(bubble, `泄露: ${p}`).not.toMatch(p);
   // 降级体验：仪表盘未被错误态替换，无无限 loading
-  expect(document.getElementById('coachDashboard').hidden).toBe(false);
+  expect(document.getElementById('agentWorkspace').hidden).toBe(false);
   expect(document.querySelectorAll('#todayGrid .today-stat').length).toBe(6);
-  expect(document.getElementById('chatInput').disabled).toBe(false);
+  expect(document.getElementById('agentInput').disabled).toBe(false);
   expect(document.querySelector('#chatMessages .typing-dots')).toBeNull();
 });
 
@@ -263,7 +266,7 @@ test('timeout / 429 / 500 / 网络错误：文案安全且不透出后端细节'
     const bubble = chatBubbles()[chatBubbles().length - 1].textContent;
     expect(bubble).toContain(c.want);
     for (const p of LEAK_PATTERNS) expect(bubble, `泄露: ${p}`).not.toMatch(p);
-    expect(document.getElementById('chatInput').disabled).toBe(false);
+  expect(document.getElementById('agentInput').disabled).toBe(false);
     expect(document.querySelector('#chatMessages .typing-dots')).toBeNull();
   }
 });

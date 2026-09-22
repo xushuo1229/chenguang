@@ -6,6 +6,8 @@ import indexHtml from '../index.html?raw';
 import loginHtml from '../login.html?raw';
 import statsHtml from '../stats.html?raw';
 import workbenchHtml from '../workbench.html?raw';
+import todayHtml from '../today.html?raw';
+import agentHomeHtml from '../agent-home.html?raw';
 
 const PAGES = [
   ['login.html', loginHtml],
@@ -40,6 +42,17 @@ describe('XINGZHIXING brand integration', () => {
       expect(html).not.toContain('class="wb-brand-mark">☀');
       expect(html).not.toContain('<i class="fas fa-sun"></i>知行');
       expect(html).not.toContain('晨光自律台');
+    }
+  });
+
+  it('uses Personal Agent naming across user-facing shells', () => {
+    const personalPages = [
+      ...PAGES,
+      ['today.html', todayHtml],
+      ['agent-home.html', agentHomeHtml],
+    ];
+    for (const [page, html] of personalPages) {
+      expect(html, page).not.toMatch(/AI\s*教练|AI\s*Coach/);
     }
   });
 
