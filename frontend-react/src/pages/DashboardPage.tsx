@@ -9,13 +9,14 @@ import {
   TableHeaderCell,
   TableRow,
 } from '@tremor/react'
-import { BrainCircuit, RefreshCw } from 'lucide-react'
+import { BrainCircuit, ListChecks, RefreshCw } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { ErrorState, LoadingState } from '@/components/ui/state'
+import { EmptyState, ErrorState } from '@/components/ui/state'
 import { KpiCard } from '@/components/dashboard/KpiCard'
+import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton'
 import { getDashboardOverview } from '@/services/dashboardService'
 import type { DashboardTask } from '@/services/dashboardService'
 
@@ -40,7 +41,7 @@ export default function DashboardPage() {
   })
 
   if (overviewQuery.isPending) {
-    return <LoadingState text="正在加载 Zeno 工作台..." className="mt-6" />
+    return <DashboardSkeleton />
   }
   if (overviewQuery.isError) {
     return <ErrorState text="工作台暂时不可用，请稍后刷新。" className="mt-6" />
@@ -132,23 +133,33 @@ export default function DashboardPage() {
               {completed}/{overview.tasks.length} 完成
             </span>
           </div>
-          <Table className="text-sm">
-            <TableHead>
-              <TableRow className="bg-surface-muted/50">
-                <TableHeaderCell className="w-10 pl-5">状态</TableHeaderCell>
-                <TableHeaderCell>任务</TableHeaderCell>
-                <TableHeaderCell>类型</TableHeaderCell>
-                <TableHeaderCell className="text-right pr-5">
-                  时长
-                </TableHeaderCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {overview.tasks.map((task) => (
-                <TaskRow key={task.id} task={task} />
-              ))}
-            </TableBody>
-          </Table>
+          {overview.tasks.length === 0 ? (
+            <div className="p-5">
+              <EmptyState
+                icon={<ListChecks className="size-5" />}
+                title="今日暂无计划任务"
+                description="AI 不会虚构任务，产生计划或同步后会出现在这里。"
+              />
+            </div>
+          ) : (
+            <Table className="text-sm">
+              <TableHead>
+                <TableRow className="bg-surface-muted/50">
+                  <TableHeaderCell className="w-10 pl-5">状态</TableHeaderCell>
+                  <TableHeaderCell>任务</TableHeaderCell>
+                  <TableHeaderCell>类型</TableHeaderCell>
+                  <TableHeaderCell className="text-right pr-5">
+                    时长
+                  </TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {overview.tasks.map((task) => (
+                  <TaskRow key={task.id} task={task} />
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </Card>
 
         <Card>
