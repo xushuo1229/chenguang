@@ -3,11 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { Command } from 'cmdk'
 import {
   Bot,
+  BrainCircuit,
+  Compass,
   LayoutDashboard,
   LogOut,
   Moon,
   Plus,
   Sun,
+  TrendingUp,
 } from 'lucide-react'
 import { useAuth } from '@/stores/auth-store'
 import { useTheme } from '@/stores/theme-store'
@@ -65,7 +68,7 @@ export function CommandDialog({ open, onOpenChange }: CommandDialogProps) {
         </Group>
 
         <Group heading="操作">
-          <Item value="new 新建对话" onSelect={() => go('/agent')}>
+          <Item value="new 新建对话 agent" onSelect={() => go('/agent')}>
             <Plus />
             新建对话
           </Item>
@@ -83,6 +86,36 @@ export function CommandDialog({ open, onOpenChange }: CommandDialogProps) {
             <LogOut />
             退出登录
             {user ? <Hint>{user.email}</Hint> : null}
+          </Item>
+        </Group>
+
+        <Group heading="Ask Zeno">
+          <Item
+            value="ask today 今天该推进什么 任务"
+            onSelect={() =>
+              go(`/agent?q=${encodeURIComponent('我今天该推进什么？')}`)
+            }
+          >
+            <Compass />
+            问：我今天该推进什么？
+          </Item>
+          <Item
+            value="ask trend 学习趋势 专注"
+            onSelect={() =>
+              go(`/agent?q=${encodeURIComponent('我的学习趋势怎么样？')}`)
+            }
+          >
+            <TrendingUp />
+            问：我的学习趋势怎么样？
+          </Item>
+          <Item
+            value="ask review 复习 薄弱 知识"
+            onSelect={() =>
+              go(`/agent?q=${encodeURIComponent('哪些知识需要优先复习？')}`)
+            }
+          >
+            <BrainCircuit />
+            问：哪些知识需要优先复习？
           </Item>
         </Group>
       </Command.List>

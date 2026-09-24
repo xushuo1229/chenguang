@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { useSearchParams } from 'react-router-dom'
 import { ChevronDown, ShieldCheck } from 'lucide-react'
 import { AgentComposer } from '@/components/agent/AgentComposer'
 import { MessageCard, type ChatMessage } from '@/components/agent/MessageCard'
@@ -27,6 +28,16 @@ export default function AgentPage() {
   const [contextOpen, setContextOpen] = useState(false)
   const conversationId = useRef(`zeno-mock-${Date.now()}`)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  useEffect(() => {
+    const draft = searchParams.get('q')
+    if (draft) {
+      setInput(draft)
+      setSearchParams({}, { replace: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const contextQuery = useQuery({
     queryKey: ['zeno', 'agent-context'],
