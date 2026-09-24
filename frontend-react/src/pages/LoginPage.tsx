@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
-import { Loader2, Sparkles } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ErrorState } from '@/components/ui/state'
@@ -14,9 +14,10 @@ export default function LoginPage() {
   const { isAuthenticated, isLoading } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as LocationState)?.from || '/dashboard'
+  const from = (location.state as LocationState)?.from ?? '/dashboard'
   const [email, setEmail] = useState('explorer@zeno.ai')
   const [password, setPassword] = useState('zeno2026')
+  const [remember, setRemember] = useState(true)
 
   const loginMutation = useMutation({
     mutationFn: () => authService.login(email, password),
@@ -25,7 +26,7 @@ export default function LoginPage() {
 
   if (isLoading) {
     return (
-      <div className="surface-card p-8 text-center text-sm text-muted">
+      <div className="rounded-card border border-line bg-surface p-8 text-center text-sm text-ink-muted">
         <Loader2 className="mx-auto mb-2 size-5 animate-spin text-primary" />
         正在检查登录状态...
       </div>
@@ -40,66 +41,114 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="surface-card p-8">
-      <div className="mb-6 flex items-center gap-3 lg:hidden">
-        <span className="grid size-10 place-items-center rounded-2xl bg-gradient-to-br from-primary to-secondary text-white">
-          <Sparkles className="size-5" />
-        </span>
-        <div>
-          <p className="text-sm font-bold text-ink">Zeno</p>
-          <p className="text-xs text-muted">AI Personal Growth OS</p>
-        </div>
+    <div>
+      <div className="mb-2 flex items-center gap-2 lg:hidden">
+        <span className="grid size-8 place-items-center rounded-control bg-primary text-primary-foreground" />
+        <span className="text-sm font-semibold text-ink">Zeno Workspace</span>
       </div>
 
-      <h1 className="text-2xl font-bold tracking-tight text-ink">欢迎回来</h1>
-      <p className="mt-1 text-sm text-muted">登录 Zeno AI Workspace，当前为 mock 登录</p>
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">
+        欢迎回来
+      </h1>
+      <p className="mt-1 text-sm text-ink-muted">
+        使用你的账号登录 Zeno AI Workspace
+      </p>
 
       <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
-        <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium text-ink">
+        <div className="space-y-1.5">
+          <label htmlFor="email" className="text-[13px] font-medium text-ink">
             邮箱
           </label>
           <Input
             id="email"
             type="email"
             autoComplete="email"
+            required
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@zeno.ai"
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@company.com"
           />
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium text-ink">
-            密码
-          </label>
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <label
+              htmlFor="password"
+              className="text-[13px] font-medium text-ink"
+            >
+              密码
+            </label>
+            <button
+              type="button"
+              className="text-[13px] text-primary hover:underline"
+            >
+              忘记密码？
+            </button>
+          </div>
           <Input
             id="password"
             type="password"
             autoComplete="current-password"
+            required
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="••••••••"
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="输入密码"
           />
         </div>
 
+        <label className="flex cursor-pointer items-center gap-2 text-[13px] text-ink-secondary">
+          <input
+            type="checkbox"
+            checked={remember}
+            onChange={(e) => setRemember(e.target.checked)}
+            className="size-4 rounded border-line text-primary accent-[var(--primary)]"
+          />
+          保持登录状态
+        </label>
+
         {loginMutation.isError ? (
           <ErrorState
-            text={loginMutation.error instanceof Error ? loginMutation.error.message : '登录失败，请稍后重试'}
+            title="登录失败"
+            text={
+              loginMutation.error instanceof Error
+                ? loginMutation.error.message
+                : '请稍后重试'
+            }
           />
         ) : null}
 
-        <Button type="submit" size="lg" className="w-full" disabled={loginMutation.isPending}>
-          {loginMutation.isPending ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Sparkles className="size-4" />
-          )}
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full"
+          disabled={loginMutation.isPending}
+        >
+          {loginMutation.isPending ? <Loader2 className="animate-spin" /> : null}
           {loginMutation.isPending ? '正在登录...' : '登录'}
         </Button>
       </form>
 
-      <p className="mt-5 text-center text-xs text-muted">mock 模式：任意非空邮箱与密码均可登录</p>
+      <div className="my-6 flex items-center gap-3 text-[11px] text-ink-faint">
+        <span className="h-px flex-1 bg-line" />
+        或使用
+        <span className="h-px flex-1 bg-line" />
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <Button variant="outline" type="button" disabled>
+          SSO 登录
+        </Button>
+        <Button variant="outline" type="button" disabled>
+          Google
+        </Button>
+      </div>
+
+      <p className="mt-7 text-center text-[13px] text-ink-muted">
+        还没有账号？{' '}
+        <button type="button" className="text-primary hover:underline">
+          联系管理员开通
+        </button>
+      </p>
     </div>
   )
 }

@@ -1,29 +1,34 @@
 import { useState, type ReactNode } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowUpRight, Menu, Sparkles } from 'lucide-react'
-import { Sidebar } from '@/components/layout/Sidebar'
-import { MobileNav } from '@/components/layout/MobileNav'
-import { ContextPanel } from '@/features/workspace/ContextPanel'
+import {
+  ChevronRight,
+  Menu,
+  Search,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useAuth } from '@/stores/auth-store'
+import { MobileNav } from '@/components/layout/MobileNav'
+import {
+  Sidebar,
+  SIDEBAR_COLLAPSED_WIDTH,
+  SIDEBAR_WIDTH,
+} from '@/components/layout/Sidebar'
+import { CommandDialog } from '@/components/command/CommandDialog'
 import { cn } from '@/lib/utils'
-
-const titles: Record<string, { title: string; description: string }> = {
-  '/dashboard': { title: 'Dashboard', description: '成长状态与下一步' },
-  '/agent': { title: 'Agent Workspace', description: '与你的 AI 成长伙伴对话' },
-}
 
 export function WorkspaceLayout({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const { pathname } = useLocation()
-  const { user } = useAuth()
-  const heading = titles[pathname] || { title: 'Zeno Workspace', description: 'AI 个人成长工作区' }
-
+  const [commandOpen, setCommandOpen] = useState(false)
   return (
-    <div className="min-h-dvh">
-      <Sidebar collapsed={collapsed} onToggleCollapsed={() => setCollapsed((value) => !value)} />
+    <div className="min-h-dvh bg-background">
+      <Sidebar
+        collapsed={collapsed}
+        onToggleCollapsed={() => setCollapsed((v) => !v)}
+        onOpenCommand={() => setCommandOpen(true)}
+      />
+
+      <CommandDialog open={commandOpen} onOpenChange={setCommandOpen} />
 
       <AnimatePresence>
         {mobileOpen ? (
@@ -33,60 +38,68 @@ export function WorkspaceLayout({ children }: { children: ReactNode }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-40 bg-slate-900/25 backdrop-blur-sm lg:hidden"
+              className="fixed inset-0 z-40 bg-[var(--overlay)] lg:hidden"
               onClick={() => setMobileOpen(false)}
             />
             <motion.aside
-              initial={{ x: -320 }}
+              initial={{ x: -280 }}
               animate={{ x: 0 }}
-              exit={{ x: -320 }}
-              transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-              className="glass-panel fixed inset-y-0 left-0 z-50 w-[286px] p-4 lg:hidden"
+              exit={{ x: -280 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 340 }}
+              className="fixed inset-y-0 left-0 z-50 w-[280px] border-r border-line bg-surface lg:hidden"
             >
-              <MobileSidebarContent onNavigate={() => setMobileOpen(false)} />
+              <MobileSidebarContent
+                onOpenCommand={() => {
+                  setMobileOpen(false)
+                  setCommandOpen(true)
+                }}
+                onNavigate={() => setMobileOpen(false)}
+              />
             </motion.aside>
           </>
         ) : null}
       </AnimatePresence>
 
       <div
-        className={cn(
-          'flex min-h-dvh transition-[padding] duration-200',
-          collapsed ? 'lg:pl-[88px]' : 'lg:pl-[280px]',
-        )}
+        className="flex min-h-dvh flex-col transition-[padding] duration-150"
+        style={{ paddingLeft: collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH }}
       >
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="glass-panel sticky top-0 z-20 border-x-0 border-t-0 px-4 py-3.5 lg:px-8">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileOpen(true)} aria-label="打开导航">
-                <Menu className="size-5" />
-              </Button>
-              <span className="grid size-10 place-items-center rounded-2xl bg-primary/10 text-primary lg:hidden">
-                <Sparkles className="size-5" />
-              </span>
-              <div className="min-w-0">
-                <h1 className="truncate text-lg font-semibold tracking-tight text-ink">{heading.title}</h1>
-                <p className="truncate text-sm text-muted">{heading.description}</p>
-              </div>
-              <div className="ml-auto flex items-center gap-2">
-                <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-                  <NavLink to="/agent">
-                    Ask Zeno
-                    <ArrowUpRight className="size-4" />
-                  </NavLink>
-                </Button>
-                <span className="grid size-9 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                  {(user?.nickname || user?.email || 'U').slice(0, 1).toUpperCase()}
-                </span>
-              </div>
-            </div>
-          </header>
+        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-line bg-surface/95 px-4 backdrop-blur lg:px-6">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden"
+            onClick={() => setMobileOpen(true)}
+            aria-label="打开导航"
+          >
+            <Menu />
+          </Button>
 
-          <main className="flex min-w-0 flex-1">
-            <div className="min-w-0 flex-1 px-4 py-6 pb-24 lg:px-8 lg:pb-8">{children}</div>
-            <ContextPanel />
-          </main>
-        </div>
+          <button
+            type="button"
+            onClick={() => setCommandOpen(true)}
+            className="flex h-9 w-full max-w-[320px] items-center gap-2 rounded-control border border-line bg-surface-muted/60 px-3 text-sm text-ink-muted transition-colors hover:border-border-strong hover:text-ink-secondary"
+          >
+            <Search className="size-4" />
+            <span className="flex-1 text-left">搜索或跳转...</span>
+            <kbd className="hidden rounded border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] sm:block">
+              ⌘K
+            </kbd>
+          </button>
+
+          <div className="ml-auto flex items-center gap-1">
+            <Button asChild variant="ghost" size="sm">
+              <NavLink to="/agent">
+                Ask Zeno
+                <ChevronRight className="size-3.5" />
+              </NavLink>
+            </Button>
+          </div>
+        </header>
+
+        <main className="flex-1 px-4 py-6 pb-24 lg:px-6 lg:pb-10">
+          <div className="mx-auto w-full max-w-[1200px]">{children}</div>
+        </main>
       </div>
 
       <MobileNav />
@@ -94,16 +107,22 @@ export function WorkspaceLayout({ children }: { children: ReactNode }) {
   )
 }
 
-function MobileSidebarContent({ onNavigate }: { onNavigate: () => void }) {
+function MobileSidebarContent({
+  onNavigate,
+  onOpenCommand,
+}: {
+  onNavigate: () => void
+  onOpenCommand: () => void
+}) {
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-3 px-2 py-2">
-        <span className="grid size-10 place-items-center rounded-2xl bg-gradient-to-br from-primary to-secondary text-white">
-          <Sparkles className="size-5" />
+      <div className="flex h-14 items-center gap-2 border-b border-line px-4">
+        <span className="grid size-8 place-items-center rounded-control bg-primary text-primary-foreground">
+          <Search className="size-4" />
         </span>
-        <span className="text-sm font-bold text-ink">Zeno Workspace</span>
+        <span className="text-sm font-semibold text-ink">Zeno Workspace</span>
       </div>
-      <nav className="mt-5 space-y-1.5">
+      <nav className="flex-1 space-y-0.5 p-2">
         {[
           { label: 'Dashboard', to: '/dashboard' },
           { label: 'Agent', to: '/agent' },
@@ -113,13 +132,29 @@ function MobileSidebarContent({ onNavigate }: { onNavigate: () => void }) {
             to={to}
             onClick={onNavigate}
             className={({ isActive }) =>
-              cn('block rounded-2xl px-3 py-3 text-sm', isActive ? 'bg-primary/10 text-primary' : 'text-muted')
+              cn(
+                'block rounded-control px-3 py-2 text-sm font-medium',
+                isActive
+                  ? 'bg-primary-muted text-primary'
+                  : 'text-ink-secondary',
+              )
             }
           >
             {label}
           </NavLink>
         ))}
       </nav>
+      <div className="border-t border-line p-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start"
+          onClick={onOpenCommand}
+        >
+          <Search />
+          命令面板
+        </Button>
+      </div>
     </div>
   )
 }
