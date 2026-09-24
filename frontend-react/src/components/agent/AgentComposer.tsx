@@ -1,5 +1,5 @@
-import { useRef } from 'react'
-import { ArrowUp, Loader2, Paperclip, Sparkles } from 'lucide-react'
+import { useEffect, useRef } from 'react'
+import { ArrowUp, Loader2, Paperclip, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -19,18 +19,37 @@ type AgentComposerProps = {
   onSubmit: () => void
 }
 
-export function AgentComposer({ value, mode, busy, onChange, onModeChange, onSubmit }: AgentComposerProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null)
+const modes = [
+  { id: 'personal', label: 'Personal Agent' },
+  { id: 'general', label: 'General AI' },
+] as const
+
+export function AgentComposer({
+  value,
+  mode,
+  busy,
+  onChange,
+  onModeChange,
+  onSubmit,
+}: AgentComposerProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+    textarea.style.height = 'auto'
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 144)}px`
+  }, [value])
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
+    <div className="space-y-2.5">
+      <div className="flex flex-wrap gap-1.5">
         {quickPrompts.map((prompt) => (
           <button
             key={prompt}
             type="button"
             disabled={busy}
-            className="rounded-full border border-line bg-surface px-3.5 py-2 text-sm text-muted transition-colors hover:border-primary/40 hover:text-primary disabled:opacity-50"
+            className="rounded-full border border-line bg-surface px-3 py-1.5 text-xs text-ink-muted transition-colors hover:border-primary/40 hover:text-primary disabled:opacity-50"
             onClick={() => onChange(prompt)}
           >
             {prompt}
@@ -39,28 +58,31 @@ export function AgentComposer({ value, mode, busy, onChange, onModeChange, onSub
       </div>
 
       <form
-        className="surface-card p-3"
+        className="rounded-card border border-line bg-surface shadow-sm transition-colors focus-within:border-primary/50"
         onSubmit={(event) => {
           event.preventDefault()
           onSubmit()
         }}
       >
-        <div className="flex items-end gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            onChange={() => fileInputRef.current?.value && onChange((value ? `${value}\n` : '') + '[附件已选择：文件内容尚未接入 Agent 上下文]')}
-          />
-          <Button type="button" variant="ghost" size="icon" aria-label="上传文件" disabled={busy} onClick={() => fileInputRef.current?.click()}>
+        <div className="flex items-end gap-1.5 px-2.5 pt-2.5">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="上传附件（即将上线）"
+            title="附件功能即将上线"
+            disabled
+            className="text-ink-faint"
+          >
             <Paperclip className="size-4" />
           </Button>
           <textarea
+            ref={textareaRef}
             rows={1}
             value={value}
             disabled={busy}
-            placeholder="输入问题，例如：我今天该推进什么？"
-            className="max-h-36 min-h-11 flex-1 resize-none bg-transparent px-1 py-2.5 text-sm text-ink outline-none placeholder:text-slate-400"
+            placeholder="向 Zeno 提问…"
+            className="max-h-36 min-h-9 min-w-0 flex-1 resize-none self-center bg-transparent px-1 py-2 text-sm leading-6 text-ink outline-none placeholder:text-ink-faint"
             onChange={(event) => onChange(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === 'Enter' && !event.shiftKey) {
@@ -69,27 +91,48 @@ export function AgentComposer({ value, mode, busy, onChange, onModeChange, onSub
               }
             }}
           />
-          <Button type="submit" size="icon" disabled={busy || !value.trim()} aria-label="发送">
-            {busy ? <Loader2 className="size-4 animate-spin" /> : <ArrowUp className="size-4" />}
+          <Button
+            type="submit"
+            size="icon"
+            disabled={busy || !value.trim()}
+            aria-label="发送"
+            className="mb-0.5"
+          >
+            {busy ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <ArrowUp className="size-4" />
+            )}
           </Button>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-3">
-          {(['personal', 'general'] as const).map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => onModeChange(item)}
-              className={cn(
-                'rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors',
-                mode === item ? 'bg-primary text-white' : 'bg-slate-100 text-muted hover:text-ink',
-              )}
-            >
-              {item === 'personal' ? 'Personal Agent' : 'General AI'}
-            </button>
-          ))}
-          <span className="ml-auto flex items-center gap-1 text-xs text-muted">
-            <Sparkles className="size-3" /> Evidence Bound
+        <div className="flex items-center justify-between gap-2 border-t border-line px-2.5 py-2">
+          <div
+            role="tablist"
+            aria-label="Agent 模式"
+            className="flex rounded-control bg-surface-muted p-0.5"
+          >
+            {modes.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={mode === item.id}
+                onClick={() => onModeChange(item.id)}
+                className={cn(
+                  'rounded-[5px] px-2.5 py-1 text-xs font-medium transition-colors',
+                  mode === item.id
+                    ? 'bg-surface text-ink shadow-sm'
+                    : 'text-ink-muted hover:text-ink-secondary',
+                )}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <span className="flex items-center gap-1 text-[11px] text-ink-faint">
+            <ShieldCheck className="size-3" />
+            AI 只读 · 写入需确认
           </span>
         </div>
       </form>

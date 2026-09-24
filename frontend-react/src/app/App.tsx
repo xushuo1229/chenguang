@@ -31,7 +31,7 @@ export default function App() {
         path="/agent"
         element={
           <ProtectedRoute>
-            <WorkspaceLayout>
+            <WorkspaceLayout fullBleed>
               <AgentPage />
             </WorkspaceLayout>
           </ProtectedRoute>

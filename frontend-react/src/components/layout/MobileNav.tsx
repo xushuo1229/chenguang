@@ -18,7 +18,7 @@ export function MobileNav() {
             className={({ isActive }) =>
               cn(
                 'flex min-w-16 flex-col items-center gap-1 rounded-xl px-3 py-2 text-[11px] transition-colors',
-                isActive ? 'bg-primary/10 text-primary' : 'text-muted hover:text-ink',
+                isActive ? 'bg-primary-muted text-primary' : 'text-ink-muted hover:text-ink',
               )
             }
           >

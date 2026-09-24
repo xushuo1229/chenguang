@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { ChevronDown, FileText, Lightbulb, Quote, ShieldCheck, Sparkles, User } from 'lucide-react'
+import {
+  ChevronDown,
+  FileText,
+  Lightbulb,
+  Quote,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import type { AgentChatResponse } from '@/services/agentService'
@@ -19,7 +26,9 @@ export type ChatMessage = {
 
 export function MessageCard({ message }: { message: ChatMessage }) {
   const isAssistant = message.role === 'assistant'
-  const [display, setDisplay] = useState(message.streaming ? '' : message.content)
+  const [display, setDisplay] = useState(
+    message.streaming ? '' : message.content,
+  )
   const [showEvidence, setShowEvidence] = useState(false)
   const cursorRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -43,40 +52,77 @@ export function MessageCard({ message }: { message: ChatMessage }) {
     }
   }, [message.content, message.streaming])
 
+  if (!isAssistant) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+        className="flex justify-end"
+      >
+        <div className="max-w-[85%] rounded-card rounded-br-sm border border-line bg-surface-muted px-3.5 py-2.5">
+          <p className="whitespace-pre-wrap text-sm leading-6 text-ink">
+            {message.content}
+          </p>
+        </div>
+      </motion.div>
+    )
+  }
+
+  const typing =
+    message.streaming && display.length < message.content.length
+
   return (
     <motion.article
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-      className={cn('flex gap-3', !isAssistant && 'justify-end')}
+      transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+      className="flex gap-3"
     >
-      {isAssistant ? (
-        <span className="mt-1 grid size-9 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-primary to-secondary text-white">
-          <Sparkles className="size-4" />
-        </span>
-      ) : null}
+      <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-control bg-primary-muted text-primary">
+        <Sparkles className="size-4" />
+      </span>
 
-      <div className={cn('min-w-0 max-w-[760px] rounded-3xl border p-4', isAssistant ? 'border-line bg-surface/84 shadow-sm' : 'border-primary/20 bg-primary/10')}>
-        <div className="mb-2 flex items-center gap-2">
-          <span className="text-xs font-semibold text-muted">{isAssistant ? 'Learning Agent' : 'You'}</span>
-          {message.mode ? <Badge tone={message.mode === 'personal' ? 'primary' : 'info'}>{message.mode}</Badge> : null}
-          {message.streaming ? <span className="text-xs text-primary">streaming</span> : null}
+      <div className="min-w-0 flex-1">
+        <div className="mb-1 flex items-center gap-2">
+          <span className="text-xs font-semibold text-ink-secondary">
+            Zeno
+          </span>
+          {message.mode ? (
+            <Badge tone={message.mode === 'personal' ? 'primary' : 'neutral'}>
+              {message.mode}
+            </Badge>
+          ) : null}
+          {message.streaming ? (
+            <span className="size-1.5 animate-pulse rounded-full bg-primary" />
+          ) : null}
         </div>
+
         <div className="whitespace-pre-wrap text-sm leading-7 text-ink">
           {display}
-          {message.streaming && display.length < message.content.length ? <span className="ml-0.5 inline-block h-4 w-[2px] animate-pulse bg-primary align-middle" /> : null}
+          {typing ? (
+            <span className="ml-0.5 inline-block h-4 w-[2px] animate-pulse bg-primary align-middle" />
+          ) : null}
         </div>
 
         {message.insights?.length ? (
-          <div className="mt-3 rounded-2xl bg-amber-50/70 p-3">
-            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-amber-700">
-              <Lightbulb className="size-3.5" /> Growth Observation
+          <div className="mt-3 rounded-card bg-warning-muted p-3">
+            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-warning">
+              <Lightbulb className="size-3.5" />
+              Growth Observation
             </p>
-            <ul className="space-y-1.5 text-sm text-amber-800">
+            <ul className="space-y-1.5">
               {message.insights.map((insight, index) => (
-                <li key={insight.id || index} className="flex items-start justify-between gap-3">
+                <li
+                  key={insight.id || index}
+                  className="flex items-start justify-between gap-3 text-[13px] leading-6 text-ink-secondary"
+                >
                   <span>{insight.title}</span>
-                  {typeof insight.confidence === 'number' ? <span className="text-xs text-amber-600">{Math.round(insight.confidence * 100)}%</span> : null}
+                  {typeof insight.confidence === 'number' ? (
+                    <span className="shrink-0 text-xs tabular-nums text-ink-faint">
+                      {Math.round(insight.confidence * 100)}%
+                    </span>
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -84,20 +130,37 @@ export function MessageCard({ message }: { message: ChatMessage }) {
         ) : null}
 
         {message.evidence?.length ? (
-          <div className="mt-3 rounded-2xl border border-line bg-slate-50/70">
-            <button type="button" className="flex w-full items-center justify-between gap-2 p-3 text-left" onClick={() => setShowEvidence((value) => !value)}>
-              <span className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                <Quote className="size-3.5" /> Evidence Bound · {message.evidence.length}
+          <div className="mt-3 rounded-card border border-line bg-surface">
+            <button
+              type="button"
+              className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left"
+              onClick={() => setShowEvidence((value) => !value)}
+              aria-expanded={showEvidence}
+            >
+              <span className="flex items-center gap-2 text-xs font-semibold text-ink-secondary">
+                <Quote className="size-3.5 text-primary" />
+                Evidence Bound · {message.evidence.length}
               </span>
-              <ChevronDown className={cn('size-4 text-slate-500 transition-transform', showEvidence && 'rotate-180')} />
+              <ChevronDown
+                className={cn(
+                  'size-4 text-ink-faint transition-transform duration-200',
+                  showEvidence && 'rotate-180',
+                )}
+              />
             </button>
             {showEvidence ? (
               <ul className="space-y-2 border-t border-line p-3">
                 {message.evidence.map((item) => (
-                  <li key={item.id} className="rounded-xl bg-white p-3">
-                    <p className="text-sm text-ink">{item.title}</p>
-                    <p className="mt-1 flex items-center gap-1 text-xs text-muted">
-                      <FileText className="size-3" /> {item.source}
+                  <li
+                    key={item.id}
+                    className="rounded-control bg-surface-muted p-2.5"
+                  >
+                    <p className="text-[13px] leading-5 text-ink-secondary">
+                      {item.title}
+                    </p>
+                    <p className="mt-1 flex items-center gap-1 text-xs text-ink-faint">
+                      <FileText className="size-3" />
+                      {item.source}
                     </p>
                   </li>
                 ))}
@@ -109,23 +172,25 @@ export function MessageCard({ message }: { message: ChatMessage }) {
         {message.actions?.length ? (
           <div className="mt-3 space-y-2">
             {message.actions.map((action, index) => (
-              <div key={action.id || index} className="rounded-2xl border border-primary/18 bg-primary/6 p-3">
+              <div
+                key={action.id || index}
+                className="rounded-card border border-primary/25 bg-primary-muted p-3"
+              >
                 <p className="text-sm font-medium text-ink">{action.title}</p>
-                <p className="mt-1 text-xs text-muted">{action.reason || '学习状态建议'}</p>
+                {action.reason ? (
+                  <p className="mt-1 text-xs leading-5 text-ink-muted">
+                    {action.reason}
+                  </p>
+                ) : null}
                 <p className="mt-2 flex items-center gap-1 text-xs font-medium text-primary">
-                  <ShieldCheck className="size-3.5" /> Action Proposal · 需要你确认
+                  <ShieldCheck className="size-3.5" />
+                  Action Proposal · 需要你确认
                 </p>
               </div>
             ))}
           </div>
         ) : null}
       </div>
-
-      {!isAssistant ? (
-        <span className="mt-1 grid size-9 shrink-0 place-items-center rounded-2xl bg-slate-100 text-slate-500">
-          <User className="size-4" />
-        </span>
-      ) : null}
     </motion.article>
   )
 }

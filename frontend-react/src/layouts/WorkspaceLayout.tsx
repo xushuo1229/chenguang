@@ -10,13 +10,17 @@ import { Button } from '@/components/ui/button'
 import { MobileNav } from '@/components/layout/MobileNav'
 import {
   Sidebar,
-  SIDEBAR_COLLAPSED_WIDTH,
-  SIDEBAR_WIDTH,
 } from '@/components/layout/Sidebar'
 import { CommandDialog } from '@/components/command/CommandDialog'
 import { cn } from '@/lib/utils'
 
-export function WorkspaceLayout({ children }: { children: ReactNode }) {
+export function WorkspaceLayout({
+  children,
+  fullBleed = false,
+}: {
+  children: ReactNode
+  fullBleed?: boolean
+}) {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [commandOpen, setCommandOpen] = useState(false)
@@ -61,8 +65,11 @@ export function WorkspaceLayout({ children }: { children: ReactNode }) {
       </AnimatePresence>
 
       <div
-        className="flex min-h-dvh flex-col transition-[padding] duration-150"
-        style={{ paddingLeft: collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH }}
+        className={cn(
+          'flex flex-col transition-[padding] duration-150',
+          fullBleed ? 'h-dvh' : 'min-h-dvh',
+          collapsed ? 'lg:pl-16' : 'lg:pl-[264px]',
+        )}
       >
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-line bg-surface/95 px-4 backdrop-blur lg:px-6">
           <Button
@@ -97,9 +104,13 @@ export function WorkspaceLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 px-4 py-6 pb-24 lg:px-6 lg:pb-10">
-          <div className="mx-auto w-full max-w-[1200px]">{children}</div>
-        </main>
+        {fullBleed ? (
+          <main className="min-h-0 flex-1">{children}</main>
+        ) : (
+          <main className="flex-1 px-4 py-6 pb-24 lg:px-6 lg:pb-10">
+            <div className="mx-auto w-full max-w-[1200px]">{children}</div>
+          </main>
+        )}
       </div>
 
       <MobileNav />
