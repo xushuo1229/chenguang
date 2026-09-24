@@ -1,0 +1,3 @@
+# Root .gitignore ignores archive/ everywhere; keep archived design pages tracked.
+!src/pages/archive/
+!src/pages/archive/**
