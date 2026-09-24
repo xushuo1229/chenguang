@@ -55,13 +55,29 @@ Agent 不是代码补全工具，必须以以下身份工作：
 - `stats.html`
 - `ai.html`
 
-禁止：
+禁止（仅针对旧 MPA，React 迁移例外见下一条款）：
 
-- React。
-- Vue。
-- Next.js。
-- SPA 化重写。
-- 引入第二套组件体系或状态管理体系。
+- 在旧 MPA 中引入 React、Vue、Next.js。
+- 对旧 MPA 进行 SPA 化重写。
+- 在旧 MPA 中引入第二套组件体系或状态管理体系。
+
+### React 前端迁移（Zeno AI Workspace）
+
+授权状态：已授权（Phase 39）。
+
+双前端规则：
+
+- 原 MPA 继续保持生产稳定，是切换完成前唯一的生产前端。
+- `frontend-react/` 是明确授权的新前端工程（React + TypeScript + Vite，Tailwind、shadcn/ui、Framer Motion）。
+- React 开发规则仅作用于 `frontend-react/`，不得外溢到旧 MPA。
+- 未经讨论不得删除或停止维护旧 MPA。
+
+边界规则：
+
+- 禁止修改后端、API、数据库、同步协议与数据协议。
+- 禁止读写或污染旧 MPA 的 `cg_token` / `cg_user`；mock 会话使用独立键。
+- 禁止破坏旧数据，禁止改动 `CGStore` 与本地数据键 `chenguangData`。
+- React 侧当前只使用 mock 数据；接入真实 API 需单独阶段并保留只读与「AI 建议 → 用户确认 → Store 写入」约束。
 
 ### 数据层
 
