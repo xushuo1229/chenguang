@@ -1,3 +1,7 @@
 # Root .gitignore ignores archive/ everywhere; keep archived design pages tracked.
 !src/pages/archive/
 !src/pages/archive/**
+
+# Playwright / test-web run artifacts; specs and .confirmations stay tracked
+test-results/
+playwright-report/

@@ -7,7 +7,8 @@
     "dev": "vite --port 5174",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --port 5174",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:web": "playwright test --config=tests/test-web/playwright.config.mjs"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.2.6",
@@ -34,6 +35,7 @@
     "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.0.0",
     "@types/node": "^26.6.2",
     "@types/react": "^18.3.18",

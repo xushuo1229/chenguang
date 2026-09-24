@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "caseId": "zeno-core-workflow",
+  "status": "approved",
+  "targetProject": "F:\\chenguang-platform\\frontend-react",
+  "confirmedAt": "2026-09-24T15:10:00+08:00",
+  "environment": {
+    "name": "local preview (vite preview, msedge)",
+    "tier": "local"
+  },
+  "target": {
+    "url": "http://localhost:5174/",
+    "allowedHosts": [
+      "localhost"
+    ]
+  },
+  "roles": [
+    {
+      "name": "mock Zeno user",
+      "permissions": [
+        "login via zeno_mock_session",
+        "read synthetic mock data"
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "action": "open protected routes without session",
+      "expectedState": "redirect to /login"
+    },
+    {
+      "action": "log in with prefilled mock credentials",
+      "expectedState": "dashboard with KPI cards, two charts, six task rows and isolated storage keys"
+    },
+    {
+      "action": "send Personal and General agent messages",
+      "expectedState": "mock answers render with evidence bound"
+    },
+    {
+      "action": "toggle dark mode and reload",
+      "expectedState": "dark class persists"
+    },
+    {
+      "action": "search command palette and pick Ask Zeno action",
+      "expectedState": "agent composer prefilled and q param consumed"
+    },
+    {
+      "action": "use 390px mobile viewport and toggle context rail",
+      "expectedState": "no sidebar offset, context panel expands/collapses"
+    }
+  ],
+  "expectedStates": [
+    "unauthenticated access redirects to login",
+    "dashboard renders enterprise KPIs, charts and table",
+    "localStorage contains zeno_mock_session and never cg_token, cg_user or chenguangData",
+    "agent answers and evidence render in both modes",
+    "theme preference persists across reload",
+    "command palette seeds agent prompt",
+    "mobile layout has no sidebar padding offset and context collapsible works"
+  ],
+  "allowedData": {
+    "classification": "synthetic",
+    "description": "frontend-react built-in mocks/data.ts; no backend, API or real user data involved"
+  },
+  "sideEffects": [],
+  "confirmationSource": "User explicitly requested completing the test-web core workflow acceptance suite in this conversation",
+  "bindings": {
+    "specPath": "tests/test-web/zeno-core-workflow.spec.mjs",
+    "configPath": "tests/test-web/playwright.config.mjs",
+    "projectName": "chromium",
+    "targetURL": "http://localhost:5174/",
+    "specSha256": "0a93fecd3dde789a897826fb59e6da0876690e82753740cb4aa0683d72824284",
+    "configSha256": "2f83587d57046e9db09080ca6744aba41bafb11bbf507119c1ddc3d05cd2c93e"
+  },
+  "evidence": {
+    "htmlReport": true,
+    "video": "on",
+    "trace": "on-failure",
+    "screenshot": "on-failure"
+  }
+}
