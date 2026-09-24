@@ -157,7 +157,22 @@ AI 安全规则：
 
 ## 6. UI 与体验规范
 
-当前设计体系：知行 Calm Dawn。
+旧 MPA 设计体系：知行 Calm Dawn（仅作用于旧 MPA）。
+
+### frontend-react 设计体系：Zeno Enterprise（Quiet Precision）
+
+适用范围：仅 `frontend-react/`，对标 Linear、Vercel、Stripe 等企业级工作台。
+
+- 中性灰阶双主题：浅色默认，深色同步交付；以发丝级描边和层级区分结构，不依赖大投影。
+- 主色：企业蓝 `#2563EB`（深色模式 `#60A5FA`）；语义色 success/warning/danger/info 统一 token。
+- 圆角：卡片 8px、输入与控件 6px；禁止气泡式大圆角。
+- 字体：自托管 Geist Sans 与 Geist Mono（woff2），数字使用 tabular-nums；CJK 回退 PingFang SC、Microsoft YaHei。
+- 图标：统一 Lucide，1.5px 线宽，16/20 两档。
+- 密度：舒适为默认，支持紧凑模式。
+- 企业模式：侧边栏工作区骨架、⌘K 命令面板、企业级数据表（排序/筛选/批量操作）、KPI 卡片与图表。
+- 图表使用 Tremor，颜色必须与设计 token 对齐。
+
+以下为旧 MPA 的 Calm Dawn 规范（frontend-react 遵循上方 Quiet Precision）：
 
 设计原则：
 
