@@ -119,17 +119,20 @@ export const mockSyncSnapshot: SyncSnapshot = {
   },
 }
 
-export const mockDashboardOverview: DashboardOverview = {
+export const mockDashboardOverview: Omit<
+  DashboardOverview,
+  'chart' | 'knowledge'
+> = {
   growthIndex: 82,
   summary: '任务完成率、近 7 天专注与有效学习日均保持在高位',
   tasksDone: '4/6',
   focusToday: 95,
   streak: 12,
   metrics: [
-    { id: 'tasks', label: '今日任务', value: '4/6', hint: '已完成 / 总计划', tone: 'primary' },
-    { id: 'focus', label: '今日专注', value: 95, hint: '有效专注分钟', tone: 'secondary' },
-    { id: 'streak', label: '连续学习', value: 12, hint: '当前连续天数', tone: 'warning' },
-    { id: 'knowledge', label: '知识掌握', value: '5/8', hint: '掌握 / 已评估节点', tone: 'success' },
+    { id: 'tasks', label: '今日任务', value: '4/6', hint: '已完成 / 总计划', tone: 'primary', delta: '+2', trend: 'up' },
+    { id: 'focus', label: '今日专注', value: 95, hint: '有效专注分钟', tone: 'secondary', delta: '-8%', trend: 'down' },
+    { id: 'streak', label: '连续学习', value: 12, hint: '当前连续天数', tone: 'warning', delta: '+3', trend: 'up' },
+    { id: 'knowledge', label: '知识掌握', value: '5/8', hint: '掌握 / 已评估节点', tone: 'success', delta: '+1', trend: 'up' },
   ],
   trend,
   tasks: [

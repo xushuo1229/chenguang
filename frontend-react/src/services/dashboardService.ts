@@ -1,4 +1,10 @@
 import { mockDashboardOverview } from '@/mocks/data'
+import { getSyncSnapshot } from './analyticsService'
+import { getAgentContext } from './agentService'
+import {
+  buildKnowledgeCoverage,
+  buildStudyTimeSeries,
+} from '@/features/dashboard/dashboardMetrics'
 import { delay } from './mockSession'
 
 export type DashboardTrendPoint = { date: string; value: number }
@@ -10,6 +16,8 @@ export type DashboardMetric = {
   value: string | number
   hint: string
   tone: DashboardMetricTone
+  delta?: string
+  trend?: 'up' | 'down'
 }
 export type DashboardOverview = {
   growthIndex: number
@@ -21,9 +29,19 @@ export type DashboardOverview = {
   trend: DashboardTrendPoint[]
   tasks: DashboardTask[]
   insights: Array<{ title: string; confidence?: number }>
+  chart: import('@/features/dashboard/dashboardMetrics').StudySeriesPoint[]
+  knowledge: { strong: number; weak: number; coverage: number }
 }
 
 export async function getDashboardOverview(): Promise<DashboardOverview> {
   await delay(320)
-  return structuredClone(mockDashboardOverview)
+  const [snapshot, context] = await Promise.all([
+    getSyncSnapshot(),
+    getAgentContext(),
+  ])
+  return {
+    ...structuredClone(mockDashboardOverview),
+    chart: buildStudyTimeSeries(snapshot),
+    knowledge: buildKnowledgeCoverage(context),
+  }
 }

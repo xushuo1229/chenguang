@@ -2,6 +2,12 @@ import type { AgentContext } from '@/services/agentService'
 import type { SyncSnapshot } from '@/services/analyticsService'
 
 export type FocusTrendPoint = { date: string; value: number }
+export type StudySeriesPoint = {
+  date: string
+  focus: number
+  reading: number
+  english: number
+}
 
 function dateKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -66,4 +72,36 @@ export function buildKnowledgeCoverage(context: AgentContext | undefined) {
     total,
     coverage: total ? Math.round((strong / total) * 100) : 0,
   }
+}
+
+export function buildStudyTimeSeries(
+  snapshot: SyncSnapshot | undefined,
+  windowDays = 14,
+): StudySeriesPoint[] {
+  const sumByDate = (
+    records: Array<{ date?: string; minutes?: number }> | undefined,
+  ) => {
+    const map = new Map<string, number>()
+    records?.forEach((record) => {
+      if (!record.date) return
+      map.set(record.date, (map.get(record.date) || 0) + (Number(record.minutes) || 0))
+    })
+    return map
+  }
+
+  const focus = sumByDate(snapshot?.data?.focus)
+  const reading = sumByDate(snapshot?.data?.readings)
+  const english = sumByDate(snapshot?.data?.english)
+
+  return Array.from({ length: windowDays }, (_, index) => {
+    const key = dateKey(
+      new Date(Date.now() - (windowDays - 1 - index) * 24 * 60 * 60 * 1000),
+    )
+    return {
+      date: key.slice(5),
+      focus: focus.get(key) || 0,
+      reading: reading.get(key) || 0,
+      english: english.get(key) || 0,
+    }
+  })
 }
