@@ -1,0 +1,64 @@
+# ============================================================
+# Zeno React Workspace · 质量门
+# ------------------------------------------------------------
+# 仅在 frontend-react/ 变更时触发：
+# install → playwright chromium → typecheck → test:web
+# test:web 会自行 build 并通过 webServer 拉起 vite preview。
+# ============================================================
+
+name: React Workspace
+
+on:
+  push:
+    paths:
+      - 'frontend-react/**'
+      - '.github/workflows/react-workspace.yml'
+  pull_request:
+    paths:
+      - 'frontend-react/**'
+      - '.github/workflows/react-workspace.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: react-workspace-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  acceptance:
+    name: Typecheck + Browser Acceptance
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend-react
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend-react/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Browser acceptance suite (build + preview + tests)
+        run: npm run test:web
+
+      - name: Upload test evidence on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: react-test-web-results
+          path: frontend-react/test-results
+          retention-days: 7
+          if-no-files-found: ignore

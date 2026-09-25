@@ -15,7 +15,8 @@ Browser acceptance tests for the Zeno React workspace, following the
 - theme persistence across reload;
 - the command palette (⌘K) can seed an Agent question;
 - 390px mobile layout has no sidebar offset and the context rail collapses;
-- the `empty` mock scenario renders the task empty state and is reversible.
+- mock scenarios: `empty` renders the task empty state, `loading` shows the
+  skeleton first, `error` shows an alert with a working retry; all reversible.
 
 ## Run
 
@@ -34,8 +35,19 @@ node ~/.codex/skills/test-web/scripts/run-case.mjs \
 ```
 
 Tests run against the system Edge browser (`channel: 'msedge'`), so no
-Playwright browser download is needed. Run artifacts (videos, traces, HTML
-reports, JSON results) are written under `test-results/` and are gitignored.
+Playwright browser download is needed locally. In CI (`CI` env set) the
+channel switches to Playwright's pinned chromium — install it with
+`npx playwright install --with-deps chromium` (the workflows do this).
+Override with `TEST_WEB_CHANNEL`.
+
+Two GitHub Actions workflows run the suite:
+
+- `.github/workflows/react-workspace.yml`: every push/PR touching
+  `frontend-react/` (fast feedback);
+- `.github/workflows/deploy.yml`: the main-branch production quality gate.
+
+Run artifacts (videos, traces, HTML reports, JSON results) are written under
+`test-results/` and are gitignored.
 
 ## Notes
 
@@ -43,6 +55,7 @@ reports, JSON results) are written under `test-results/` and are gitignored.
   `npm run ... && ...` spawns nested cmd/npm trees on Windows whose inherited
   handles hang Playwright teardown; the launcher builds via `spawnSync` and
   runs preview in a shallow node tree.
-- The empty scenario is switched through `localStorage` key
-  `zeno_mock_scenario` (`default` | `empty`), see `src/mocks/scenario.ts`.
-  It is a test-only switch and is never read by the legacy MPA or CGStore.
+- Scenarios are switched through `localStorage` key `zeno_mock_scenario`,
+  see `src/mocks/scenario.ts`: `default` | `empty` | `loading` | `error`.
+  They are test-only switches and are never read by the legacy MPA or
+  CGStore.

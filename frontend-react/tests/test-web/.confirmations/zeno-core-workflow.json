@@ -5,7 +5,7 @@
   "targetProject": "F:\\chenguang-platform\\frontend-react",
   "confirmedAt": "2026-09-24T15:10:00+08:00",
   "environment": {
-    "name": "local (Playwright webServer auto builds and runs vite preview on 5174, msedge)",
+    "name": "local: msedge; CI (ubuntu): Playwright chromium auto-built via webServer",
     "tier": "local"
   },
   "target": {
@@ -55,6 +55,14 @@
     {
       "action": "clear scenario flag and reload",
       "expectedState": "six task rows return, empty state gone"
+    },
+    {
+      "action": "switch zeno_mock_scenario to loading and reload",
+      "expectedState": "skeleton aria-busy visible, content appears within 10s"
+    },
+    {
+      "action": "switch zeno_mock_scenario to error and reload",
+      "expectedState": "role=alert with retry action renders; clearing flag and retrying restores dashboard"
     }
   ],
   "expectedStates": [
@@ -65,7 +73,9 @@
     "theme preference persists across reload",
     "command palette seeds agent prompt",
     "mobile layout has no sidebar padding offset and context collapsible works",
-    "empty mock scenario renders the task empty state and is reversible"
+    "empty mock scenario renders the task empty state and is reversible",
+    "loading mock scenario shows the skeleton before content",
+    "error mock scenario shows an alert and retry recovers"
   ],
   "allowedData": {
     "classification": "synthetic",
@@ -78,8 +88,8 @@
     "configPath": "tests/test-web/playwright.config.mjs",
     "projectName": "chromium",
     "targetURL": "http://localhost:5174/",
-    "specSha256": "87cefc64f934d380c5881d62a2b811946c2038e68aac447877562393e1cf774a",
-    "configSha256": "bf42ae216cc1be9430be5902b1b591c21f980bfb71e8a5795da8889df4ec81eb"
+    "specSha256": "157b9ed4ccc1104d9b24f7e7cd5d448bdf125bdc07a597fc8d7c9a8b22c9e604",
+    "configSha256": "da9a50c0d520f46e9ff14fa8b9d1b8d73369cab8d0fe572ac5cf76d9264fe66b"
   },
   "evidence": {
     "htmlReport": true,

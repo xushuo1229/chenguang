@@ -3,6 +3,12 @@ import { fileURLToPath, URL } from 'node:url'
 
 const runDir = process.env.TEST_WEB_RUN_DIR
 const projectRoot = fileURLToPath(new URL('../..', import.meta.url))
+// CI installs Playwright's pinned chromium (`npx playwright install
+// chromium`); local runs reuse the system Edge so no browser download is
+// needed. Override with TEST_WEB_CHANNEL when needed.
+const browserChannel =
+  process.env.TEST_WEB_CHANNEL ?? (process.env.CI ? '' : 'msedge')
+const browserUse = browserChannel ? { channel: browserChannel } : {}
 
 export default defineConfig({
   testDir: '.',
@@ -20,7 +26,7 @@ export default defineConfig({
   output: runDir ? `${runDir}/artifacts` : '../../test-results/artifacts',
   use: {
     baseURL: 'http://localhost:5174/',
-    channel: 'msedge',
+    ...browserUse,
     headless: true,
     trace: 'on-failure',
     video: 'on',
@@ -29,7 +35,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { channel: 'msedge' },
+      use: { ...browserUse },
     },
   ],
   webServer: {
