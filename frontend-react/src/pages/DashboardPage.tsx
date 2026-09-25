@@ -44,7 +44,23 @@ export default function DashboardPage() {
     return <DashboardSkeleton />
   }
   if (overviewQuery.isError) {
-    return <ErrorState text="工作台暂时不可用，请稍后刷新。" className="mt-6" />
+    return (
+      <ErrorState
+        text="工作台暂时不可用，请检查网络后重试。"
+        className="mt-6"
+        action={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void overviewQuery.refetch()}
+            disabled={overviewQuery.isFetching}
+          >
+            <RefreshCw />
+            重试
+          </Button>
+        }
+      />
+    )
   }
 
   const overview = overviewQuery.data

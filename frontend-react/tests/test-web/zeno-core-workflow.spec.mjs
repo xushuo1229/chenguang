@@ -135,4 +135,50 @@ test.describe('Zeno AI Workspace 核心流接受测试', () => {
     await expect(page.locator('table tbody tr')).toHaveCount(6)
     await expect(page.getByText('今日暂无计划任务')).toHaveCount(0)
   })
+
+  test('loading mock 场景先显示骨架屏再呈现内容', async ({ page }) => {
+    await login(page)
+
+    await page.evaluate(() =>
+      localStorage.setItem('zeno_mock_scenario', 'loading'),
+    )
+    await page.reload()
+
+    await expect(page.locator('[aria-busy="true"]')).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: '今日成长概览' }),
+    ).not.toBeVisible()
+
+    await expect(
+      page.getByRole('heading', { name: '今日成长概览' }),
+    ).toBeVisible({ timeout: 10000 })
+
+    await page.evaluate(() =>
+      localStorage.removeItem('zeno_mock_scenario'),
+    )
+  })
+
+  test('error mock 场景显示错误提示且重试可恢复', async ({ page }) => {
+    await login(page)
+
+    await page.evaluate(() =>
+      localStorage.setItem('zeno_mock_scenario', 'error'),
+    )
+    await page.reload()
+
+    const alert = page.getByRole('alert')
+    await expect(alert).toBeVisible({ timeout: 10000 })
+    const retry = page.getByRole('button', { name: '重试' })
+    await expect(retry).toBeVisible()
+
+    await page.evaluate(() =>
+      localStorage.removeItem('zeno_mock_scenario'),
+    )
+    await retry.click()
+
+    await expect(
+      page.getByRole('heading', { name: '今日成长概览' }),
+    ).toBeVisible()
+    await expect(alert).toHaveCount(0)
+  })
 })
