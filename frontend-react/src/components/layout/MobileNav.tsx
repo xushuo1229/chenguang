@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom'
-import { Bot, Home } from 'lucide-react'
+import { Bot, Home, Library } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navigation = [
   { label: 'Dashboard', to: '/dashboard', icon: Home },
+  { label: 'Knowledge', to: '/knowledge', icon: Library },
   { label: 'Agent', to: '/agent', icon: Bot },
 ]
 

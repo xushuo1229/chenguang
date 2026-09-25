@@ -155,3 +155,72 @@ export function buildAgentReply(message: string, mode: 'personal' | 'general'): 
   }
   return { ...personalReply, answer: `${personalReply.answer}\n\n你刚才问的是：${question}` }
 }
+
+import type {
+  KbDocument,
+  KbEvidence,
+  KbNode,
+  KbRelation,
+} from '@/services/courseSpaceService'
+import type {
+  KnowledgeState,
+  ReviewItem,
+} from '@/services/knowledgeStateService'
+import type { ParsedCourse } from '@/services/courseService'
+
+export const mockKbDocuments: KbDocument[] = [
+  { id: 'doc-1', courseId: 'course-zeno-1', title: 'Zeno 架构讲义 · 第 1 章', content: '组件模型与工程化基础。', version: 1, createdAt: dateKey(daysAgo(3)) },
+  { id: 'doc-2', courseId: 'course-zeno-1', title: 'Zeno 架构讲义 · 第 2 章', content: 'Hooks、状态与数据流。', version: 1, createdAt: dateKey(daysAgo(1)) },
+]
+
+export const mockKbNodes: KbNode[] = [
+  { id: 'node-g-1', courseId: 'course-zeno-1', title: 'ES Modules', kind: 'concept', definition: '语言级模块系统，支持静态分析与 tree-shaking。', status: 'validated', confidence: 'high' },
+  { id: 'node-g-2', courseId: 'course-zeno-1', title: 'Vite 构建配置', kind: 'procedure', definition: '基于原生 ESM 的 dev server 与 Rollup 生产构建。', status: 'validated', confidence: 'high' },
+  { id: 'node-g-3', courseId: 'course-zeno-1', title: 'React 组件模型', kind: 'concept', definition: '以组件为单位的声明式 UI 组合模型。', status: 'validated', confidence: 'medium' },
+  { id: 'node-g-4', courseId: 'course-zeno-1', title: 'Hooks 与状态', kind: 'concept', definition: '函数组件中复用状态逻辑的机制。', status: 'validated', confidence: 'medium' },
+  { id: 'node-g-5', courseId: 'course-zeno-1', title: 'TypeScript 泛型推导', kind: 'skill', definition: '通过泛型参数表达类型间的推导关系。', status: 'validated', confidence: 'low' },
+  { id: 'node-g-6', courseId: 'course-zeno-1', title: '异步并发控制', kind: 'principle', definition: '协调多个异步任务的调度、取消与竞争。', status: 'validated', confidence: 'low' },
+  { id: 'node-g-7', courseId: 'course-zeno-1', title: 'Git 分支策略', kind: 'procedure', definition: '隔离特性开发与稳定主干的协作约定。', status: 'validated', confidence: 'high' },
+]
+
+export const mockKbRelations: KbRelation[] = [
+  { id: 'rel-1', sourceNodeId: 'node-g-1', targetNodeId: 'node-g-2', relationType: 'prerequisite' },
+  { id: 'rel-2', sourceNodeId: 'node-g-2', targetNodeId: 'node-g-3', relationType: 'related_to' },
+  { id: 'rel-3', sourceNodeId: 'node-g-3', targetNodeId: 'node-g-4', relationType: 'prerequisite' },
+  { id: 'rel-4', sourceNodeId: 'node-g-4', targetNodeId: 'node-g-5', relationType: 'related_to' },
+  { id: 'rel-5', sourceNodeId: 'node-g-4', targetNodeId: 'node-g-6', relationType: 'related_to' },
+  { id: 'rel-6', sourceNodeId: 'node-g-1', targetNodeId: 'node-g-7', relationType: 'related_to' },
+]
+
+export const mockKbEvidence: KbEvidence[] = [
+  { id: 'kb-ev-1', documentId: 'doc-1', nodeId: 'node-g-3', quote: '组件是 React 的一等公民，通过 props 组合。', locator: '第 1 章 · §2' },
+  { id: 'kb-ev-2', documentId: 'doc-2', nodeId: 'node-g-4', quote: 'Hooks 让函数组件拥有状态与副作用能力。', locator: '第 2 章 · §1' },
+  { id: 'kb-ev-3', documentId: 'doc-2', nodeId: 'node-g-5', quote: '泛型推导在复杂工具类型中尤其重要。', locator: '第 2 章 · §4' },
+  { id: 'kb-ev-4', documentId: 'doc-1', nodeId: 'node-g-2', quote: 'Vite 依赖预构建基于 esbuild。', locator: '第 1 章 · §3' },
+]
+
+export const mockKnowledgeStates: KnowledgeState[] = [
+  { id: 'ks-1', courseId: 'course-zeno-1', knowledgeNodeId: 'node-g-1', nodeTitle: 'ES Modules', nodeKind: 'concept', masteryLevel: 0.9, confidence: 0.88, state: 'mastered', evidenceCount: 3, assessmentEvidenceCount: 2 },
+  { id: 'ks-2', courseId: 'course-zeno-1', knowledgeNodeId: 'node-g-2', nodeTitle: 'Vite 构建配置', nodeKind: 'procedure', masteryLevel: 0.82, confidence: 0.8, state: 'mastered', evidenceCount: 2, assessmentEvidenceCount: 1 },
+  { id: 'ks-3', courseId: 'course-zeno-1', knowledgeNodeId: 'node-g-3', nodeTitle: 'React 组件模型', nodeKind: 'concept', masteryLevel: 0.62, confidence: 0.6, state: 'learning', evidenceCount: 2, assessmentEvidenceCount: 1 },
+  { id: 'ks-4', courseId: 'course-zeno-1', knowledgeNodeId: 'node-g-4', nodeTitle: 'Hooks 与状态', nodeKind: 'concept', masteryLevel: 0.55, confidence: 0.52, state: 'learning', evidenceCount: 1, assessmentEvidenceCount: 0 },
+  { id: 'ks-5', courseId: 'course-zeno-1', knowledgeNodeId: 'node-g-5', nodeTitle: 'TypeScript 泛型推导', nodeKind: 'skill', masteryLevel: 0.3, confidence: 0.4, state: 'weak', evidenceCount: 1, assessmentEvidenceCount: 0 },
+  { id: 'ks-6', courseId: 'course-zeno-1', knowledgeNodeId: 'node-g-6', nodeTitle: '异步并发控制', nodeKind: 'principle', masteryLevel: 0.25, confidence: 0.35, state: 'weak', evidenceCount: 0, assessmentEvidenceCount: 0 },
+]
+
+export const mockReviewItems: ReviewItem[] = [
+  { courseId: 'course-zeno-1', knowledgeNodeId: 'node-g-5', nodeTitle: 'TypeScript 泛型推导', masteryLevel: 0.3, confidence: 0.4, state: 'weak', evidenceCount: 1, priority: 1, reason: 'weak_state' },
+  { courseId: 'course-zeno-1', knowledgeNodeId: 'node-g-6', nodeTitle: '异步并发控制', masteryLevel: 0.25, confidence: 0.35, state: 'weak', evidenceCount: 0, priority: 1, reason: 'weak_state' },
+  { courseId: 'course-zeno-1', knowledgeNodeId: 'node-g-4', nodeTitle: 'Hooks 与状态', masteryLevel: 0.55, confidence: 0.52, state: 'learning', evidenceCount: 1, priority: 2, reason: 'consolidation_needed' },
+]
+
+export const mockParsedCourses: ParsedCourse[] = [
+  {
+    name: 'Zeno AI 基础与实践（导入预览）',
+    slots: [
+      { weekday: 1, period: 1 },
+      { weekday: 3, period: 3 },
+      { weekday: 5, period: 5 },
+    ],
+  },
+]

@@ -24,6 +24,8 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) return undefined
+          if (id.includes('@xyflow') || id.includes('zustand'))
+            return 'xyflow'
           if (
             id.includes('@tremor') ||
             id.includes('/recharts') ||

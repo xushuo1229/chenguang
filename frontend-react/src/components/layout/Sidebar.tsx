@@ -4,6 +4,7 @@ import {
   ChevronsUpDown,
   Command as CommandIcon,
   LayoutDashboard,
+  Library,
   LogOut,
   Moon,
   PanelLeftClose,
@@ -34,6 +35,7 @@ export const SIDEBAR_COLLAPSED_WIDTH = 64
 
 const navigation = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
+  { label: 'Knowledge', to: '/knowledge', icon: Library },
   { label: 'Agent', to: '/agent', icon: Bot },
 ]
 

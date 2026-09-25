@@ -133,6 +133,23 @@ test.describe('Zeno AI Workspace 核心流接受测试', () => {
     await expect(mobileSignals).toBeHidden()
   })
 
+  test('知识库展示图谱、节点详情与掌握度队列', async ({ page }) => {
+    await login(page)
+    await page.goto('/knowledge')
+
+    await expect(
+      page.getByRole('heading', { name: '知识库' }),
+    ).toBeVisible()
+    await expect(page.locator('.react-flow__node')).toHaveCount(7)
+
+    await page.getByRole('button', { name: '列表' }).click()
+    await expect(page.locator('table tbody tr')).toHaveCount(7)
+
+    await page.getByRole('button', { name: '掌握度' }).click()
+    await expect(page.getByText('平均掌握度')).toBeVisible()
+    await expect(page.locator('table tbody tr')).toHaveCount(3)
+  })
+
   test('空数据 mock 场景显示任务空态且可恢复', async ({ page }) => {
     await login(page)
 

@@ -49,6 +49,10 @@
       "expectedState": "no sidebar offset, context panel expands/collapses"
     },
     {
+      "action": "open the knowledge base for the selected course",
+      "expectedState": "seven graph nodes, seven list rows, mastery average and a three-item review queue"
+    },
+    {
       "action": "switch zeno_mock_scenario to empty and reload",
       "expectedState": "empty task state visible, zero table rows, charts render zeros"
     },
@@ -73,6 +77,7 @@
     "theme preference persists across reload",
     "command palette seeds agent prompt",
     "mobile layout has no sidebar padding offset and context collapsible works",
+    "knowledge base renders the graph, list view and mastery review queue",
     "empty mock scenario renders the task empty state and is reversible",
     "loading mock scenario shows the skeleton before content",
     "error mock scenario shows an alert and retry recovers"
@@ -88,7 +93,7 @@
     "configPath": "tests/test-web/playwright.config.mjs",
     "projectName": "chromium",
     "targetURL": "http://localhost:5174/",
-    "specSha256": "c57ce0d59ed5f1f07c7bde452dc5934e5819f757ae5611761dcc4a1308323e27",
+    "specSha256": "fc139a28352d42861fa9e65eab4f78996ea34cc4354d0c3bb1929f055efcbd0a",
     "configSha256": "da9a50c0d520f46e9ff14fa8b9d1b8d73369cab8d0fe572ac5cf76d9264fe66b"
   },
   "evidence": {

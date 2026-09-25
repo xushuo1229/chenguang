@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import LoginPage from '../pages/LoginPage'
 import DashboardPage from '../pages/DashboardPage'
 import AgentPage from '../pages/AgentPage'
+import KnowledgePage from '../pages/KnowledgePage'
 import { ProtectedRoute } from './ProtectedRoute'
 import { AuthLayout } from '../layouts/AuthLayout'
 import { WorkspaceLayout } from '../layouts/WorkspaceLayout'
@@ -23,6 +24,16 @@ export default function App() {
           <ProtectedRoute>
             <WorkspaceLayout>
               <DashboardPage />
+            </WorkspaceLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/knowledge"
+        element={
+          <ProtectedRoute>
+            <WorkspaceLayout>
+              <KnowledgePage />
             </WorkspaceLayout>
           </ProtectedRoute>
         }
