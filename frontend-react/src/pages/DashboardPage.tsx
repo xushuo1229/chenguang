@@ -1,3 +1,4 @@
+import { useMemo, useState, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   AreaChart,
@@ -9,7 +10,7 @@ import {
   TableHeaderCell,
   TableRow,
 } from '@tremor/react'
-import { BrainCircuit, ListChecks, RefreshCw } from 'lucide-react'
+import { BrainCircuit, ListChecks, Plus, RefreshCw } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -17,14 +18,20 @@ import { Card } from '@/components/ui/card'
 import { EmptyState, ErrorState } from '@/components/ui/state'
 import { KpiCard } from '@/components/dashboard/KpiCard'
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton'
-import { getDashboardOverview } from '@/services/dashboardService'
+import { buildDashboardOverview } from '@/services/dashboardService'
 import type { DashboardTask } from '@/services/dashboardService'
+import { getAgentContext } from '@/services/agentService'
+import {
+  useSnapshot,
+  useUpdateSnapshot,
+} from '@/features/snapshot/useSnapshot'
 
 const kindTone: Record<string, 'neutral' | 'info' | 'warning' | 'success'> = {
   architecture: 'neutral',
   ui: 'info',
   docs: 'warning',
   english: 'success',
+  normal: 'neutral',
 }
 
 const kindLabel: Record<string, string> = {
@@ -32,28 +39,45 @@ const kindLabel: Record<string, string> = {
   ui: '界面',
   docs: '文档',
   english: '英语',
+  normal: '普通',
+}
+
+function todayKey(): string {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 }
 
 export default function DashboardPage() {
-  const overviewQuery = useQuery({
-    queryKey: ['zeno', 'dashboard'],
-    queryFn: getDashboardOverview,
+  const snapshotQuery = useSnapshot()
+  const contextQuery = useQuery({
+    queryKey: ['zeno', 'agent-context'],
+    queryFn: getAgentContext,
   })
+  const updateSnapshot = useUpdateSnapshot()
+  const [newTask, setNewTask] = useState('')
 
-  if (overviewQuery.isPending) {
+  const overview = useMemo(
+    () =>
+      buildDashboardOverview(
+        snapshotQuery.data,
+        contextQuery.data,
+      ),
+    [snapshotQuery.data, contextQuery.data],
+  )
+
+  if (snapshotQuery.isPending || contextQuery.isPending) {
     return <DashboardSkeleton />
   }
-  if (overviewQuery.isError) {
+  if (snapshotQuery.isError) {
     return (
       <ErrorState
-        text="工作台暂时不可用，请检查网络后重试。"
+        text="工作台数据加载失败，请检查网络后重试。"
         className="mt-6"
         action={
           <Button
             variant="outline"
             size="sm"
-            onClick={() => void overviewQuery.refetch()}
-            disabled={overviewQuery.isFetching}
+            onClick={() => void snapshotQuery.refetch()}
           >
             <RefreshCw />
             重试
@@ -63,7 +87,46 @@ export default function DashboardPage() {
     )
   }
 
-  const overview = overviewQuery.data
+  const refresh = () => {
+    void snapshotQuery.refetch()
+    void contextQuery.refetch()
+  }
+
+  const toggleTask = (task: DashboardTask) => {
+    const today = todayKey()
+    updateSnapshot.mutate((draft) => ({
+      ...draft,
+      todos: (draft.todos ?? []).map((todo) =>
+        todo.id === task.id && todo.date === today
+          ? { ...todo, done: !task.completed }
+          : todo,
+      ),
+    }))
+  }
+
+  const handleAddTask = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const text = newTask.trim()
+    if (!text || updateSnapshot.isPending) return
+    const today = todayKey()
+    updateSnapshot.mutate(
+      (draft) => ({
+        ...draft,
+        todos: [
+          ...(draft.todos ?? []),
+          {
+            id: `todo-${Date.now()}`,
+            text,
+            date: today,
+            done: false,
+            priority: 'normal',
+          },
+        ],
+      }),
+      { onSuccess: () => setNewTask('') },
+    )
+  }
+
   const chartData = overview.chart.map((point) => ({
     date: point.date,
     专注: point.focus,
@@ -74,21 +137,16 @@ export default function DashboardPage() {
     { name: '已掌握', value: overview.knowledge.strong },
     { name: '薄弱', value: overview.knowledge.weak },
   ]
-  const completed = overview.tasks.filter((t) => t.completed).length
+  const completed = overview.tasks.filter((task) => task.completed).length
 
   return (
     <div className="space-y-5">
       <PageHeader
         eyebrow="Zeno Workspace"
         title="今日成长概览"
-        description="所有数字由服务层从同步快照派生；当前为 mock 数据。"
+        description={overview.summary}
         actions={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void overviewQuery.refetch()}
-            disabled={overviewQuery.isFetching}
-          >
+          <Button variant="outline" size="sm" onClick={refresh}>
             <RefreshCw />
             刷新
           </Button>
@@ -112,7 +170,7 @@ export default function DashboardPage() {
             index="date"
             categories={['专注', '阅读', '英语']}
             colors={['blue', 'emerald', 'amber']}
-            valueFormatter={(v) => `${v}m`}
+            valueFormatter={(value) => `${value}m`}
             showLegend
             showGridLines
             curveType="monotone"
@@ -154,7 +212,7 @@ export default function DashboardPage() {
               <EmptyState
                 icon={<ListChecks className="size-5" />}
                 title="今日暂无计划任务"
-                description="AI 不会虚构任务，产生计划或同步后会出现在这里。"
+                description="在下方添加今天的第一项任务，AI 不会虚构计划。"
               />
             </div>
           ) : (
@@ -164,18 +222,34 @@ export default function DashboardPage() {
                   <TableHeaderCell className="w-10 pl-5">状态</TableHeaderCell>
                   <TableHeaderCell>任务</TableHeaderCell>
                   <TableHeaderCell>类型</TableHeaderCell>
-                  <TableHeaderCell className="text-right pr-5">
-                    时长
-                  </TableHeaderCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {overview.tasks.map((task) => (
-                  <TaskRow key={task.id} task={task} />
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    onToggle={() => toggleTask(task)}
+                  />
                 ))}
               </TableBody>
             </Table>
           )}
+          <form
+            className="flex items-center gap-2 border-t border-line px-5 py-3"
+            onSubmit={handleAddTask}
+          >
+            <input
+              value={newTask}
+              onChange={(event) => setNewTask(event.target.value)}
+              placeholder="添加今日任务..."
+              className="h-9 min-w-0 flex-1 rounded-control border border-line bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-primary"
+            />
+            <Button type="submit" size="sm" disabled={updateSnapshot.isPending}>
+              <Plus />
+              添加
+            </Button>
+          </form>
         </Card>
 
         <Card>
@@ -184,19 +258,27 @@ export default function DashboardPage() {
             <h3 className="text-sm font-semibold text-ink">确定性洞察</h3>
           </div>
           <ul className="space-y-2.5">
-            {overview.insights.map((insight, i) => (
-              <li
-                key={i}
-                className="rounded-control border border-line bg-surface-subtle p-3"
-              >
-                <p className="text-[13px] leading-5 text-ink">{insight.title}</p>
-                {typeof insight.confidence === 'number' ? (
-                  <p className="mt-1 text-xs text-ink-muted tabular-nums">
-                    置信度 {Math.round(insight.confidence * 100)}%
-                  </p>
-                ) : null}
+            {overview.insights.length === 0 ? (
+              <li className="rounded-control border border-dashed border-line p-3 text-[13px] text-ink-muted">
+                接入 Agent 上下文后，这里展示确定性成长洞察。
               </li>
-            ))}
+            ) : (
+              overview.insights.map((insight, index) => (
+                <li
+                  key={index}
+                  className="rounded-control border border-line bg-surface-subtle p-3"
+                >
+                  <p className="text-[13px] leading-5 text-ink">
+                    {insight.title}
+                  </p>
+                  {typeof insight.confidence === 'number' ? (
+                    <p className="mt-1 text-xs text-ink-muted tabular-nums">
+                      置信度 {Math.round(insight.confidence * 100)}%
+                    </p>
+                  ) : null}
+                </li>
+              ))
+            )}
           </ul>
         </Card>
       </section>
@@ -204,20 +286,30 @@ export default function DashboardPage() {
   )
 }
 
-function TaskRow({ task }: { task: DashboardTask }) {
+function TaskRow({
+  task,
+  onToggle,
+}: {
+  task: DashboardTask
+  onToggle: () => void
+}) {
   return (
     <TableRow className="hover:bg-surface-muted/40">
       <TableCell className="pl-5">
         <input
           type="checkbox"
           checked={task.completed}
-          readOnly
+          onChange={onToggle}
           className="size-4 accent-[var(--primary)]"
           aria-label={task.completed ? '已完成' : '未完成'}
         />
       </TableCell>
       <TableCell>
-        <span className={task.completed ? 'text-ink-muted line-through' : 'text-ink'}>
+        <span
+          className={
+            task.completed ? 'text-ink-muted line-through' : 'text-ink'
+          }
+        >
           {task.title}
         </span>
       </TableCell>
@@ -225,9 +317,6 @@ function TaskRow({ task }: { task: DashboardTask }) {
         <Badge tone={kindTone[task.kind] ?? 'neutral'}>
           {kindLabel[task.kind] ?? task.kind}
         </Badge>
-      </TableCell>
-      <TableCell className="pr-5 text-right tabular-nums text-ink-secondary">
-        {task.minutes}m
       </TableCell>
     </TableRow>
   )

@@ -1,5 +1,5 @@
 import type { AgentContext } from '@/services/agentService'
-import type { SyncSnapshot } from '@/services/analyticsService'
+import type { SnapshotEnvelope } from '@/services/snapshotService'
 
 export type FocusTrendPoint = { date: string; value: number }
 export type StudySeriesPoint = {
@@ -13,7 +13,7 @@ function dateKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
-export function buildFocusTrend(snapshot: SyncSnapshot | undefined, windowDays = 14): FocusTrendPoint[] {
+export function buildFocusTrend(snapshot: SnapshotEnvelope | undefined, windowDays = 14): FocusTrendPoint[] {
   const focusRecords = snapshot?.data?.focus || []
   const readingRecords = snapshot?.data?.readings || []
   const englishRecords = snapshot?.data?.english || []
@@ -37,11 +37,13 @@ export function buildFocusTrend(snapshot: SyncSnapshot | undefined, windowDays =
   })
 }
 
-export function buildTaskCompletion(snapshot: SyncSnapshot | undefined) {
+export function buildTaskCompletion(snapshot: SnapshotEnvelope | undefined) {
   const today = dateKey(new Date())
   const todos = (snapshot?.data?.todos || []).filter((todo) => todo.date === today)
   const total = todos.length
-  const completed = todos.filter((todo) => todo.completed).length
+  const isDone = (todo: { done?: boolean; completed?: boolean }) =>
+    todo.done ?? todo.completed ?? false
+  const completed = todos.filter(isDone).length
   return { total, completed, rate: total ? completed / total : 0 }
 }
 
@@ -49,7 +51,7 @@ export function buildGrowthIndex({
   snapshot,
   context,
 }: {
-  snapshot: SyncSnapshot | undefined
+  snapshot: SnapshotEnvelope | undefined
   context: AgentContext | undefined
 }) {
   const task = buildTaskCompletion(snapshot)
@@ -75,7 +77,7 @@ export function buildKnowledgeCoverage(context: AgentContext | undefined) {
 }
 
 export function buildStudyTimeSeries(
-  snapshot: SyncSnapshot | undefined,
+  snapshot: SnapshotEnvelope | undefined,
   windowDays = 14,
 ): StudySeriesPoint[] {
   const sumByDate = (

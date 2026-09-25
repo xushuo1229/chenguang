@@ -10,9 +10,16 @@ export type SyncSnapshot = {
 export type ChenguangData = {
   user?: Record<string, unknown> & { memory?: Record<string, unknown> }
   courses?: Array<{ id?: string; name?: string }>
-  todos?: Array<{ date?: string; completed?: boolean }>
+  todos?: Array<{
+    id?: string
+    text?: string
+    date?: string
+    done?: boolean
+    completed?: boolean
+    priority?: string
+  }>
   focus?: Array<{ date?: string; minutes?: number }>
-  checkins?: Array<{ date?: string }>
+  checkins?: Array<{ date?: string; status?: string }>
   sports?: Array<{ date?: string; minutes?: number }>
   readings?: Array<{ date?: string; minutes?: number }>
   english?: Array<{ date?: string; minutes?: number }>

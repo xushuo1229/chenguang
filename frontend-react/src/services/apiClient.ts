@@ -64,11 +64,20 @@ export async function request<T>(
     const payload = (await response.json().catch(() => null)) as ApiEnvelope<T> | null
 
     if (!response.ok) {
-      throw new ApiError(
+      const error = new ApiError(
         payload?.error?.code || 'REQUEST_FAILED',
         payload?.error?.message || '服务暂时不可用，请稍后再试。',
         response.status,
       )
+      const errorBody = payload?.error
+      if (errorBody) {
+        for (const [key, value] of Object.entries(errorBody)) {
+          if (key !== 'code' && key !== 'message') {
+            (error as ApiError & Record<string, unknown>)[key] = value
+          }
+        }
+      }
+      throw error
     }
 
     return (payload?.data ?? (payload as unknown)) as T

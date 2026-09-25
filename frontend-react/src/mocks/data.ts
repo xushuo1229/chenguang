@@ -1,7 +1,6 @@
 import type { AuthUser } from '@/services/authService'
 import type { AgentContext, AgentChatResponse } from '@/services/agentService'
 import type { SyncSnapshot } from '@/services/analyticsService'
-import type { DashboardOverview } from '@/services/dashboardService'
 
 function dateKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -87,12 +86,6 @@ const englishRecords = [
   { date: dateKey(daysAgo(7)), minutes: 20 },
 ]
 
-const trend = focusRecords.map((record) => {
-  const reading = readingsRecords.find((item) => item.date === record.date)?.minutes || 0
-  const english = englishRecords.find((item) => item.date === record.date)?.minutes || 0
-  return { date: record.date.slice(5), value: record.minutes + reading + english }
-})
-
 export const mockSyncSnapshot: SyncSnapshot = {
   revision: 3901,
   updatedAt: new Date().toISOString(),
@@ -100,12 +93,12 @@ export const mockSyncSnapshot: SyncSnapshot = {
     user: { nickname: 'Zeno Explorer' },
     courses: [{ id: 'course-zeno-1', name: 'Zeno AI 基础与实践' }],
     todos: [
-      { date: dateKey(new Date()), completed: true },
-      { date: dateKey(new Date()), completed: true },
-      { date: dateKey(new Date()), completed: true },
-      { date: dateKey(new Date()), completed: true },
-      { date: dateKey(new Date()), completed: false },
-      { date: dateKey(new Date()), completed: false },
+      { id: 'todo-1', text: '完成 React 架构目录整理', date: dateKey(new Date()), done: true, priority: 'architecture' },
+      { id: 'todo-2', text: '实现 LoginPage', date: dateKey(new Date()), done: true, priority: 'ui' },
+      { id: 'todo-3', text: '实现 DashboardPage', date: dateKey(new Date()), done: true, priority: 'ui' },
+      { id: 'todo-4', text: '实现 AgentPage mock', date: dateKey(new Date()), done: true, priority: 'ui' },
+      { id: 'todo-5', text: '整理迁移文档与风险清单', date: dateKey(new Date()), done: false, priority: 'docs' },
+      { id: 'todo-6', text: '英语听力练习', date: dateKey(new Date()), done: false, priority: 'english' },
     ],
     focus: focusRecords,
     checkins: Array.from({ length: 12 }, (_, index) => ({ date: dateKey(daysAgo(index)) })),
@@ -117,58 +110,6 @@ export const mockSyncSnapshot: SyncSnapshot = {
       { id: 'goal-2', title: '本学期独立完成 AI 应用', progress: 45 },
     ],
   },
-}
-
-export const mockDashboardOverview: Omit<
-  DashboardOverview,
-  'chart' | 'knowledge'
-> = {
-  growthIndex: 82,
-  summary: '任务完成率、近 7 天专注与有效学习日均保持在高位',
-  tasksDone: '4/6',
-  focusToday: 95,
-  streak: 12,
-  metrics: [
-    { id: 'tasks', label: '今日任务', value: '4/6', hint: '已完成 / 总计划', tone: 'primary', delta: '+2', trend: 'up' },
-    { id: 'focus', label: '今日专注', value: 95, hint: '有效专注分钟', tone: 'secondary', delta: '-8%', trend: 'down' },
-    { id: 'streak', label: '连续学习', value: 12, hint: '当前连续天数', tone: 'warning', delta: '+3', trend: 'up' },
-    { id: 'knowledge', label: '知识掌握', value: '5/8', hint: '掌握 / 已评估节点', tone: 'success', delta: '+1', trend: 'up' },
-  ],
-  trend,
-  tasks: [
-    { id: 'task-1', title: '完成 React 架构目录整理', kind: 'architecture', minutes: 30, completed: true },
-    { id: 'task-2', title: '实现 LoginPage', kind: 'ui', minutes: 40, completed: true },
-    { id: 'task-3', title: '实现 DashboardPage mock', kind: 'ui', minutes: 50, completed: true },
-    { id: 'task-4', title: '实现 AgentPage mock', kind: 'ui', minutes: 45, completed: true },
-    { id: 'task-5', title: '整理迁移文档与风险清单', kind: 'docs', minutes: 20, completed: false },
-    { id: 'task-6', title: '英语听力练习', kind: 'english', minutes: 15, completed: false },
-  ],
-  insights: [
-    { title: '连续学习 12 天，节奏稳定', confidence: 0.9 },
-    { title: '上午专注质量明显高于下午', confidence: 0.78 },
-    { title: '薄弱节点集中在 Hooks 与泛型', confidence: 0.84 },
-  ],
-}
-
-export const mockEmptyDashboardOverview: Omit<
-  DashboardOverview,
-  'chart' | 'knowledge'
-> = {
-  ...structuredClone(mockDashboardOverview),
-  growthIndex: 0,
-  summary: '还没有学习记录，完成第一次记录后这里会出现成长概览。',
-  tasksDone: '0/0',
-  focusToday: 0,
-  streak: 0,
-  metrics: [
-    { id: 'tasks', label: '今日任务', value: '0/0', hint: '已完成 / 总计划', tone: 'primary' },
-    { id: 'focus', label: '今日专注', value: 0, hint: '有效专注分钟', tone: 'secondary' },
-    { id: 'streak', label: '连续学习', value: 0, hint: '当前连续天数', tone: 'warning' },
-    { id: 'knowledge', label: '知识掌握', value: '0/0', hint: '掌握 / 已评估节点', tone: 'success' },
-  ],
-  trend: [],
-  tasks: [],
-  insights: [],
 }
 
 const personalReply: AgentChatResponse = {
