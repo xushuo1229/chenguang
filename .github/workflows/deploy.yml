@@ -69,6 +69,17 @@ jobs:
         run: npm ci
         working-directory: frontend-react
 
+      - name: Resolve Playwright version
+        id: pw-react
+        working-directory: frontend-react
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.pw-react.outputs.version }}
+
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
         working-directory: frontend-react
