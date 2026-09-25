@@ -1,5 +1,5 @@
 import { request } from './apiClient'
-import { getMockSession, setMockSession } from './mockSession'
+import { getSession, setSession } from './session'
 import type { AuthUser } from './authService'
 
 export type ProfileUpdate = {
@@ -10,11 +10,11 @@ export type ProfileUpdate = {
 export async function updateProfile(
   payload: ProfileUpdate,
 ): Promise<{ user: AuthUser }> {
-  const session = getMockSession()
+  const session = getSession()
   if (!session) throw new Error('未登录')
   const result = await request<{ user: AuthUser }>('/auth/me', {
     method: 'PUT',
     body: payload,
   })
-  return { user: setMockSession(result.user, session.token).user }
+  return { user: setSession(result.user, session.token).user }
 }

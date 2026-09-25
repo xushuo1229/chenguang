@@ -5,7 +5,7 @@ import { AppProviders } from './app/providers'
 import './styles/globals.css'
 
 async function enableMocking(): Promise<void> {
-  if (import.meta.env.VITE_MOCK_ENABLED === 'false') return
+  if (import.meta.env.VITE_MOCK_ENABLED !== 'true') return
   const { worker } = await import('./mocks/browser')
   await worker.start({
     onUnhandledRequest: 'bypass',

@@ -1,5 +1,5 @@
 import { request } from './apiClient'
-import { clearMockSession, setMockSession } from './mockSession'
+import { clearSession, setSession } from './session'
 
 export type AuthUser = {
   id: number
@@ -19,7 +19,7 @@ export async function login(
     method: 'POST',
     body: { email: email.trim(), password },
   })
-  return setMockSession(
+  return setSession(
     { ...result.user, email: email.trim() },
     result.token,
   ).user
@@ -37,7 +37,7 @@ export async function register(
     method: 'POST',
     body: { nickname: nickname.trim(), email: email.trim(), password },
   })
-  return setMockSession(
+  return setSession(
     { ...result.user, nickname: nickname.trim(), email: email.trim() },
     result.token,
   ).user
@@ -49,5 +49,5 @@ export async function getMe(): Promise<AuthUser> {
 }
 
 export async function logout(): Promise<void> {
-  clearMockSession()
+  clearSession()
 }

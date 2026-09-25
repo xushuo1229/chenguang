@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import * as authService from '../services/authService'
-import { MOCK_AUTH_EVENT, getMockSession } from '../services/mockSession'
+import { AUTH_EVENT, getSession } from '../services/session'
 
 type AuthState = {
   user: authService.AuthUser | null
@@ -14,12 +14,12 @@ const AuthContext = createContext<AuthState | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
-  const [sessionToken, setSessionToken] = useState(() => getMockSession()?.token ?? null)
+  const [sessionToken, setSessionToken] = useState(() => getSession()?.token ?? null)
 
   useEffect(() => {
-    const handleAuthChange = () => setSessionToken(getMockSession()?.token ?? null)
-    window.addEventListener(MOCK_AUTH_EVENT, handleAuthChange)
-    return () => window.removeEventListener(MOCK_AUTH_EVENT, handleAuthChange)
+    const handleAuthChange = () => setSessionToken(getSession()?.token ?? null)
+    window.addEventListener(AUTH_EVENT, handleAuthChange)
+    return () => window.removeEventListener(AUTH_EVENT, handleAuthChange)
   }, [])
 
   const hasSession = Boolean(sessionToken)

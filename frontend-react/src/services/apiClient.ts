@@ -26,8 +26,8 @@ export class ApiError extends Error {
   }
 }
 
-// The React app owns its own session source (zeno_mock_session during the
-// mock phase); apiClient must never touch the legacy MPA's cg_token key.
+// The React app owns its own session source (zeno_auth); apiClient must
+// never touch the legacy MPA's cg_token key.
 type AccessTokenProvider = () => string | null
 
 let accessTokenProvider: AccessTokenProvider = () => null

@@ -8,8 +8,9 @@ Browser acceptance tests for the Zeno React workspace, following the
 `zeno-core-workflow.spec.mjs` verifies the core product flow:
 
 - unauthenticated access redirects to `/login`;
-- login renders the enterprise Dashboard (KPI cards, two Tremor charts, the
-  task table) and keeps storage isolated — only `zeno_mock_session` is used,
+- login and register go through the auth form; login renders the enterprise
+  Dashboard (KPI cards, two Tremor charts, the task table) and keeps storage
+  isolated — only `zeno_auth` is used,
   never `cg_token`, `cg_user` or `chenguangData`;
 - Personal / General Agent conversations, evidence and modes;
 - theme persistence across reload;
@@ -20,8 +21,8 @@ Browser acceptance tests for the Zeno React workspace, following the
 
 ## Run
 
-The Playwright `webServer` builds the app and starts `vite preview` on port
-5174 automatically:
+The Playwright `webServer` builds the app with `VITE_MOCK_ENABLED=true` and
+starts `vite preview` on port 5174 automatically:
 
 ```bash
 npm run test:web
@@ -61,3 +62,6 @@ Run artifacts (videos, traces, HTML reports, JSON results) are written under
   no `localStorage` access, so the flag is mirrored into a same-origin
   cookie; specs set both. They are test-only switches and are never read by
   the legacy MPA or CGStore.
+- Default mode talks to the real backend (`/api`, JWT in the `zeno_auth`
+  key). MSW starts only when `VITE_MOCK_ENABLED=true`; the acceptance build
+  sets it automatically.

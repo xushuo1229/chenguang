@@ -11,6 +11,10 @@ import { fileURLToPath } from 'node:url'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const vite = join(root, 'node_modules', 'vite', 'bin', 'vite.js')
 
+// Acceptance runs exercise the UI through MSW; embed the flag into the
+// production build started below.
+process.env.VITE_MOCK_ENABLED = 'true'
+
 function run(args) {
   return spawnSync(process.execPath, args, { cwd: root, stdio: 'inherit' })
 }

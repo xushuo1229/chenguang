@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test'
 
 async function login(page) {
   await page.goto('/login')
+  await page.getByPlaceholder('you@company.com').fill('explorer@zeno.ai')
+  await page.getByPlaceholder('至少 6 位').fill('zeno2026')
   await page.getByRole('button', { name: '登录', exact: true }).click()
   await expect(page).toHaveURL(/\/dashboard/)
 }
@@ -46,7 +48,7 @@ test.describe('Zeno AI Workspace 核心流接受测试', () => {
     await expect(page.locator('table tbody tr')).toHaveCount(6)
 
     const storage = await page.evaluate(() => ({ ...localStorage }))
-    expect(storage).toHaveProperty('zeno_mock_session')
+    expect(storage).toHaveProperty('zeno_auth')
     expect(storage).not.toHaveProperty('cg_token')
     expect(storage).not.toHaveProperty('cg_user')
     expect(storage).not.toHaveProperty('chenguangData')

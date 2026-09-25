@@ -9,18 +9,23 @@ import * as authService from '@/services/authService'
 import { useAuth } from '@/stores/auth-store'
 
 type LocationState = { from?: string } | null
+type Mode = 'login' | 'register'
 
 export default function LoginPage() {
   const { isAuthenticated, isLoading } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const from = (location.state as LocationState)?.from ?? '/dashboard'
-  const [email, setEmail] = useState('explorer@zeno.ai')
-  const [password, setPassword] = useState('zeno2026')
-  const [remember, setRemember] = useState(true)
+  const [mode, setMode] = useState<Mode>('login')
+  const [nickname, setNickname] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
 
-  const loginMutation = useMutation({
-    mutationFn: () => authService.login(email, password),
+  const authMutation = useMutation({
+    mutationFn: () =>
+      mode === 'login'
+        ? authService.login(email, password)
+        : authService.register(nickname, email, password),
     onSuccess: () => navigate(from, { replace: true }),
   })
 
@@ -37,7 +42,12 @@ export default function LoginPage() {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    loginMutation.mutate()
+    authMutation.mutate()
+  }
+
+  const switchMode = (next: Mode) => {
+    setMode(next)
+    authMutation.reset()
   }
 
   return (
@@ -48,13 +58,34 @@ export default function LoginPage() {
       </div>
 
       <h1 className="text-2xl font-semibold tracking-tight text-ink">
-        欢迎回来
+        {mode === 'login' ? '欢迎回来' : '创建你的账号'}
       </h1>
       <p className="mt-1 text-sm text-ink-muted">
-        使用你的账号登录 Zeno AI Workspace
+        {mode === 'login'
+          ? '登录 Zeno AI Workspace，继续你的成长'
+          : '注册后即可导入课程、构建知识库'}
       </p>
 
       <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
+        {mode === 'register' ? (
+          <div className="space-y-1.5">
+            <label
+              htmlFor="nickname"
+              className="text-[13px] font-medium text-ink"
+            >
+              昵称
+            </label>
+            <Input
+              id="nickname"
+              autoComplete="nickname"
+              required
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              placeholder="你的称呼"
+            />
+          </div>
+        ) : null}
+
         <div className="space-y-1.5">
           <label htmlFor="email" className="text-[13px] font-medium text-ink">
             邮箱
@@ -71,47 +102,30 @@ export default function LoginPage() {
         </div>
 
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <label
-              htmlFor="password"
-              className="text-[13px] font-medium text-ink"
-            >
-              密码
-            </label>
-            <button
-              type="button"
-              className="text-[13px] text-primary hover:underline"
-            >
-              忘记密码？
-            </button>
-          </div>
+          <label
+            htmlFor="password"
+            className="text-[13px] font-medium text-ink"
+          >
+            密码
+          </label>
           <Input
             id="password"
             type="password"
-            autoComplete="current-password"
+            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
             required
+            minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="输入密码"
+            placeholder="至少 6 位"
           />
         </div>
 
-        <label className="flex cursor-pointer items-center gap-2 text-[13px] text-ink-secondary">
-          <input
-            type="checkbox"
-            checked={remember}
-            onChange={(e) => setRemember(e.target.checked)}
-            className="size-4 rounded border-line text-primary accent-[var(--primary)]"
-          />
-          保持登录状态
-        </label>
-
-        {loginMutation.isError ? (
+        {authMutation.isError ? (
           <ErrorState
-            title="登录失败"
+            title={mode === 'login' ? '登录失败' : '注册失败'}
             text={
-              loginMutation.error instanceof Error
-                ? loginMutation.error.message
+              authMutation.error instanceof Error
+                ? authMutation.error.message
                 : '请稍后重试'
             }
           />
@@ -121,32 +135,25 @@ export default function LoginPage() {
           type="submit"
           size="lg"
           className="w-full"
-          disabled={loginMutation.isPending}
+          disabled={authMutation.isPending}
         >
-          {loginMutation.isPending ? <Loader2 className="animate-spin" /> : null}
-          {loginMutation.isPending ? '正在登录...' : '登录'}
+          {authMutation.isPending ? <Loader2 className="animate-spin" /> : null}
+          {authMutation.isPending
+            ? '请稍候...'
+            : mode === 'login'
+              ? '登录'
+              : '注册并进入'}
         </Button>
       </form>
 
-      <div className="my-6 flex items-center gap-3 text-[11px] text-ink-faint">
-        <span className="h-px flex-1 bg-line" />
-        或使用
-        <span className="h-px flex-1 bg-line" />
-      </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        <Button variant="outline" type="button" disabled>
-          SSO 登录
-        </Button>
-        <Button variant="outline" type="button" disabled>
-          Google
-        </Button>
-      </div>
-
       <p className="mt-7 text-center text-[13px] text-ink-muted">
-        还没有账号？{' '}
-        <button type="button" className="text-primary hover:underline">
-          联系管理员开通
+        {mode === 'login' ? '还没有账号？' : '已经有账号了？'}{' '}
+        <button
+          type="button"
+          className="text-primary hover:underline"
+          onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}
+        >
+          {mode === 'login' ? '立即注册' : '去登录'}
         </button>
       </p>
     </div>
