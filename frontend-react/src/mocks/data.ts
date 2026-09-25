@@ -150,6 +150,27 @@ export const mockDashboardOverview: Omit<
   ],
 }
 
+export const mockEmptyDashboardOverview: Omit<
+  DashboardOverview,
+  'chart' | 'knowledge'
+> = {
+  ...structuredClone(mockDashboardOverview),
+  growthIndex: 0,
+  summary: '还没有学习记录，完成第一次记录后这里会出现成长概览。',
+  tasksDone: '0/0',
+  focusToday: 0,
+  streak: 0,
+  metrics: [
+    { id: 'tasks', label: '今日任务', value: '0/0', hint: '已完成 / 总计划', tone: 'primary' },
+    { id: 'focus', label: '今日专注', value: 0, hint: '有效专注分钟', tone: 'secondary' },
+    { id: 'streak', label: '连续学习', value: 0, hint: '当前连续天数', tone: 'warning' },
+    { id: 'knowledge', label: '知识掌握', value: '0/0', hint: '掌握 / 已评估节点', tone: 'success' },
+  ],
+  trend: [],
+  tasks: [],
+  insights: [],
+}
+
 const personalReply: AgentChatResponse = {
   answer: [
     '根据你近 7 天的同步数据（mock）：',

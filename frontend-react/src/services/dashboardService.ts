@@ -1,4 +1,8 @@
-import { mockDashboardOverview } from '@/mocks/data'
+import {
+  mockDashboardOverview,
+  mockEmptyDashboardOverview,
+} from '@/mocks/data'
+import { getMockScenario } from '@/mocks/scenario'
 import { getSyncSnapshot } from './analyticsService'
 import { getAgentContext } from './agentService'
 import {
@@ -35,6 +39,13 @@ export type DashboardOverview = {
 
 export async function getDashboardOverview(): Promise<DashboardOverview> {
   await delay(320)
+  if (getMockScenario() === 'empty') {
+    return {
+      ...structuredClone(mockEmptyDashboardOverview),
+      chart: buildStudyTimeSeries(undefined),
+      knowledge: buildKnowledgeCoverage(undefined),
+    }
+  }
   const [snapshot, context] = await Promise.all([
     getSyncSnapshot(),
     getAgentContext(),

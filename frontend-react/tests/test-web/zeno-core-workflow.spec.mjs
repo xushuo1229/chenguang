@@ -114,4 +114,25 @@ test.describe('Zeno AI Workspace 核心流接受测试', () => {
     await toggle.click()
     await expect(mobileSignals).toBeHidden()
   })
+
+  test('空数据 mock 场景显示任务空态且可恢复', async ({ page }) => {
+    await login(page)
+
+    await page.evaluate(() =>
+      localStorage.setItem('zeno_mock_scenario', 'empty'),
+    )
+    await page.reload()
+
+    await expect(page.getByText('今日暂无计划任务')).toBeVisible()
+    await expect(page.locator('table tbody tr')).toHaveCount(0)
+    await expect(page.locator('.recharts-surface')).toHaveCount(2)
+
+    await page.evaluate(() =>
+      localStorage.removeItem('zeno_mock_scenario'),
+    )
+    await page.reload()
+
+    await expect(page.locator('table tbody tr')).toHaveCount(6)
+    await expect(page.getByText('今日暂无计划任务')).toHaveCount(0)
+  })
 })
