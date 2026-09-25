@@ -1,3 +1,4 @@
+import { configureAccessTokenProvider } from './apiClient'
 import type { AuthUser } from './authService'
 
 const SESSION_KEY = 'zeno_mock_session'
@@ -14,8 +15,11 @@ export function getMockSession(): MockSession | null {
   }
 }
 
-export function setMockSession(user: AuthUser): MockSession {
-  const session: MockSession = { token: `zeno-mock-${Date.now()}`, user }
+export function setMockSession(user: AuthUser, token?: string): MockSession {
+  const session: MockSession = {
+    token: token ?? `zeno-mock-${Date.now()}`,
+    user,
+  }
   try {
     localStorage.setItem(SESSION_KEY, JSON.stringify(session))
   } catch {
@@ -24,7 +28,6 @@ export function setMockSession(user: AuthUser): MockSession {
   window.dispatchEvent(new Event(MOCK_AUTH_EVENT))
   return session
 }
-
 export function clearMockSession(): void {
   try {
     localStorage.removeItem(SESSION_KEY)
@@ -34,8 +37,4 @@ export function clearMockSession(): void {
   window.dispatchEvent(new Event(MOCK_AUTH_EVENT))
 }
 
-export function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, ms)
-  })
-}
+configureAccessTokenProvider(() => getMockSession()?.token ?? null)

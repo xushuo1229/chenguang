@@ -1,23 +1,19 @@
-import {
-  mockDashboardOverview,
-  mockEmptyDashboardOverview,
-} from '@/mocks/data'
-import {
-  MockScenarioError,
-  getMockScenario,
-  mockScenarioDelayMs,
-  mockScenarioShouldFail,
-} from '@/mocks/scenario'
+import { request } from './apiClient'
 import { getSyncSnapshot } from './analyticsService'
 import { getAgentContext } from './agentService'
 import {
   buildKnowledgeCoverage,
   buildStudyTimeSeries,
 } from '@/features/dashboard/dashboardMetrics'
-import { delay } from './mockSession'
 
 export type DashboardTrendPoint = { date: string; value: number }
-export type DashboardTask = { id: string; title: string; kind: string; minutes: number; completed: boolean }
+export type DashboardTask = {
+  id: string
+  title: string
+  kind: string
+  minutes: number
+  completed: boolean
+}
 export type DashboardMetricTone = 'primary' | 'secondary' | 'success' | 'warning'
 export type DashboardMetric = {
   id: string
@@ -42,24 +38,19 @@ export type DashboardOverview = {
   knowledge: { strong: number; weak: number; coverage: number }
 }
 
+export type DashboardOverviewBase = Omit<
+  DashboardOverview,
+  'chart' | 'knowledge'
+>
+
 export async function getDashboardOverview(): Promise<DashboardOverview> {
-  await delay(mockScenarioDelayMs(320))
-  if (mockScenarioShouldFail()) {
-    throw new MockScenarioError()
-  }
-  if (getMockScenario() === 'empty') {
-    return {
-      ...structuredClone(mockEmptyDashboardOverview),
-      chart: buildStudyTimeSeries(undefined),
-      knowledge: buildKnowledgeCoverage(undefined),
-    }
-  }
-  const [snapshot, context] = await Promise.all([
+  const [base, snapshot, context] = await Promise.all([
+    request<DashboardOverviewBase>('/agent-home/dashboard'),
     getSyncSnapshot(),
     getAgentContext(),
   ])
   return {
-    ...structuredClone(mockDashboardOverview),
+    ...base,
     chart: buildStudyTimeSeries(snapshot),
     knowledge: buildKnowledgeCoverage(context),
   }

@@ -1,9 +1,6 @@
 export type ApiEnvelope<T> = {
-  success?: boolean
   data?: T
-  code?: string
-  message?: string
-  revision?: number
+  error?: { code?: string; message?: string }
 }
 
 export type ApiRequestOptions = {
@@ -13,7 +10,10 @@ export type ApiRequestOptions = {
   signal?: AbortSignal
 }
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '')
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api').replace(
+  /\/+$/,
+  '',
+)
 
 export class ApiError extends Error {
   readonly code: string
@@ -26,55 +26,31 @@ export class ApiError extends Error {
   }
 }
 
-export const api = {
-  token: 'cg_token',
-  user: 'cg_user',
-  base: API_BASE,
+// The React app owns its own session source (zeno_mock_session during the
+// mock phase); apiClient must never touch the legacy MPA's cg_token key.
+type AccessTokenProvider = () => string | null
+
+let accessTokenProvider: AccessTokenProvider = () => null
+
+export function configureAccessTokenProvider(
+  provider: AccessTokenProvider,
+): void {
+  accessTokenProvider = provider
 }
 
-export const AUTH_CHANGE_EVENT = 'chenguang:auth-changed'
-
-export function notifyAuthChanged(): void {
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new Event(AUTH_CHANGE_EVENT))
-  }
-}
-
-export function getToken(): string | null {
-  try {
-    return localStorage.getItem(api.token)
-  } catch {
-    return null
-  }
-}
-
-export function setSession(token: string, user: unknown): void {
-  try {
-    localStorage.setItem(api.token, token)
-    localStorage.setItem(api.user, JSON.stringify(user))
-  } catch {
-    /* storage may be unavailable in private mode; requests still work in-memory */
-  }
-  notifyAuthChanged()
-}
-
-export function clearSession(): void {
-  try {
-    localStorage.removeItem(api.token)
-    localStorage.removeItem(api.user)
-  } catch {
-    /* ignore */
-  }
-  notifyAuthChanged()
-}
-
-export async function request<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
+export async function request<T>(
+  path: string,
+  options: ApiRequestOptions = {},
+): Promise<T> {
   const controller = new AbortController()
-  const timeout = window.setTimeout(() => controller.abort(), options.timeoutMs || 15000)
-  const token = getToken()
+  const timeout = window.setTimeout(
+    () => controller.abort(),
+    options.timeoutMs || 15000,
+  )
+  const token = accessTokenProvider()
 
   try {
-    const response = await fetch(`${api.base}${path}`, {
+    const response = await fetch(`${API_BASE}${path}`, {
       method: options.method || 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -89,8 +65,8 @@ export async function request<T>(path: string, options: ApiRequestOptions = {}):
 
     if (!response.ok) {
       throw new ApiError(
-        payload?.code || 'REQUEST_FAILED',
-        payload?.message || '服务暂时不可用，请稍后再试。',
+        payload?.error?.code || 'REQUEST_FAILED',
+        payload?.error?.message || '服务暂时不可用，请稍后再试。',
         response.status,
       )
     }

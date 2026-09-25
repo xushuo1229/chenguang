@@ -88,7 +88,7 @@
     "configPath": "tests/test-web/playwright.config.mjs",
     "projectName": "chromium",
     "targetURL": "http://localhost:5174/",
-    "specSha256": "157b9ed4ccc1104d9b24f7e7cd5d448bdf125bdc07a597fc8d7c9a8b22c9e604",
+    "specSha256": "0977821b74a333ec4064cfe4431d90593c4a2a155717b12999d5b076cfbd52ea",
     "configSha256": "da9a50c0d520f46e9ff14fa8b9d1b8d73369cab8d0fe572ac5cf76d9264fe66b"
   },
   "evidence": {

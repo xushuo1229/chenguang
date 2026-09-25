@@ -6,6 +6,22 @@ async function login(page) {
   await expect(page).toHaveURL(/\/dashboard/)
 }
 
+// Scenarios must reach the MSW service worker, which cannot read
+// localStorage, so the flag is mirrored into a same-origin cookie.
+async function setScenario(page, scenario) {
+  await page.evaluate((value) => {
+    localStorage.setItem('zeno_mock_scenario', value)
+    document.cookie = `zeno_mock_scenario=${value}; path=/`
+  }, scenario)
+}
+
+async function clearScenario(page) {
+  await page.evaluate(() => {
+    localStorage.removeItem('zeno_mock_scenario')
+    document.cookie = 'zeno_mock_scenario=; Max-Age=0; path=/'
+  })
+}
+
 test.describe('Zeno AI Workspace 核心流接受测试', () => {
   test('未认证访问受保护页面时重定向到登录页', async ({ page }) => {
     await page.goto('/dashboard')
@@ -118,18 +134,14 @@ test.describe('Zeno AI Workspace 核心流接受测试', () => {
   test('空数据 mock 场景显示任务空态且可恢复', async ({ page }) => {
     await login(page)
 
-    await page.evaluate(() =>
-      localStorage.setItem('zeno_mock_scenario', 'empty'),
-    )
+    await setScenario(page, 'empty')
     await page.reload()
 
     await expect(page.getByText('今日暂无计划任务')).toBeVisible()
     await expect(page.locator('table tbody tr')).toHaveCount(0)
     await expect(page.locator('.recharts-surface')).toHaveCount(2)
 
-    await page.evaluate(() =>
-      localStorage.removeItem('zeno_mock_scenario'),
-    )
+    await clearScenario(page)
     await page.reload()
 
     await expect(page.locator('table tbody tr')).toHaveCount(6)
@@ -139,9 +151,7 @@ test.describe('Zeno AI Workspace 核心流接受测试', () => {
   test('loading mock 场景先显示骨架屏再呈现内容', async ({ page }) => {
     await login(page)
 
-    await page.evaluate(() =>
-      localStorage.setItem('zeno_mock_scenario', 'loading'),
-    )
+    await setScenario(page, 'loading')
     await page.reload()
 
     await expect(page.locator('[aria-busy="true"]')).toBeVisible()
@@ -153,17 +163,13 @@ test.describe('Zeno AI Workspace 核心流接受测试', () => {
       page.getByRole('heading', { name: '今日成长概览' }),
     ).toBeVisible({ timeout: 10000 })
 
-    await page.evaluate(() =>
-      localStorage.removeItem('zeno_mock_scenario'),
-    )
+    await clearScenario(page)
   })
 
   test('error mock 场景显示错误提示且重试可恢复', async ({ page }) => {
     await login(page)
 
-    await page.evaluate(() =>
-      localStorage.setItem('zeno_mock_scenario', 'error'),
-    )
+    await setScenario(page, 'error')
     await page.reload()
 
     const alert = page.getByRole('alert')
@@ -171,9 +177,7 @@ test.describe('Zeno AI Workspace 核心流接受测试', () => {
     const retry = page.getByRole('button', { name: '重试' })
     await expect(retry).toBeVisible()
 
-    await page.evaluate(() =>
-      localStorage.removeItem('zeno_mock_scenario'),
-    )
+    await clearScenario(page)
     await retry.click()
 
     await expect(

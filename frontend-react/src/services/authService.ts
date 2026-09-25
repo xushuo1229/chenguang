@@ -1,5 +1,5 @@
-import { clearMockSession, delay, getMockSession, setMockSession } from './mockSession'
-import { mockUser } from '@/mocks/data'
+import { request } from './apiClient'
+import { clearMockSession, setMockSession } from './mockSession'
 
 export type AuthUser = {
   id: number
@@ -8,25 +8,44 @@ export type AuthUser = {
   avatar?: string
 }
 
-export async function login(email: string, password: string): Promise<AuthUser> {
-  await delay(420)
+type AuthResult = { token: string; user: AuthUser }
+
+export async function login(
+  email: string,
+  password: string,
+): Promise<AuthUser> {
   if (!email.trim() || !password.trim()) throw new Error('请输入邮箱和密码')
-  const user: AuthUser = { ...mockUser, email: email.trim() }
-  return setMockSession(user).user
+  const result = await request<AuthResult>('/auth/login', {
+    method: 'POST',
+    body: { email: email.trim(), password },
+  })
+  return setMockSession(
+    { ...result.user, email: email.trim() },
+    result.token,
+  ).user
 }
 
-export async function register(nickname: string, email: string, password: string): Promise<AuthUser> {
-  await delay(520)
-  if (!nickname.trim() || !email.trim() || !password.trim()) throw new Error('请完整填写注册信息')
-  const user: AuthUser = { ...mockUser, nickname: nickname.trim(), email: email.trim() }
-  return setMockSession(user).user
+export async function register(
+  nickname: string,
+  email: string,
+  password: string,
+): Promise<AuthUser> {
+  if (!nickname.trim() || !email.trim() || !password.trim()) {
+    throw new Error('请完整填写注册信息')
+  }
+  const result = await request<AuthResult>('/auth/register', {
+    method: 'POST',
+    body: { nickname: nickname.trim(), email: email.trim(), password },
+  })
+  return setMockSession(
+    { ...result.user, nickname: nickname.trim(), email: email.trim() },
+    result.token,
+  ).user
 }
 
 export async function getMe(): Promise<AuthUser> {
-  await delay(160)
-  const session = getMockSession()
-  if (!session) throw new Error('当前没有 mock 会话')
-  return session.user
+  const result = await request<{ user: AuthUser }>('/auth/me')
+  return result.user
 }
 
 export async function logout(): Promise<void> {

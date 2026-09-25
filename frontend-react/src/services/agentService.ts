@@ -1,5 +1,4 @@
-import { buildAgentReply, mockAgentContext } from '@/mocks/data'
-import { delay } from './mockSession'
+import { request } from './apiClient'
 
 export type Evidence = {
   id: string
@@ -41,9 +40,18 @@ export type AgentContext = {
     stateCounts?: Record<string, number>
     nextBestRecommendation?: { nodeTitle?: string }
   }
-  plan?: { blocks?: Array<{ nodeTitle?: string; minutes?: number; reason?: string; kind?: string }> }
+  plan?: {
+    blocks?: Array<{
+      nodeTitle?: string
+      minutes?: number
+      reason?: string
+      kind?: string
+    }>
+  }
   actions?: AgentSuggestion[]
-  practice?: { attempts?: Array<{ createdAt?: string; knowledgeNodeId?: string }> }
+  practice?: {
+    attempts?: Array<{ createdAt?: string; knowledgeNodeId?: string }>
+  }
   metadata?: { generatedAt?: string }
 }
 
@@ -74,15 +82,26 @@ export type KnowledgeStateValue = {
 
 export type MemoryValue = {
   available?: boolean
-  items?: Array<{ id: string; category: string; content: string; confidence?: number; updatedAt?: string }>
+  items?: Array<{
+    id: string
+    category: string
+    content: string
+    confidence?: number
+    updatedAt?: string
+  }>
 }
 
 export async function getAgentContext(): Promise<AgentContext> {
-  await delay(300)
-  return structuredClone(mockAgentContext)
+  return request<AgentContext>('/personal-agent/context')
 }
 
-export async function sendAgentMessage(message: string, mode: 'personal' | 'general', _conversationId: string): Promise<AgentChatResponse> {
-  await delay(680)
-  return buildAgentReply(message, mode)
+export async function sendAgentMessage(
+  message: string,
+  mode: 'personal' | 'general',
+  conversationId: string,
+): Promise<AgentChatResponse> {
+  return request<AgentChatResponse>('/personal-agent/chat', {
+    method: 'POST',
+    body: { message, mode, conversationId },
+  })
 }

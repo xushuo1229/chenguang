@@ -1,8 +1,10 @@
-// Test-only mock data switch. The Zeno React app is fully mock-driven in this
-// phase; acceptance tests flip scenarios through this localStorage flag to
-// exercise loading / empty / error states without a backend. Never read by the
-// legacy MPA, CGStore or any production sync code path.
+// Test-only mock scenario switch. The Zeno React app is fully mock-driven in
+// this phase; acceptance tests flip scenarios to exercise loading / empty /
+// error states without a backend. The active scenario is mirrored into a
+// cookie because MSW runs as a service worker, which has no localStorage
+// access. Never read by the legacy MPA, CGStore or any production sync path.
 const SCENARIO_KEY = 'zeno_mock_scenario'
+const COOKIE_NAME = 'zeno_mock_scenario'
 
 export type MockScenario = 'default' | 'empty' | 'loading' | 'error'
 
@@ -38,23 +40,14 @@ export function setMockScenario(scenario: MockScenario): void {
   } catch {
     // storage unavailable: scenario stays default for this tab
   }
+  writeScenarioCookie(scenario)
 }
 
-// Delay a mock service should wait before resolving, per active scenario.
-export function mockScenarioDelayMs(baseMs: number): number {
-  return getMockScenario() === 'loading'
-    ? MOCK_LOADING_SCENARIO_MS
-    : baseMs
-}
-
-// Whether a mock service should fail for the active scenario.
-export function mockScenarioShouldFail(): boolean {
-  return getMockScenario() === 'error'
-}
-
-export class MockScenarioError extends Error {
-  constructor(message = '模拟的服务异常（mock error scenario）') {
-    super(message)
-    this.name = 'MockScenarioError'
+export function writeScenarioCookie(scenario: MockScenario): void {
+  if (typeof document === 'undefined') return
+  if (scenario === 'default') {
+    document.cookie = `${COOKIE_NAME}=; Max-Age=0; path=/`
+  } else {
+    document.cookie = `${COOKIE_NAME}=${scenario}; path=/; SameSite=Lax`
   }
 }
