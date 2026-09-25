@@ -55,7 +55,9 @@ Run artifacts (videos, traces, HTML reports, JSON results) are written under
   `npm run ... && ...` spawns nested cmd/npm trees on Windows whose inherited
   handles hang Playwright teardown; the launcher builds via `spawnSync` and
   runs preview in a shallow node tree.
-- Scenarios are switched through `localStorage` key `zeno_mock_scenario`,
-  see `src/mocks/scenario.ts`: `default` | `empty` | `loading` | `error`.
-  They are test-only switches and are never read by the legacy MPA or
-  CGStore.
+- Scenarios are switched through the `zeno_mock_scenario` flag
+  (`default` | `empty` | `loading` | `error`, see
+  `src/mocks/scenario.ts`). Mocks run in an MSW service worker, which has
+  no `localStorage` access, so the flag is mirrored into a same-origin
+  cookie; specs set both. They are test-only switches and are never read by
+  the legacy MPA or CGStore.
