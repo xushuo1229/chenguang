@@ -7,9 +7,40 @@ export type SyncSnapshot = {
   updatedAt?: string
 }
 
+export type CgUser = Record<string, unknown> & {
+  nickname?: string
+  email?: string
+  semesterStart?: string
+  currentWeek?: number
+  memory?: Record<string, unknown>
+}
+
+export type CourseSlot = {
+  weekday?: number
+  period?: number
+  periods?: number[]
+  weeks?: string
+  startTime?: string
+  endTime?: string
+}
+
+export type CourseRecord = {
+  id?: string
+  name?: string
+  progress?: number
+  status?: string
+  slots?: CourseSlot[]
+  schedule?: CourseSlot[]
+  time?: string
+  weeks?: string
+  location?: string
+  credits?: number
+  courseType?: string
+}
+
 export type ChenguangData = {
-  user?: Record<string, unknown> & { memory?: Record<string, unknown> }
-  courses?: Array<{ id?: string; name?: string }>
+  user?: CgUser
+  courses?: CourseRecord[]
   todos?: Array<{
     id?: string
     text?: string
@@ -18,11 +49,24 @@ export type ChenguangData = {
     completed?: boolean
     priority?: string
   }>
-  focus?: Array<{ date?: string; minutes?: number }>
+  focus?: Array<{ date?: string; minutes?: number; task?: string }>
   checkins?: Array<{ date?: string; status?: string }>
-  sports?: Array<{ date?: string; minutes?: number }>
-  readings?: Array<{ date?: string; minutes?: number }>
-  english?: Array<{ date?: string; minutes?: number }>
+  sports?: Array<{
+    date?: string
+    duration?: number
+    minutes?: number
+    calories?: number
+    type?: string
+    name?: string
+  }>
+  readings?: Array<{
+    date?: string
+    pages?: number
+    minutes?: number
+    totalPages?: number
+    bookName?: string
+  }>
+  english?: Array<{ date?: string; minutes?: number; words?: number }>
   goals?: Array<{ id?: string; title?: string; progress?: number }>
 }
 

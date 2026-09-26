@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Command } from 'cmdk'
 import {
+  BarChart3,
   Bot,
   BrainCircuit,
   Compass,
+  Library,
   LayoutDashboard,
   LogOut,
   Moon,
@@ -59,6 +61,16 @@ export function CommandDialog({ open, onOpenChange }: CommandDialogProps) {
             <LayoutDashboard />
             Dashboard
             <Hint>成长总览</Hint>
+          </Item>
+          <Item value="knowledge 知识库 课程" onSelect={() => go('/knowledge')}>
+            <Library />
+            Knowledge
+            <Hint>课程知识图谱</Hint>
+          </Item>
+          <Item value="analytics 分析 统计 趋势" onSelect={() => go('/analytics')}>
+            <BarChart3 />
+            Analytics
+            <Hint>成长数据分析</Hint>
           </Item>
           <Item value="agent 对话" onSelect={() => go('/agent')}>
             <Bot />

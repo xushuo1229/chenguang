@@ -136,6 +136,8 @@ function MobileSidebarContent({
       <nav className="flex-1 space-y-0.5 p-2">
         {[
           { label: 'Dashboard', to: '/dashboard' },
+          { label: 'Knowledge', to: '/knowledge' },
+          { label: 'Analytics', to: '/analytics' },
           { label: 'Agent', to: '/agent' },
         ].map(({ label, to }) => (
           <NavLink

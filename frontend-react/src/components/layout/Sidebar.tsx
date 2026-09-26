@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import {
+  BarChart3,
   Bot,
   ChevronsUpDown,
   Command as CommandIcon,
@@ -36,6 +37,7 @@ export const SIDEBAR_COLLAPSED_WIDTH = 64
 const navigation = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
   { label: 'Knowledge', to: '/knowledge', icon: Library },
+  { label: 'Analytics', to: '/analytics', icon: BarChart3 },
   { label: 'Agent', to: '/agent', icon: Bot },
 ]
 

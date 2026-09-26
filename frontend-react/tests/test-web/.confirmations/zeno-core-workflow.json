@@ -61,6 +61,10 @@
       "expectedState": "the graph gains one node and the new relation is listed in the node drawer"
     },
     {
+      "action": "view analytics KPIs, switch the range and read the period comparison",
+      "expectedState": "30-day total 920 minutes and 13 active days with comparison text; 7-day total 540 minutes"
+    },
+    {
       "action": "switch zeno_mock_scenario to empty and reload",
       "expectedState": "empty task state visible, zero table rows, charts render zeros"
     },
@@ -88,6 +92,7 @@
     "knowledge base renders the graph, list view and mastery review queue",
     "extraction candidates are reviewable and saved documents appear",
     "manual node creation and relation linking",
+    "analytics KPIs, range switching and period comparison",
     "empty mock scenario renders the task empty state and is reversible",
     "loading mock scenario shows the skeleton before content",
     "error mock scenario shows an alert and retry recovers"
@@ -103,7 +108,7 @@
     "configPath": "tests/test-web/playwright.config.mjs",
     "projectName": "chromium",
     "targetURL": "http://localhost:5174/",
-    "specSha256": "a9a3bfcf921c7142c638a8d07b580bc0cf296c26bdb0629aefe846070375f541",
+    "specSha256": "6bfeb06cfe2130caa1af74c3da019a2ef11d4bfe0696a49d2298db96c78200f4",
     "configSha256": "da9a50c0d520f46e9ff14fa8b9d1b8d73369cab8d0fe572ac5cf76d9264fe66b"
   },
   "evidence": {

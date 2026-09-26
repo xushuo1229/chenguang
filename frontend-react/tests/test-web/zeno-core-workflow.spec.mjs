@@ -201,6 +201,22 @@ test.describe('Zeno AI Workspace 核心流接受测试', () => {
     ).toContainText('ES Modules')
   })
 
+  test('Analytics 展示学习 KPI，可切换范围并给出周期对比', async ({ page }) => {
+    await login(page)
+    await page.goto('/analytics')
+
+    await expect(
+      page.getByRole('heading', { name: '成长分析' }),
+    ).toBeVisible()
+    await expect(page.getByText('总学习时长')).toBeVisible()
+    await expect(page.getByText('920', { exact: true })).toBeVisible()
+    await expect(page.getByText('学习时长增加 920 分钟')).toBeVisible()
+    await expect(page.getByText('13 个活跃日')).toBeVisible()
+
+    await page.getByRole('button', { name: '近 7 天' }).click()
+    await expect(page.getByText('540', { exact: true })).toBeVisible()
+  })
+
   test('空数据 mock 场景显示任务空态且可恢复', async ({ page }) => {
     await login(page)
 
