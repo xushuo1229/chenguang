@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>个人 Agent · 知行</title>
+  <title>个人 Agent · Zeno</title>
   <meta name="theme-color" content="#0B1220">
-  <meta name="description" content="知行个人 Agent：理解学习状态、解释原因、推荐下一步并组织学习行动。">
+  <meta name="description" content="Zeno个人 Agent：理解学习状态、解释原因、推荐下一步并组织学习行动。">
   <link rel="icon" href="/brand/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/vendor/fontawesome/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="css/variables.css" as="style">
@@ -648,17 +648,18 @@
   <link rel="stylesheet" href="/calm-dawn-fusion.css">
   <link rel="stylesheet" href="/calm-dawn-1to1.css">
   <link rel="stylesheet" href="/xingzhixing.css">
+  <link rel="stylesheet" href="/css/agent-os.css">
   <script src="js/shellBootstrap.js"></script>
   </head>
-  <body class="dashboard-shell" data-theme="fusion" data-brand="xingzhixing">
+  <body class="dashboard-shell" data-theme="fusion" data-brand="xingzhixing" data-page="agent">
 
 <!-- ===== 主导航侧边栏 ===== -->
 <aside class="sidebar">
   <div class="wb-brand">
-    <div class="wb-brand-mark"><img src="/brand/logo-icon.svg" alt="知行品牌图标"></div>
+    <div class="wb-brand-mark"><img src="/brand/logo-icon.svg" alt="Zeno品牌图标"></div>
     <div class="wb-brand-copy">
-      <strong>知行</strong>
-      <span>AI Personal Growth OS</span>
+      <strong>Zeno</strong>
+      <span>Personal Learning Agent OS</span>
     </div>
   </div>
   <a href="workbench.html" class="nav-item" data-nav="home"><i class="fas fa-home"></i>首页</a>
@@ -698,55 +699,88 @@
     </div>
   </div>
 
-  <!-- ===== Personal Agent 工作区导航 ===== -->
-  <nav class="coach-ia coach-card" aria-label="个人 Agent 工作区">
-    <div class="coach-ia-head"><i class="fas fa-route"></i><h3>Personal Agent Workspace</h3></div>
-    <div class="coach-ia-grid">
-      <a class="coach-ia-item" href="agent-home.html">Agent Home<small>学习状态与证据</small></a>
-      <a class="coach-ia-item" href="#agentConversationPanel">Conversation<small>基于上下文解释</small></a>
-      <a class="coach-ia-item" href="#aiInsightPanels">Insight<small>发现、风险与趋势</small></a>
-      <a class="coach-ia-item" href="#cardToday">Today<small>今日完成与专注</small></a>
-      <a class="coach-ia-item" href="agent-home.html">Mastery<small>掌握状态与复习</small></a>
-      <a class="coach-ia-item" href="agent-home.html">Action<small>确认后的下一步</small></a>
-    </div>
-  </nav>
+  <section id="agentWorkspace" class="agent-os" aria-label="Agent Operating System">
+    <aside id="agentHistoryPanel" class="agent-rail" aria-label="Agent Identity and Execution">
+      <article class="agent-card">
+        <div class="agent-card-header">
+          <div>
+            <h2 class="agent-card-title">Agent Identity</h2>
+            <p class="agent-list-meta">Read-only growth runtime</p>
+          </div>
+          <span class="agent-badge accent">Agent OS</span>
+        </div>
+        <div class="agent-card-body">
+          <div id="agentIdentityStatus"></div>
+          <div id="agentIdentityMetrics" class="agent-metric-grid" style="margin-top: 12px;"></div>
+        </div>
+      </article>
 
-  <section id="personalAgentExperience" class="personal-agent-experience" aria-label="个人 Agent 核心体验"></section>
+      <article class="agent-card">
+        <div class="agent-card-header">
+          <h2 class="agent-card-title">Execution Timeline</h2>
+          <span class="agent-badge">Gated</span>
+        </div>
+        <div class="agent-card-body">
+          <div id="agentExecutionTimeline"></div>
+        </div>
+      </article>
 
-  <section id="agentWorkspace" class="agent-workspace" aria-label="Agent Workspace">
-    <aside id="agentHistoryPanel" class="agent-panel" aria-label="Conversation History">
-      <div class="agent-panel-card">
-        <div class="agent-panel-title"><i class="fas fa-clock-rotate-left"></i> Conversation History</div>
-        <button type="button" class="personal-agent-button primary" id="newAgentChat">New Chat</button>
-        <div id="conversationHistory" class="personal-agent-list"></div>
-      </div>
+      <article class="agent-card">
+        <div class="agent-card-header">
+          <h2 class="agent-card-title">Session</h2>
+          <button type="button" class="personal-agent-button" id="newAgentChat">Clear</button>
+        </div>
+        <div class="agent-card-body">
+          <div id="conversationHistory" class="personal-agent-list"></div>
+        </div>
+      </article>
     </aside>
 
-    <section id="agentConversationPanel" class="agent-panel" aria-label="Agent Conversation Workspace">
-      <div class="agent-panel-card">
-        <div class="agent-panel-title"><i class="fas fa-compass"></i> Agent Conversation</div>
-        <div class="agent-mode-row" role="group" aria-label="回答模式">
-          <button type="button" class="agent-mode-btn active" id="agentModePersonal" aria-pressed="true">Personal</button>
-          <button type="button" class="agent-mode-btn" id="agentModeGeneral" aria-pressed="false">General</button>
+    <section id="agentConversationPanel" class="agent-main" aria-label="Agent Workspace Canvas">
+      <header id="agentCommandBar" class="agent-commandbar" aria-label="Universal Command Bar">
+        <div class="agent-commandbar-row">
+          <span class="agent-command-icon"><i class="fas fa-compass"></i></span>
+          <textarea class="agent-command-input" id="agentInput" placeholder="输入指令或问题..." rows="1" autocomplete="off" aria-label="输入你的问题"></textarea>
+          <button class="agent-command-send" id="agentSend" aria-label="发送"><i class="fas fa-paper-plane"></i></button>
         </div>
-      </div>
-      <div class="agent-panel-card">
-        <div class="chat-messages" id="agentMessages" aria-live="polite"></div>
-        <div class="chat-input-area">
-          <div class="chat-input-wrap">
-            <textarea class="chat-input" id="agentInput" placeholder="问个人 Agent：我今天应该做什么？" rows="1" autocomplete="off" aria-label="输入你的问题"></textarea>
-            <button class="chat-send" id="agentSend" aria-label="发送"><i class="fas fa-paper-plane"></i></button>
+        <div class="agent-command-actions">
+          <div class="agent-mode-row" role="group" aria-label="回答模式">
+            <button type="button" class="agent-mode-btn active" id="agentModePersonal" aria-pressed="true">Personal</button>
+            <button type="button" class="agent-mode-btn" id="agentModeGeneral" aria-pressed="false">General</button>
           </div>
-          <div class="chat-disclaimer">Personal Agent 只做分析与建议；行动需要你的确认。</div>
+          <span class="agent-badge positive">Evidence Bound</span>
+          <span class="agent-badge">Read Only</span>
         </div>
+      </header>
+
+      <div class="agent-canvas" aria-label="Dynamic Workspace Canvas">
+        <section class="agent-response" aria-label="Agent Response Stream">
+          <article class="agent-card">
+            <div class="agent-card-header">
+              <h2 class="agent-card-title">Agent Output</h2>
+              <span class="agent-badge">Validated</span>
+            </div>
+            <div class="agent-card-body">
+              <div id="agentMessages" aria-live="polite"></div>
+            </div>
+          </article>
+        </section>
+
+        <section id="personalAgentExperience" class="personal-agent-experience" aria-label="个人 Agent 核心体验"></section>
       </div>
     </section>
 
-    <aside id="agentContextPanel" class="agent-panel" aria-label="Context / Learning State">
-      <div class="agent-panel-card">
-        <div class="agent-panel-title"><i class="fas fa-layer-group"></i> Context</div>
-        <div id="agentContextItems" class="personal-agent-list"></div>
-      </div>
+    <aside id="agentContextPanel" class="agent-context" aria-label="Context Intelligence">
+      <article class="agent-card">
+        <div class="agent-card-header">
+          <h2 class="agent-card-title">Context Intelligence</h2>
+          <span class="agent-badge positive">Deterministic</span>
+        </div>
+        <div class="agent-card-body">
+          <div id="agentContextItems" class="personal-agent-list"></div>
+          <div id="agentContextPulse" style="margin-top: 14px;"></div>
+        </div>
+      </article>
     </aside>
   </section>
 

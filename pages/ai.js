@@ -4,6 +4,7 @@ import '../js/ui/toast.js';
 import '../js/apiClient.js';
 import { createAgentHomeService } from '../js/agentHomeService.js';
 import { createPersonalAgentExperience } from '../js/personalAgentExperience.js';
+import { metrics as agentMetrics, status as agentStatus, timeline as agentTimeline, emptyState as agentEmptyState } from '../js/agentUi.js';
 import '../js/store.js';
 import '../js/sync.js';
 import Analytics from '../js/analytics.js';
@@ -17,7 +18,7 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
 import { homeAuthHref } from '../js/utils/authNavigation.js';
 
 // ====================================================================
-// 知行 · 个人 Agent 页 (Phase 13 AI 2.0)
+// Zeno · 个人 Agent 页 (Phase 13 AI 2.0)
 // ====================================================================
 // 架构（Phase 13 冻结）：
 //
@@ -464,6 +465,101 @@ function renderAgentContext(context) {
   renderAgentContextItem(container, 'Insights', context.previousInsights.length
     ? context.previousInsights.map(function (item) { return item.title; }).join('；')
     : '暂无结构化洞察');
+  renderAgentIdentity(context);
+  renderAgentExecutionTimeline(context);
+  renderAgentContextPulse(context);
+}
+
+function boundaryValue(context, key) {
+  var boundary = context && context.context && context.context[key];
+  return boundary && boundary.value || {};
+}
+
+function renderAgentIdentityStatus(text, busy) {
+  var host = $('#agentIdentityStatus');
+  if (!host) return;
+  host.replaceChildren(agentStatus({ text: text, busy: busy, meta: 'Read-only' }));
+}
+
+function renderAgentIdentity(context) {
+  var behavior = boundaryValue(context, 'behavior');
+  var knowledge = boundaryValue(context, 'knowledgeStates');
+  var memoryBoundary = context && context.context && context.context.memories;
+  var memory = memoryBoundary && memoryBoundary.growth && memoryBoundary.growth.value || {};
+  var memoryItems = Array.isArray(memory.items) ? memory.items : [];
+  var task = behavior.taskSummary || {};
+  var focus = behavior.focusSummary || {};
+  var weak = Array.isArray(knowledge.weakTopics) ? knowledge.weakTopics : [];
+  var strong = Array.isArray(knowledge.strongTopics) ? knowledge.strongTopics : [];
+  var host = $('#agentIdentityMetrics');
+  if (!host) return;
+  host.replaceChildren(agentMetrics([
+    { label: 'Tasks', value: (task.completed || 0) + '/' + (task.total || 0), note: 'Today' },
+    { label: 'Focus', value: (focus.minutes || 0) + 'm', note: 'Current session' },
+    { label: 'Weak', value: String(weak.length), note: 'Knowledge nodes' },
+    { label: 'Memory', value: String(memoryItems.length), note: 'Confirmed items' },
+  ]));
+}
+
+function renderAgentExecutionTimeline(context) {
+  var host = $('#agentExecutionTimeline');
+  if (!host) return;
+  var plan = context && context.plan;
+  var actions = Array.isArray(context && context.actions) ? context.actions : [];
+  var practice = context && context.practice && Array.isArray(context.practice.attempts)
+    ? context.practice.attempts : [];
+  var items = [];
+  if (plan && Array.isArray(plan.blocks)) {
+    plan.blocks.forEach(function (block) {
+      items.push({
+        title: block.nodeTitle || 'Learning action',
+        meta: (block.minutes || 0) + ' min · ' + (block.reason || 'learning state'),
+        badge: block.kind || 'plan',
+        tone: 'accent',
+      });
+    });
+  }
+  actions.forEach(function (action) {
+    items.push({
+      title: action.title || 'Action proposal',
+      meta: action.reason || 'Awaiting explicit confirmation',
+      badge: 'Pending',
+      tone: 'accent',
+    });
+  });
+  practice.forEach(function (attempt) {
+    items.push({
+      title: 'Practice attempt',
+      meta: attempt.createdAt || 'Completed practice evidence',
+      badge: 'Evidence',
+      tone: 'positive',
+    });
+  });
+  host.replaceChildren(agentTimeline(items, '当前没有待执行或刚完成的 Agent 行动。'));
+}
+
+function renderAgentContextPulse(context) {
+  var host = $('#agentContextPulse');
+  if (!host) return;
+  var knowledge = boundaryValue(context, 'knowledgeStates');
+  var courseKnowledge = boundaryValue(context, 'courseKnowledge');
+  var memoryBoundary = context && context.context && context.context.memories;
+  var memory = memoryBoundary && memoryBoundary.growth && memoryBoundary.growth.value || {};
+  var weak = Array.isArray(knowledge.weakTopics) ? knowledge.weakTopics : [];
+  var strong = Array.isArray(knowledge.strongTopics) ? knowledge.strongTopics : [];
+  var nodes = Array.isArray(courseKnowledge.nodes) ? courseKnowledge.nodes : [];
+  var evidence = Array.isArray(courseKnowledge.evidence) ? courseKnowledge.evidence : [];
+  var memoryItems = Array.isArray(memory.items) ? memory.items : [];
+  var pulse = agentMetrics([
+    { label: 'Course Nodes', value: String(nodes.length), note: 'Knowledge graph' },
+    { label: 'Evidence', value: String(evidence.length), note: 'Bound facts' },
+    { label: 'Weak', value: String(weak.length), note: 'Review pressure' },
+    { label: 'Memory', value: String(memoryItems.length), note: 'Confirmed only' },
+  ]);
+  host.replaceChildren(pulse);
+  if (!nodes.length && !evidence.length && !weak.length && !memoryItems.length) {
+    host.appendChild(agentEmptyState({ text: '还没有足够的上下文信号，先补充学习记录。' }));
+  }
 }
 
 function loadAgentContext() {
@@ -593,6 +689,7 @@ function setBusy(on) {
   var input = $('#agentInput'); var send = $('#agentSend');
   if (input) input.disabled = on;
   if (send) send.disabled = on;
+  renderAgentIdentityStatus(on ? '正在处理指令...' : 'Agent Runtime Ready', on);
 }
 
 function detectReportRequest(text) {
