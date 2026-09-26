@@ -47,3 +47,10 @@ tmp-*
 # ---------- 工作区内部 ----------
 .workbuddy/
 archive/
+
+# review scratch / Codex local config
+_diff*
+_rv_*
+_review_*
+.codex/
+.claude/settings.local.json
