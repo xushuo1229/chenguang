@@ -17,7 +17,7 @@ const welcomeMessage: ChatMessage = {
   id: 'welcome',
   role: 'assistant',
   content:
-    '你好，我是 Zeno（当前为 mock 模式）。可以问我今天该推进什么，也可以切换到 General AI。',
+    '你好，我是 Zeno，你的个人成长 Agent。可以问我今天该推进什么，也可以切换到 General AI 处理通用问题。',
   mode: 'personal',
 }
 
