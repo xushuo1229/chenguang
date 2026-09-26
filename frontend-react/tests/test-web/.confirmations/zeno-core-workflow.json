@@ -53,6 +53,14 @@
       "expectedState": "seven graph nodes, seven list rows, mastery average and a three-item review queue"
     },
     {
+      "action": "accept then reject extraction candidates, then save a source document",
+      "expectedState": "pending queue empties after review and the saved document appears in the list"
+    },
+    {
+      "action": "create a knowledge node manually and link it to an existing node",
+      "expectedState": "the graph gains one node and the new relation is listed in the node drawer"
+    },
+    {
       "action": "switch zeno_mock_scenario to empty and reload",
       "expectedState": "empty task state visible, zero table rows, charts render zeros"
     },
@@ -78,6 +86,8 @@
     "command palette seeds agent prompt",
     "mobile layout has no sidebar padding offset and context collapsible works",
     "knowledge base renders the graph, list view and mastery review queue",
+    "extraction candidates are reviewable and saved documents appear",
+    "manual node creation and relation linking",
     "empty mock scenario renders the task empty state and is reversible",
     "loading mock scenario shows the skeleton before content",
     "error mock scenario shows an alert and retry recovers"
@@ -93,7 +103,7 @@
     "configPath": "tests/test-web/playwright.config.mjs",
     "projectName": "chromium",
     "targetURL": "http://localhost:5174/",
-    "specSha256": "fc139a28352d42861fa9e65eab4f78996ea34cc4354d0c3bb1929f055efcbd0a",
+    "specSha256": "a9a3bfcf921c7142c638a8d07b580bc0cf296c26bdb0629aefe846070375f541",
     "configSha256": "da9a50c0d520f46e9ff14fa8b9d1b8d73369cab8d0fe572ac5cf76d9264fe66b"
   },
   "evidence": {

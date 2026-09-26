@@ -150,6 +150,57 @@ test.describe('Zeno AI Workspace 核心流接受测试', () => {
     await expect(page.locator('table tbody tr')).toHaveCount(3)
   })
 
+  test('文档保存进入列表且抽取候选可接受或拒绝', async ({ page }) => {
+    await login(page)
+    await page.goto('/knowledge')
+
+    await page.getByRole('button', { name: '审核', exact: true }).click()
+    await expect(page.getByText('useEffect 依赖数组')).toBeVisible()
+
+    await page.getByRole('button', { name: '接受' }).first().click()
+    await expect(page.getByText('useEffect 依赖数组')).toHaveCount(0)
+    await expect(page.getByText('状态提升原则')).toBeVisible()
+
+    await page.getByRole('button', { name: '拒绝' }).click()
+    await expect(page.getByText('没有待审核的候选')).toBeVisible()
+
+    await page.getByRole('button', { name: '文档', exact: true }).click()
+    await page
+      .getByPlaceholder('文档标题，如：第 3 章讲义')
+      .fill('冒烟讲义')
+    await page
+      .getByPlaceholder('粘贴课程文本内容...')
+      .fill('这是一段用于验证文档保存的课程文本内容。')
+    await page.getByRole('button', { name: '保存文档' }).click()
+    await expect(page.getByText('冒烟讲义')).toBeVisible()
+  })
+
+  test('手动新建节点并为其添加关系', async ({ page }) => {
+    await login(page)
+    await page.goto('/knowledge')
+
+    await expect(page.locator('.react-flow__node')).toHaveCount(7)
+    await page.getByRole('button', { name: '新建节点' }).click()
+    await page
+      .getByPlaceholder('知识点标题，如：闭包')
+      .fill('手动节点 A')
+    await page.getByRole('button', { name: '创建节点' }).click()
+
+    await expect(page.locator('.react-flow__node')).toHaveCount(8)
+    await page.getByText('手动节点 A').click()
+
+    const drawer = page.locator('aside').last()
+    await expect(drawer).toBeVisible()
+    await page
+      .locator('select')
+      .nth(1)
+      .selectOption({ label: 'ES Modules' })
+    await page.getByRole('button', { name: '添加关系' }).click()
+    await expect(
+      drawer.locator('li.rounded-control').first(),
+    ).toContainText('ES Modules')
+  })
+
   test('空数据 mock 场景显示任务空态且可恢复', async ({ page }) => {
     await login(page)
 

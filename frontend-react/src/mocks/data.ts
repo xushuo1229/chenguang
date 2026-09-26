@@ -224,3 +224,30 @@ export const mockParsedCourses: ParsedCourse[] = [
     ],
   },
 ]
+
+export const mockExtractionCandidates = [
+  {
+    id: 'cand-1',
+    courseId: 'course-zeno-1',
+    documentId: 'doc-2',
+    type: 'concept',
+    title: 'useEffect 依赖数组',
+    content: '依赖数组声明 effect 订阅的响应式值，变化时重新执行。',
+    confidence: 0.82,
+    status: 'pending' as const,
+    originalTitle: 'useEffect 依赖数组',
+    originalContent: '依赖数组声明 effect 订阅的响应式值，变化时重新执行。',
+  },
+  {
+    id: 'cand-2',
+    courseId: 'course-zeno-1',
+    documentId: 'doc-2',
+    type: 'principle',
+    title: '状态提升原则',
+    content: '当多个组件共享状态时，把状态提升到最近的共同父级。',
+    confidence: 0.61,
+    status: 'pending' as const,
+    originalTitle: '状态提升原则',
+    originalContent: '当多个组件共享状态时，把状态提升到最近的共同父级。',
+  },
+]

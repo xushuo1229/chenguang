@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/state'
 import { GraphTab } from '@/features/knowledge/GraphTab'
 import { MasteryTab } from '@/features/knowledge/MasteryTab'
+import { DocumentsTab } from '@/features/knowledge/DocumentsTab'
+import { ReviewTab } from '@/features/knowledge/ReviewTab'
 import { ImportCourseDialog } from '@/features/knowledge/ImportCourseDialog'
 import { getCourseSpace } from '@/services/courseSpaceService'
 import {
@@ -78,7 +80,7 @@ export default function KnowledgePage() {
     enabled: Boolean(courseId) && tab === 'mastery',
   })
 
-  const tabs: Array<{ id: Tab; label: string; disabled?: boolean }> = [
+  const tabs: Array<{ id: Tab; label: string }> = [
     { id: 'graph', label: '图谱' },
     { id: 'mastery', label: '掌握度' },
     { id: 'documents', label: '文档' },
@@ -130,21 +132,18 @@ export default function KnowledgePage() {
 
           <div className="flex gap-1 border-b border-line">
             {tabs.map((item) => {
-              const comingSoon = item.id === 'documents' || item.id === 'review'
               return (
                 <button
                   key={item.id}
                   type="button"
-                  disabled={comingSoon}
                   onClick={() => setTab(item.id)}
                   className={`-mb-px border-b px-4 py-2 text-[13px] transition-colors ${
                     tab === item.id
                       ? 'border-primary text-ink'
                       : 'border-transparent text-ink-muted'
-                  } ${comingSoon ? 'cursor-not-allowed opacity-50' : 'hover:text-ink'}`}
+                  } hover:text-ink`}
                 >
                   {item.label}
-                  {comingSoon ? '（Phase 40.4）' : ''}
                 </button>
               )
             })}
@@ -155,6 +154,8 @@ export default function KnowledgePage() {
               space={spaceQuery.data}
               isLoading={spaceQuery.isPending}
               isError={spaceQuery.isError}
+              courseId={courseId}
+              onChanged={() => void spaceQuery.refetch()}
             />
           ) : null}
           {tab === 'mastery' ? (
@@ -165,6 +166,13 @@ export default function KnowledgePage() {
               isError={statesQuery.isError || queueQuery.isError}
             />
           ) : null}
+          {tab === 'documents' ? (
+            <DocumentsTab
+              courseId={courseId}
+              onExtracted={() => setTab('review')}
+            />
+          ) : null}
+          {tab === 'review' ? <ReviewTab courseId={courseId} /> : null}
         </>
       )}
 

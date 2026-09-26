@@ -5,7 +5,8 @@ import type {
 } from '@/services/courseSpaceService'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { X } from 'lucide-react'
+import { Loader2, Plus, X } from 'lucide-react'
+import { useState } from 'react'
 
 const kindLabel: Record<string, string> = {
   concept: '概念',
@@ -22,14 +23,23 @@ export function NodeDetailDrawer({
   nodes,
   relations,
   evidence,
+  onCreateRelation,
   onClose,
 }: {
   node: KbNode
   nodes: KbNode[]
   relations: KbRelation[]
   evidence: KbEvidence[]
+  onCreateRelation?: (input: {
+    targetNodeId: string
+    relationType: string
+  }) => Promise<unknown>
   onClose: () => void
 }) {
+  const [targetId, setTargetId] = useState('')
+  const [relationType, setRelationType] = useState('prerequisite')
+  const [saving, setSaving] = useState(false)
+  const [formError, setFormError] = useState('')
   const titleOf = (id: string) =>
     nodes.find((item) => item.id === id)?.title ?? id
   const outgoing = relations.filter(
@@ -39,6 +49,21 @@ export function NodeDetailDrawer({
     (relation) => relation.targetNodeId === node.id,
   )
   const nodeEvidence = evidence.filter((item) => item.nodeId === node.id)
+  const otherNodes = nodes.filter((item) => item.id !== node.id)
+
+  const handleAddRelation = async () => {
+    if (!targetId || saving || !onCreateRelation) return
+    setSaving(true)
+    setFormError('')
+    try {
+      await onCreateRelation({ targetNodeId: targetId, relationType })
+      setTargetId('')
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : '添加失败')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -95,6 +120,47 @@ export function NodeDetailDrawer({
               })
             )}
           </ul>
+          {onCreateRelation && otherNodes.length > 0 ? (
+            <div className="mt-3 rounded-control border border-line p-3">
+              <p className="text-[13px] font-medium text-ink">添加关系</p>
+              <div className="mt-2 space-y-2">
+                <select
+                  value={targetId}
+                  onChange={(event) => setTargetId(event.target.value)}
+                  className="h-9 w-full rounded-control border border-line bg-surface px-2 text-[13px] text-ink outline-none focus:border-primary"
+                >
+                  <option value="">选择目标知识点</option>
+                  {otherNodes.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.title}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={relationType}
+                  onChange={(event) => setRelationType(event.target.value)}
+                  className="h-9 w-full rounded-control border border-line bg-surface px-2 text-[13px] text-ink outline-none focus:border-primary"
+                >
+                  <option value="prerequisite">前置知识</option>
+                  <option value="related_to">相关</option>
+                </select>
+                {formError ? (
+                  <p className="text-xs text-danger">{formError}</p>
+                ) : null}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  disabled={saving || !targetId}
+                  onClick={handleAddRelation}
+                >
+                  {saving ? <Loader2 className="animate-spin" /> : <Plus />}
+                  添加关系
+                </Button>
+              </div>
+            </div>
+          ) : null}
         </section>
 
         <section className="mt-6">

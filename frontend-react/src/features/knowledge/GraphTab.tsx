@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
 import {
   Table,
   TableBody,
@@ -7,14 +8,18 @@ import {
   TableHeaderCell,
   TableRow,
 } from '@tremor/react'
-import { List, Network, Search } from 'lucide-react'
+import { List, Network, Plus, Search } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { EmptyState, LoadingState } from '@/components/ui/state'
 import { KnowledgeGraphView } from './KnowledgeGraphView'
 import { NodeDetailDrawer } from './NodeDetailDrawer'
-import type { CourseSpace } from '@/services/courseSpaceService'
+import { CreateNodeDialog } from './CreateNodeDialog'
+import {
+  createRelation,
+  type CourseSpace,
+} from '@/services/courseSpaceService'
 
 type ViewMode = 'graph' | 'list'
 
@@ -32,14 +37,24 @@ export function GraphTab({
   space,
   isLoading,
   isError,
+  courseId,
+  onChanged,
 }: {
   space: CourseSpace | undefined
   isLoading: boolean
   isError: boolean
+  courseId: string
+  onChanged: () => void
 }) {
   const [view, setView] = useState<ViewMode>('graph')
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
+
+  const relationMutation = useMutation({
+    mutationFn: createRelation,
+    onSuccess: onChanged,
+  })
 
   const filteredNodes = useMemo(() => {
     const keyword = query.trim().toLowerCase()
@@ -69,11 +84,25 @@ export function GraphTab({
   }
   if (!space || space.nodes.length === 0) {
     return (
-      <EmptyState
-        icon={<Network className="size-5" />}
-        title="这门课还没有知识图谱"
-        description="上传源文档并通过审核后，抽取的知识点会出现在这里。"
-      />
+      <>
+        <EmptyState
+          icon={<Network className="size-5" />}
+          title="这门课还没有知识图谱"
+          description="上传源文档并通过审核后，抽取的知识点会出现在这里；也可以先手动补入。"
+          action={
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
+              <Plus />
+              手动新建节点
+            </Button>
+          }
+        />
+        <CreateNodeDialog
+          open={createOpen}
+          courseId={courseId}
+          onClose={() => setCreateOpen(false)}
+          onCreated={onChanged}
+        />
+      </>
     )
   }
 
@@ -90,6 +119,15 @@ export function GraphTab({
           />
         </div>
         <div className="flex rounded-control border border-line p-0.5">
+          <Button
+            variant="outline"
+            size="sm"
+            className="mr-2"
+            onClick={() => setCreateOpen(true)}
+          >
+            <Plus />
+            新建节点
+          </Button>
           <Button
             variant={view === 'graph' ? 'secondary' : 'ghost'}
             size="sm"
@@ -160,9 +198,21 @@ export function GraphTab({
           nodes={space.nodes}
           relations={space.relations}
           evidence={space.evidence}
+          onCreateRelation={(input) =>
+            relationMutation.mutateAsync({
+              sourceNodeId: selectedNode.id,
+              ...input,
+            })
+          }
           onClose={() => setSelectedId(null)}
         />
       ) : null}
+      <CreateNodeDialog
+        open={createOpen}
+        courseId={courseId}
+        onClose={() => setCreateOpen(false)}
+        onCreated={onChanged}
+      />
     </div>
   )
 }
