@@ -19,7 +19,7 @@ describe('today plan page', () => {
   });
 
   it('creates today.html as a standalone page with correct structure', () => {
-    expect(todayHtml).toContain('<title>今日计划 · 知行</title>');
+    expect(todayHtml).toContain('<title>今日计划 · Zeno</title>');
     expect(todayHtml).toContain('class="dashboard-shell"');
     expect(todayHtml).toContain('id="taskList"');
     expect(todayHtml).toContain('id="statTotal"');

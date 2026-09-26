@@ -1,5 +1,5 @@
 // ====================================================================
-// 知行 · 工作台页面 (Workbench Page)
+// Zeno · 工作台页面 (Workbench Page)
 // ====================================================================
 // 这是用户登录后的主页面，功能包括：
 //   - 今日计划（待办任务的增删改查）
@@ -2043,12 +2043,12 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
     }
 
     /* ---------- 管理视图 ---------- */
-    // applyWbTheme(theme) 切换页面主题颜色（晨光琥珀/青晨薄荷/暮色玫瑰）
+    // applyWbTheme(theme) 切换页面主题颜色（Zeno Amber/青晨薄荷/暮色玫瑰）
     function applyWbTheme(theme) {
       if (theme === 'teal' || theme === 'rose') {
         document.body.setAttribute('data-wb-theme', theme);
       } else {
-        document.body.removeAttribute('data-wb-theme'); // 默认晨光琥珀
+        document.body.removeAttribute('data-wb-theme'); // 默认Zeno Amber
       }
       try { localStorage.setItem('cg_wb_theme', theme || 'amber'); } catch (_) {}
       var sel = $('#wbThemeSelect');

@@ -1,5 +1,5 @@
 /**
- * 知行 · Prompt Builder（Phase 13 AI 2.0）
+ * Zeno · Prompt Builder（Phase 13 AI 2.0）
  * ============================================================
  * 【职责】
  * System Prompt 是后端的「所有权」：前端永远不发角色设定，只发
@@ -28,7 +28,7 @@ function buildSystemPrompt(opts) {
   const today = String(opts.today || '').slice(0, 10) || '未知';
 
   return [
-    '你是「知行 AI 教练」，AI 个人成长操作系统「知行」内置的长期成长教练。',
+    '你是「Zeno Learning Agent」，Personal Learning Agent Operating System「Zeno」内置的长期成长教练。',
     '今天是 ' + today + '。请始终用简体中文回复，语气温和、具体、可执行。',
     '',
     '【数据事实边界】',

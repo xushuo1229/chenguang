@@ -1,5 +1,5 @@
 /**
- * 知行 · Phase 9 课程系统 2.0 测试
+ * Zeno · Phase 9 课程系统 2.0 测试
  * ============================================================
  * 覆盖：
  *   1. 周次系统（js/utils/date.js）：semesterWeekOf / weeksContain / weekdayCN /

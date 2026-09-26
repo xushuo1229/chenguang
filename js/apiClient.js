@@ -1,5 +1,5 @@
 /**
- * 知行 · 前端 API 客户端 (ES Module)
+ * Zeno · 前端 API 客户端 (ES Module)
  * ------------------------------------------------------------
  * - 自动携带 JWT Token 请求头
  * - 自动携带 CSRF 防护头 (X-Requested-With)
@@ -424,7 +424,7 @@ var CGAPI = {
   /* ===== AI 助手接口 ===== */
 
     /**
-     * ai —— AI 教练接口（Phase 13 AI 2.0，后端 OpenAI 兼容代理）
+     * ai —— Learning Agent接口（Phase 13 AI 2.0，后端 OpenAI 兼容代理）
      *
      * 【什么是 ai.chat？】
      * 把「用户问题 + 最近历史 + AIContext 构建的结构化上下文」发送到
@@ -443,7 +443,7 @@ var CGAPI = {
      */
     ai: {
       /**
-       * chat(payload) —— 发起一轮 AI 教练对话
+       * chat(payload) —— 发起一轮 Learning Agent对话
        * 【返回值】Promise，resolve 时返回 { data: { reply, mode, suggestions, actions, model } }
        */
       chat: function (payload) {

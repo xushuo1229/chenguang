@@ -1,5 +1,5 @@
 /**
- * 知行 · Agent Prompt Registry (Phase 27.6.5)
+ * Zeno · Agent Prompt Registry (Phase 27.6.5)
  * ============================================================
  * 【职责】
  * Prompt 模板注册表（docs/PHASE_27_6_5 §3）：

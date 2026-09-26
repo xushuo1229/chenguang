@@ -1,11 +1,11 @@
 /**
- * 知行 · Design System 组件层　「晨光 · 静 Calm Dawn」
+ * Zeno · Design System 组件层　「Zeno · Calm Dawn」
  * ============================================================
  * 与 css/variables.css 配对。这里定义全部跨页共享组件。
  *
  * 【兼容性承诺】
  * 所有历史上被 HTML / pages/*.js 引用的 class 名 **逐个保留**，
- * 视觉全部按新 token 重写：实心暖石墨表面 + 晨光琥珀主强调、
+ * 视觉全部按新 token 重写：实心暖石墨表面 + Zeno Amber主强调、
  * 细边框 + 两层阴影，无霓虹光芒 / 无渐变按钮 / 无常驻动画。
  * spine 新设计系统额外补充组件（.btn-ghost/.btn-danger/.card-x 等）。
  * ============================================================
@@ -67,7 +67,7 @@ a:hover { color: var(--brand-amber-strong); }
 .btn:active { transform: scale(0.97); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none !important; transform: none !important; }
 
-/* Primary —— 晨光琥珀实底 + 深字（重点是克制的实色，非渐变） */
+/* Primary —— Zeno Amber实底 + 深字（重点是克制的实色，非渐变） */
 .btn-primary {
   background: var(--brand-amber);
   border-color: transparent;

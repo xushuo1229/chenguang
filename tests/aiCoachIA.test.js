@@ -6,36 +6,30 @@ function parse(html) {
 }
 
 describe('Personal Agent workspace IA', () => {
-  it('exposes the six agent modules in the canonical order', () => {
+  it('exposes the agent-native workspace regions in the canonical order', () => {
     const document = parse(aiHtml);
-    const items = [...document.querySelectorAll('.coach-ia-item')];
+    const regions = [
+      document.getElementById('agentHistoryPanel'),
+      document.getElementById('agentConversationPanel'),
+      document.getElementById('agentContextPanel'),
+    ];
 
-    expect(items.map((item) => item.childNodes[0].textContent.trim())).toEqual([
-      'Agent Home',
-      'Conversation',
-      'Insight',
-      'Today',
-      'Mastery',
-      'Action',
-    ]);
-    expect(items.map((item) => item.getAttribute('href'))).toEqual([
-      'agent-home.html',
-      '#agentConversationPanel',
-      '#aiInsightPanels',
-      '#cardToday',
-      'agent-home.html',
-      'agent-home.html',
+    expect(regions.every(Boolean)).toBe(true);
+    expect(regions.map((region) => region.getAttribute('aria-label'))).toEqual([
+      'Agent Identity and Execution',
+      'Agent Workspace Canvas',
+      'Context Intelligence',
     ]);
   });
 
-  it('keeps workspace navigation available outside the dashboard state', () => {
+  it('keeps workspace shell independent from the legacy dashboard', () => {
     const document = parse(aiHtml);
-    const navigation = document.querySelector('.coach-ia');
+    const workspace = document.getElementById('agentWorkspace');
     const dashboard = document.getElementById('coachDashboard');
 
-    expect(navigation.getAttribute('aria-label')).toBe('个人 Agent 工作区');
-    expect(dashboard.contains(navigation)).toBe(false);
-    expect(dashboard.compareDocumentPosition(navigation) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+    expect(workspace.getAttribute('aria-label')).toBe('Agent Operating System');
+    expect(dashboard.contains(workspace)).toBe(false);
+    expect(dashboard.contains(workspace)).toBe(false);
   });
 
   it('binds module anchors and responsive layout without new frameworks', () => {

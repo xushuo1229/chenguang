@@ -1,5 +1,5 @@
 /**
- * 知行 · Agent LLM Runtime Gateway (Phase 27.6.4)
+ * Zeno · Agent LLM Runtime Gateway (Phase 27.6.4)
  * ============================================================
  * 【职责】
  * 一次解释请求的唯一编排入口（架构 §2）：

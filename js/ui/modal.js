@@ -1,5 +1,5 @@
 /**
- * 知行 · 统一 Modal 模态框 (ES Module)
+ * Zeno · 统一 Modal 模态框 (ES Module)
  *
  * 什么是模态框（Modal）？
  * 模态框是一种覆盖在页面上方的弹出窗口，会阻止用户操作底层页面。

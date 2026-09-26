@@ -1,5 +1,5 @@
 /**
- * 知行 · 落地页入口 (ES Module)
+ * Zeno · 落地页入口 (ES Module)
  *
  * 这是网站的首页（落地页），用户在这里：
  *   - 浏览网站介绍（滚动动画效果）
@@ -219,7 +219,7 @@ function init() {
         syncUserToStore(username, email, false);
       }
       try { if (window.CGSync) await window.CGSync.afterRegister(); } catch (_) {}
-      toast('🎉 注册成功，欢迎加入知行！正在进入工作台…', 'success');
+      toast('🎉 注册成功，欢迎加入Zeno！正在进入工作台…', 'success');
       setTimeout(function () { window.location.href = window.REDIRECT_AFTER_LOGIN; }, 650);
     } catch (err) {
       if (err.status === 409 || err.status === 400) {
@@ -262,7 +262,7 @@ function init() {
       toast('检测到登录态，正在进入工作台…', 'info');
       setTimeout(function () { window.location.href = window.REDIRECT_AFTER_LOGIN; }, 700);
     } else {
-      setTimeout(function () { toast('👋 欢迎来到知行！', 'info'); }, 500);
+      setTimeout(function () { toast('👋 欢迎来到Zeno！', 'info'); }, 500);
     }
   } catch (_) {}
 }

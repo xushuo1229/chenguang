@@ -1,5 +1,5 @@
 /**
- * 知行 · Agent Prompt Templates (Phase 27.6.5)
+ * Zeno · Agent Prompt Templates (Phase 27.6.5)
  * ============================================================
  * 【职责】
  * 版本化 Prompt 模板定义。v1 从 openaiCompatibleProvider.js 内联实现**逐字迁移**

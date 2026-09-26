@@ -1,5 +1,5 @@
 /**
- * 知行 · Shell Bootstrap
+ * Zeno · Shell Bootstrap
  * 同步脚本，在 sidebar DOM 就绪后立即执行，确保首帧即为最终 shell。
  * 不读取业务数据、不触发网络、不等待 Promise / DOMContentLoaded。
  */

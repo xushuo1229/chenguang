@@ -1,5 +1,5 @@
 /**
- * 知行 · Agent Prompt Template Contract (Phase 27.6.5)
+ * Zeno · Agent Prompt Template Contract (Phase 27.6.5)
  * ============================================================
  * 【职责】
  * Prompt 模板的注册期契约校验（docs/PHASE_27_6_5 §2）：

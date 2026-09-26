@@ -1,5 +1,5 @@
 /**
- * 知行 · 登录页入口 (ES Module)
+ * Zeno · 登录页入口 (ES Module)
  *
  * 独立登录页（login.html），桌面端左右分栏：左品牌 + 右表单。
  * 与首页弹窗登录共用同一套后端流程（CGAPI.auth.login / register）：
@@ -40,7 +40,7 @@ function showView(mode) {
   var isReg = mode === 'register';
   login.style.display = isReg ? 'none' : '';
   register.style.display = isReg ? '' : 'none';
-  document.title = (isReg ? '注册' : '登录') + ' · 知行';
+  document.title = (isReg ? '注册' : '登录') + ' · Zeno';
   try { history.replaceState(null, '', isReg ? '?mode=register' : location.pathname); } catch (_) {}
 }
 
@@ -152,7 +152,7 @@ async function doRegister() {
       syncUserToStore(username);
     }
     try { if (window.CGSync) await window.CGSync.afterRegister(); } catch (_) {}
-    toast('🎉 注册成功，欢迎加入知行！正在进入工作台…', 'success');
+    toast('🎉 注册成功，欢迎加入Zeno！正在进入工作台…', 'success');
     setTimeout(function () { window.location.href = window.REDIRECT_AFTER_LOGIN; }, 650);
   } catch (err) {
     if (err.status === 409 || err.status === 400) {

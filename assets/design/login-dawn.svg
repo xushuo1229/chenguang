@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 300" fill="none">
-  <!-- 晨光 · 地平线日出：登录页主视觉（统一插画语言：2px 圆头线条 + 晨光四色 + 留白） -->
+  <!-- Zeno · 地平线日出：登录页主视觉（统一插画语言：2px 圆头线条 + Zeno四色 + 留白） -->
   <circle cx="180" cy="196" r="64" stroke="#e8a85c" stroke-width="2.5"/>
   <path d="M96 196h168" stroke="#e8a85c" stroke-width="2.5" stroke-linecap="round"/>
   <path d="M180 108v-24" stroke="#e8a85c" stroke-width="2.5" stroke-linecap="round"/>

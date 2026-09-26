@@ -15,7 +15,7 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
 import { homeAuthHref } from '../js/utils/authNavigation.js';
 
 // ====================================================================
-// 知行 · 统计中心 (Stats Center)
+// Zeno · 统计中心 (Stats Center)
 // ====================================================================
 // 本页面是「数据驾驶舱」。架构遵循 Phase 10 的「Unified Analytics」：
 //
@@ -43,7 +43,7 @@ function checkAuth() {
   return true;
 }
 
-/* ---------- 图表颜色（对齐「晨光·静」品牌 token） ---------- */
+/* ---------- 图表颜色（对齐「Zeno · Calm Dawn」品牌 token） ---------- */
 var C = {
   amber: '#e8a85c', teal: '#4fc3b4', sky: '#7ba7d9',
   text1: '#f2efe8', text2: '#b8b3a8', text3: '#8d887d',

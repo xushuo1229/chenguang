@@ -1,5 +1,5 @@
 /**
- * 知行 · Agent LLM Runtime Gateway Contract (Phase 27.6.4)
+ * Zeno · Agent LLM Runtime Gateway Contract (Phase 27.6.4)
  * ============================================================
  * 【职责】
  * 定义 Gateway 结果信封契约（docs/PHASE_27_6_4 §1.3）：

@@ -1,4 +1,4 @@
-# 知行 · 后端服务 + 云端同步方案
+# Zeno · 后端服务 + 云端同步方案
 
 把原有「纯 localStorage 本地存储」升级为「**后端数据库（SQLite）+ JWT 鉴权**」，
 实现 **同一账号跨浏览器 / 跨设备数据完全一致**。
@@ -83,7 +83,7 @@ npm start
 # 或自定义端口 / JWT 密钥 / 库路径：
 # PORT=3000 JWT_SECRET=你的密钥 DB_PATH=./chenguang.db npm start
 ```
-看到 `✅ 知行后端已启动: http://localhost:3000` 即成功。
+看到 `✅ Zeno 后端已启动: http://localhost:3000` 即成功。
 首次启动会自动执行 `schema.sql` 建表并生成 `chenguang.db`。
 
 ### 3. 启动前端（Vite 开发服务器）
@@ -123,7 +123,7 @@ npm run dev        # 端口 5173
 | GET  | `/data` | 拉取整份 `chenguangData`（新设备/刷新时覆盖本地） |
 | PUT  | `/data` | 覆盖整份 `chenguangData`（任一端变更后回写，`writeLimiter` 限流） |
 
-### AI 教练（Phase 13 AI 2.0）
+### Learning Agent（Phase 13 AI 2.0）
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | POST | `/ai/chat` | 教练对话 `{message, history, context, contextVersion}` → `{reply, mode:'coach', suggestions, actions, model}`；System Prompt 由后端 `promptBuilder` 生成，Context 由前端 `js/aiContext.js` 构建；`actions` 第一版只允许 `{type:'navigate'}`；需登录 + `aiLimiter`（15 次/分） |

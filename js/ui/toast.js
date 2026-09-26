@@ -1,5 +1,5 @@
 /**
- * 知行 · 统一 Toast 提示 (ES Module)
+ * Zeno · 统一 Toast 提示 (ES Module)
  *
  * 什么是 Toast？
  * Toast 是一种轻量级的消息提示，通常出现在屏幕右上角。
@@ -68,7 +68,7 @@ function getIcon(type) {
 //   error   → 珊瑚色 var(--danger) — 出错了
 //   warn    → 明黄色 var(--warning) — 需要注意
 //   info    → 天青色 var(--info) — 普通信息
-// 颜色直接引用「晨光·静」设计 token（暗底页面下依然协调）
+// 颜色直接引用「Zeno · Calm Dawn」设计 token（暗底页面下依然协调）
 function getColor(type) {
   var colors = { success: 'var(--success)', error: 'var(--danger)', warn: 'var(--warning)', info: 'var(--info)' };
   return colors[type] || colors.info;

@@ -1,5 +1,5 @@
 /**
- * 知行 · Design System 设计变量　「晨光 · 静 Calm Dawn」
+ * Zeno · Design System 设计变量　「Zeno · Calm Dawn」
  * ============================================================
  * 【本文件使命】
  * 这是全站唯一的 token 来源。四个页面（index/workbench/stats/ai）
@@ -9,10 +9,10 @@
  * 本文件保留历史上出现过的**每一个**变量名 —— pages/*.js、
  * 各页 HTML 内联 <style> 里的 var(--xxx) 沿用旧名引用，值全部按
  * 新设计系统重定义，因此 HTML/JS 无需改名即可继承新主题。
- * 例：旧 --neon-blue:#00d4ff（荧光青）→ 新沉静青蓝；--primary 指向晨光琥珀。
+ * 例：旧 --neon-blue:#00d4ff（荧光青）→ 新沉静青蓝；--primary 指向Zeno Amber。
  *
  * 【设计语言】
- * 品牌色锚定「晨光琥珀」（产品名与 logo 意象），青瓷做正反馈、
+ * 品牌色锚定「Zeno Amber」（产品名与 logo 意象），青瓷做正反馈、
  * 珊瑚做警示、天青做信息、紫做 AI 点缀；
  * 消除霓虹/发光/玻璃/深空——换成暖石墨实心表面 + 极简两层阴影。
  * 比例：spacing 4/8/12/16/20/24/32/40/48/64；
@@ -21,7 +21,7 @@
  */
 :root {
   /* ========== 品牌色（暖晨四色 + 点缀） ========== */
-  --brand-amber: #e8a85c;          /* 晨光琥珀 · 主品牌 */
+  --brand-amber: #e8a85c;          /* Zeno Amber · 主品牌 */
   --brand-amber-strong: #f2ba6f;   /* 琥珀强调 / hover */
   --brand-amber-weak: rgba(232, 168, 92, 0.14); /* 琥珀浅底 */
   --brand-teal: #4fc3b4;           /* 青瓷 · 正反馈 */

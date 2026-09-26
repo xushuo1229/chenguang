@@ -1,5 +1,5 @@
 /**
- * 知行 · Agent LLM Provider 注册表 (Phase 27.6.3)
+ * Zeno · Agent LLM Provider 注册表 (Phase 27.6.3)
  * ============================================================
  * 【职责】
  * 与 services/providers/index.js 同构的注册表模式：

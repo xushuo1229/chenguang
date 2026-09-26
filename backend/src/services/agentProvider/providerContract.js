@@ -1,5 +1,5 @@
 /**
- * 知行 · Agent LLM Provider Contract (Phase 27.6.3)
+ * Zeno · Agent LLM Provider Contract (Phase 27.6.3)
  * ============================================================
  * 【职责】
  * 定义 Provider 边界的输入/输出契约。Provider 只接受：

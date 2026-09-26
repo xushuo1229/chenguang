@@ -1,5 +1,5 @@
 /**
- * 知行 · Provider Adapter 注册表
+ * Zeno · Provider Adapter 注册表
  * ============================================================
  * Phase 13 第一版只有 openaiCompatible（DeepSeek 走此协议）。
  * 以后接入新 Provider：在本目录新增适配器并注册进 REGISTRY，

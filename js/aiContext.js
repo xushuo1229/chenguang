@@ -1,5 +1,5 @@
 /**
- * 知行 · AI Context Builder (Phase 13)
+ * Zeno · AI Context Builder (Phase 13)
  * ============================================================
  * 架构落点：
  *
@@ -10,7 +10,7 @@
  *   结构化 AI Context（版本化 JSON，发给后端 → Provider）
  *
  * 【职责】
- *   - 从 CGAnalytics / Goal Engine 聚合出「知行 AI 教练」需要的结构化上下文。
+ *   - 从 CGAnalytics / Goal Engine 聚合出「Zeno Learning Agent」需要的结构化上下文。
  *   - 内置确定性洞察层（Insights / Risk Detector）：目标风险、趋势下滑、
  *     强习惯、异常、机会——基础统计由规则引擎做，AI 只负责「解释」和「建议」。
  *   - 应用层 Context 预算控制（estimateTokens / trimContextToBudget），

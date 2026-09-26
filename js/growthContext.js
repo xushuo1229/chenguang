@@ -1,5 +1,5 @@
 /**
- * 知行 · Growth Context Layer (Phase 23.1)
+ * Zeno · Growth Context Layer (Phase 23.1)
  * ============================================================
  * 架构定位：
  *

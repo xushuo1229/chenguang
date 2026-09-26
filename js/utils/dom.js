@@ -1,5 +1,5 @@
 /**
- * 知行 · DOM 工具函数 (ES Module)
+ * Zeno · DOM 工具函数 (ES Module)
  *
  * 本文件提供了一组简化 DOM 操作的工具函数。
  *

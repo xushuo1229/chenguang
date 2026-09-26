@@ -1,5 +1,5 @@
 /**
- * 知行 · Provider Adapter —— OpenAI 兼容实现
+ * Zeno · Provider Adapter —— OpenAI 兼容实现
  * ============================================================
  * 【职责】
  * 把「发一条对话给大模型」这件事收敛到一个纯函数里：
@@ -84,14 +84,14 @@ async function chatCompletion(p) {
       // 这些消息会经前端 4xx 透传路径直达学生用户——Hardening 零运维语言标准）
       console.warn('[AI] 上游错误分类:', http, upstreamCode || '(无错误码)');
       if (/ModelNotOpen|not.*activated|model.*not.*open/i.test(upstreamCode)) {
-        throw ApiError.internal('AI_MODEL_NOT_OPEN', 'AI 教练暂时不可用，请稍后再试。');
+        throw ApiError.internal('AI_MODEL_NOT_OPEN', 'Learning Agent暂时不可用，请稍后再试。');
       }
       if (/InvalidEndpoint|NotFound|ModelNotFound|UnsupportedModel/i.test(upstreamCode)) {
-        throw ApiError.internal('AI_MODEL_NOT_FOUND', 'AI 教练暂时不可用，请稍后再试。');
+        throw ApiError.internal('AI_MODEL_NOT_FOUND', 'Learning Agent暂时不可用，请稍后再试。');
       }
       // 认证失败：绝不知晓密钥内容，也绝不透出（只按统一不可用处理）
       if (http === 401 || http === 403 || /Unauthorized|InvalidApiKey|AuthError/i.test(upstreamCode)) {
-        throw ApiError.internal('AI_UNAUTHORIZED', 'AI 教练暂时不可用，请稍后再试。');
+        throw ApiError.internal('AI_UNAUTHORIZED', 'Learning Agent暂时不可用，请稍后再试。');
       }
       // 其余上游错误：统一兜底，不透出任何细节
       // Phase 27.6.3 附加式扩展：err.upstreamStatus 仅挂在错误实例上供服务端

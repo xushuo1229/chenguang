@@ -11,7 +11,7 @@ import { setupServiceWorker } from '../js/serviceWorkerRegistration.js';
 import { homeAuthHref } from '../js/utils/authNavigation.js';
 
 // ====================================================================
-// 知行 · 目标系统 (Goals)
+// Zeno · 目标系统 (Goals)
 // ====================================================================
 // 架构（Phase 12 冻结）：
 //
