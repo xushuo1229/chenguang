@@ -5,6 +5,8 @@ import LoginPage from '../pages/LoginPage'
 import DashboardPage from '../pages/DashboardPage'
 import AgentPage from '../pages/AgentPage'
 import KnowledgePage from '../pages/KnowledgePage'
+import SettingsPage from '../pages/SettingsPage'
+import NotFoundPage from '../pages/NotFoundPage'
 import { ProtectedRoute } from './ProtectedRoute'
 import { AuthLayout } from '../layouts/AuthLayout'
 import { WorkspaceLayout } from '../layouts/WorkspaceLayout'
@@ -71,8 +73,18 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <WorkspaceLayout>
+              <SettingsPage />
+            </WorkspaceLayout>
+          </ProtectedRoute>
+        }
+      />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
 }
