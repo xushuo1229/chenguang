@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Toaster } from 'sonner'
 import { AuthProvider } from '../stores/auth-store'
 import { ThemeProvider } from '../stores/theme-store'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -23,6 +24,13 @@ export function AppProviders({ children }: { children: ReactNode }) {
           <BrowserRouter>
             <TooltipProvider delayDuration={200}>
               {children}
+              <Toaster
+                position="bottom-right"
+                toastOptions={{
+                  className:
+                    'rounded-card border border-line bg-surface text-sm text-ink',
+                }}
+              />
             </TooltipProvider>
           </BrowserRouter>
         </AuthProvider>

@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './app/App'
 import { AppProviders } from './app/providers'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import './styles/globals.css'
 
 async function unregisterStaleWorkers(): Promise<void> {
@@ -28,7 +29,9 @@ enableMocking().then(() => {
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
       <AppProviders>
-        <App />
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
       </AppProviders>
     </React.StrictMode>,
   )
