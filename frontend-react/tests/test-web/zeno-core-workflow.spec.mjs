@@ -245,6 +245,37 @@ test.describe('Zeno AI Workspace 核心流接受测试', () => {
     await expect(streakCard).toContainText('1')
   })
 
+  test('PUT 版本冲突时回滚写入并提示，重试可成功', async ({ page }) => {
+    await login(page)
+
+    await page.evaluate(() => {
+      document.cookie = 'zeno_mock_force_conflict=1; path=/'
+    })
+
+    await page.getByRole('button', { name: '专注', exact: true }).click()
+    await page.getByPlaceholder('专注分钟数').fill('30')
+    await page.getByRole('button', { name: '保存', exact: true }).click()
+
+    await expect(
+      page.getByText('数据版本冲突：本地修改晚于云端，请合并后重试'),
+    ).toBeVisible()
+
+    await page.getByRole('button', { name: '取消', exact: true }).click()
+    await page.goto('/analytics')
+    await expect(page.getByText('920', { exact: true })).toBeVisible()
+
+    await page.goto('/dashboard')
+    await page.getByRole('button', { name: '专注', exact: true }).click()
+    await page.getByPlaceholder('专注分钟数').fill('30')
+    await page.getByRole('button', { name: '保存', exact: true }).click()
+    await expect(
+      page.getByRole('heading', { name: '记录专注' }),
+    ).toHaveCount(0)
+
+    await page.goto('/analytics')
+    await expect(page.getByText('950', { exact: true })).toBeVisible()
+  })
+
   test('空数据 mock 场景显示任务空态且可恢复', async ({ page }) => {
     await login(page)
 

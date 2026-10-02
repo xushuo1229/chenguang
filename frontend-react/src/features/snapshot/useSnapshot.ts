@@ -52,9 +52,19 @@ export function useUpdateSnapshot() {
       }
       return { previous }
     },
-    onError: (_error, _produce, context) => {
+    onError: (error, _produce, context) => {
       if (context?.previous) {
         queryClient.setQueryData(snapshotKey, context.previous)
+      }
+      // 409: another device pushed a newer revision. Roll back the optimistic
+      // append, then resync with the server snapshot so the next retry merges
+      // against current truth (defensive-line merge UI lands in a later phase).
+      if (
+        error &&
+        'code' in error &&
+        (error as { code?: string }).code === 'SYNC_CONFLICT'
+      ) {
+        void queryClient.invalidateQueries({ queryKey: snapshotKey })
       }
     },
     onSuccess: (envelope) => {

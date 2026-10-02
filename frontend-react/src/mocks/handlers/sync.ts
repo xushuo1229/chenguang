@@ -10,6 +10,9 @@ const emptySnapshot = {
 }
 
 const STORAGE_KEY = 'zeno_mock_snapshot'
+const FORCE_CONFLICT_COOKIE = 'zeno_mock_force_conflict'
+const SYNC_CONFLICT_MESSAGE =
+  '数据版本冲突：本地修改晚于云端，请合并后重试'
 
 // Mock snapshot persistence lives in same-origin localStorage so it survives
 // full page navigations within one test. Playwright gives every test its own
@@ -49,7 +52,7 @@ export const syncHandlers = [
     }
     return HttpResponse.json({ data: structuredClone(readSnapshot()) })
   }),
-  http.put(`${API_PREFIX}/data`, async ({ request }) => {
+  http.put(`${API_PREFIX}/data`, async ({ request, cookies }) => {
     const body = (await request.json().catch(() => null)) as
       | { data?: typeof mockSyncSnapshot.data }
       | null
@@ -60,6 +63,28 @@ export const syncHandlers = [
       )
     }
     const current = readSnapshot()
+    // One-shot 409 simulation mirroring the real backend contract from
+    // backend/src/services/syncService.js (ApiError.conflict). Acceptance
+    // tests set zeno_mock_force_conflict=1; the response clears the cookie
+    // so only the next single PUT is rejected, like one stale push.
+    if (cookies[FORCE_CONFLICT_COOKIE] === '1') {
+      return HttpResponse.json(
+        {
+          error: {
+            code: 'SYNC_CONFLICT',
+            message: SYNC_CONFLICT_MESSAGE,
+            serverRevision: (current.revision ?? 0) + 1,
+            serverData: current.data,
+          },
+        },
+        {
+          status: 409,
+          headers: {
+            'Set-Cookie': `${FORCE_CONFLICT_COOKIE}=; Max-Age=0; path=/`,
+          },
+        },
+      )
+    }
     const envelope: typeof mockSyncSnapshot = {
       revision: (current.revision ?? 0) + 1,
       updatedAt: new Date().toISOString(),
