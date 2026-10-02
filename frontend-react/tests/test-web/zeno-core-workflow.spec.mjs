@@ -217,6 +217,34 @@ test.describe('Zeno AI Workspace 核心流接受测试', () => {
     await expect(page.getByText('540', { exact: true })).toBeVisible()
   })
 
+  test('快速记录打卡与专注后，Analytics 反映真实写入', async ({ page }) => {
+    await login(page)
+
+    await page.getByRole('button', { name: '打卡', exact: true }).click()
+    await page.getByRole('button', { name: '保存', exact: true }).click()
+    await expect(
+      page.getByRole('heading', { name: '每日打卡' }),
+    ).toHaveCount(0)
+
+    await page.getByRole('button', { name: '专注', exact: true }).click()
+    await page.getByPlaceholder('专注分钟数').fill('30')
+    await page.getByRole('button', { name: '保存', exact: true }).click()
+    await expect(
+      page.getByRole('heading', { name: '记录专注' }),
+    ).toHaveCount(0)
+
+    await page.goto('/analytics')
+    await expect(
+      page.getByRole('heading', { name: '成长分析' }),
+    ).toBeVisible()
+    await expect(page.getByText('950', { exact: true })).toBeVisible()
+
+    const streakCard = page.locator('.rounded-card', {
+      hasText: '连续打卡',
+    })
+    await expect(streakCard).toContainText('1')
+  })
+
   test('空数据 mock 场景显示任务空态且可恢复', async ({ page }) => {
     await login(page)
 

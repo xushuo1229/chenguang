@@ -10,7 +10,13 @@ import {
   TableHeaderCell,
   TableRow,
 } from '@tremor/react'
-import { BrainCircuit, ListChecks, Plus, RefreshCw } from 'lucide-react'
+import {
+  BrainCircuit,
+  ListChecks,
+  Plus,
+  RefreshCw,
+  Trash2,
+} from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -25,6 +31,7 @@ import {
   useSnapshot,
   useUpdateSnapshot,
 } from '@/features/snapshot/useSnapshot'
+import { QuickLogBar } from '@/features/dashboard/quickLog/QuickLogBar'
 
 const kindTone: Record<string, 'neutral' | 'info' | 'warning' | 'success'> = {
   architecture: 'neutral',
@@ -127,6 +134,14 @@ export default function DashboardPage() {
     )
   }
 
+  const deleteTask = (task: DashboardTask) => {
+    if (updateSnapshot.isPending) return
+    updateSnapshot.mutate((draft) => ({
+      ...draft,
+      todos: (draft.todos ?? []).filter((todo) => todo.id !== task.id),
+    }))
+  }
+
   const chartData = overview.chart.map((point) => ({
     date: point.date,
     专注: point.focus,
@@ -152,6 +167,8 @@ export default function DashboardPage() {
           </Button>
         }
       />
+
+      <QuickLogBar />
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {overview.metrics.map((metric) => (
@@ -230,6 +247,7 @@ export default function DashboardPage() {
                     key={task.id}
                     task={task}
                     onToggle={() => toggleTask(task)}
+                    onDelete={() => deleteTask(task)}
                   />
                 ))}
               </TableBody>
@@ -289,9 +307,11 @@ export default function DashboardPage() {
 function TaskRow({
   task,
   onToggle,
+  onDelete,
 }: {
   task: DashboardTask
   onToggle: () => void
+  onDelete: () => void
 }) {
   return (
     <TableRow className="hover:bg-surface-muted/40">
@@ -317,6 +337,16 @@ function TaskRow({
         <Badge tone={kindTone[task.kind] ?? 'neutral'}>
           {kindLabel[task.kind] ?? task.kind}
         </Badge>
+      </TableCell>
+      <TableCell className="pr-4 text-right">
+        <button
+          type="button"
+          onClick={onDelete}
+          aria-label="删除任务"
+          className="text-ink-faint transition-colors hover:text-danger"
+        >
+          <Trash2 className="size-4" />
+        </button>
       </TableCell>
     </TableRow>
   )

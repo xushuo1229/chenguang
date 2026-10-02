@@ -4,6 +4,7 @@ import {
   useQueryClient,
   type QueryKey,
 } from '@tanstack/react-query'
+import { useRef } from 'react'
 import {
   fetchSnapshot,
   putSnapshot,
@@ -25,6 +26,7 @@ type DraftProducer = (draft: ChenguangData) => ChenguangData
 
 export function useUpdateSnapshot() {
   const queryClient = useQueryClient()
+  const baseRef = useRef<SnapshotEnvelope | null>(null)
 
   return useMutation<
     SnapshotEnvelope,
@@ -33,14 +35,15 @@ export function useUpdateSnapshot() {
     { previous?: SnapshotEnvelope }
   >({
     mutationFn: (produce) => {
-      const current = queryClient.getQueryData<SnapshotEnvelope>(snapshotKey)
-      if (!current) throw new Error('快照尚未加载，无法写入')
-      const nextData = produce(structuredClone(current.data))
-      return putSnapshot(nextData, current.revision, getDeviceId())
+      const base = baseRef.current
+      if (!base) throw new Error('快照尚未加载，无法写入')
+      const nextData = produce(structuredClone(base.data))
+      return putSnapshot(nextData, base.revision, getDeviceId())
     },
     onMutate: async (produce) => {
       await queryClient.cancelQueries({ queryKey: snapshotKey })
       const previous = queryClient.getQueryData<SnapshotEnvelope>(snapshotKey)
+      baseRef.current = previous ?? null
       if (previous) {
         queryClient.setQueryData<SnapshotEnvelope>(snapshotKey, {
           ...previous,
@@ -56,6 +59,9 @@ export function useUpdateSnapshot() {
     },
     onSuccess: (envelope) => {
       queryClient.setQueryData(snapshotKey, envelope)
+    },
+    onSettled: () => {
+      baseRef.current = null
     },
   })
 }

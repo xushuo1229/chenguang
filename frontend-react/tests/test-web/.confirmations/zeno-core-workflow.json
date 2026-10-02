@@ -65,6 +65,10 @@
       "expectedState": "30-day total 920 minutes and 13 active days with comparison text; 7-day total 540 minutes"
     },
     {
+      "action": "quick-log a checkin and 30 focus minutes, then open analytics",
+      "expectedState": "study total becomes 950 minutes and the streak card shows 1, proving writes flow into the analytics engine"
+    },
+    {
       "action": "switch zeno_mock_scenario to empty and reload",
       "expectedState": "empty task state visible, zero table rows, charts render zeros"
     },
@@ -93,6 +97,7 @@
     "extraction candidates are reviewable and saved documents appear",
     "manual node creation and relation linking",
     "analytics KPIs, range switching and period comparison",
+    "quick-log writes flow into analytics: 950 minute total and 1 day streak",
     "empty mock scenario renders the task empty state and is reversible",
     "loading mock scenario shows the skeleton before content",
     "error mock scenario shows an alert and retry recovers"
@@ -108,7 +113,7 @@
     "configPath": "tests/test-web/playwright.config.mjs",
     "projectName": "chromium",
     "targetURL": "http://localhost:5174/",
-    "specSha256": "6bfeb06cfe2130caa1af74c3da019a2ef11d4bfe0696a49d2298db96c78200f4",
+    "specSha256": "d4cfe4d46757b526e9e1c8e7cbc6fc68940a0a6e785cde48da6565872377e481",
     "configSha256": "da9a50c0d520f46e9ff14fa8b9d1b8d73369cab8d0fe572ac5cf76d9264fe66b"
   },
   "evidence": {
