@@ -12,11 +12,16 @@ import {
 } from '@tremor/react'
 import {
   BrainCircuit,
+  GraduationCap,
   ListChecks,
   Plus,
   RefreshCw,
+  Sparkles,
   Trash2,
+  Upload,
 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -32,6 +37,7 @@ import {
   useUpdateSnapshot,
 } from '@/features/snapshot/useSnapshot'
 import { QuickLogBar } from '@/features/dashboard/quickLog/QuickLogBar'
+import { CourseLogDialog } from '@/features/dashboard/quickLog/CourseLogDialog'
 
 const kindTone: Record<string, 'neutral' | 'info' | 'warning' | 'success'> = {
   architecture: 'neutral',
@@ -62,6 +68,8 @@ export default function DashboardPage() {
   })
   const updateSnapshot = useUpdateSnapshot()
   const [newTask, setNewTask] = useState('')
+  const [courseDialogOpen, setCourseDialogOpen] = useState(false)
+  const navigate = useNavigate()
 
   const overview = useMemo(
     () =>
@@ -130,16 +138,34 @@ export default function DashboardPage() {
           },
         ],
       }),
-      { onSuccess: () => setNewTask('') },
+      {
+        onSuccess: () => {
+          setNewTask('')
+          toast.success('任务已添加')
+        },
+        onError: (submitError) =>
+          toast.error(
+            submitError instanceof Error ? submitError.message : '添加失败',
+          ),
+      },
     )
   }
 
   const deleteTask = (task: DashboardTask) => {
     if (updateSnapshot.isPending) return
-    updateSnapshot.mutate((draft) => ({
-      ...draft,
-      todos: (draft.todos ?? []).filter((todo) => todo.id !== task.id),
-    }))
+    updateSnapshot.mutate(
+      (draft) => ({
+        ...draft,
+        todos: (draft.todos ?? []).filter((todo) => todo.id !== task.id),
+      }),
+      {
+        onSuccess: () => toast.success('任务已删除'),
+        onError: (submitError) =>
+          toast.error(
+            submitError instanceof Error ? submitError.message : '删除失败',
+          ),
+      },
+    )
   }
 
   const chartData = overview.chart.map((point) => ({
@@ -153,6 +179,9 @@ export default function DashboardPage() {
     { name: '薄弱', value: overview.knowledge.weak },
   ]
   const completed = overview.tasks.filter((task) => task.completed).length
+  const isFresh =
+    (snapshotQuery.data?.data.courses?.length ?? 0) === 0 &&
+    overview.tasks.length === 0
 
   return (
     <div className="space-y-5">
@@ -169,6 +198,38 @@ export default function DashboardPage() {
       />
 
       <QuickLogBar />
+
+      {isFresh ? (
+        <Card className="flex flex-col gap-3 border-primary/30 bg-primary-muted/40 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-control bg-primary text-primary-foreground">
+              <Sparkles className="size-4" />
+            </span>
+            <div>
+              <h3 className="text-sm font-semibold text-ink">
+                开始搭建你的成长工作台
+              </h3>
+              <p className="mt-1 text-[13px] leading-5 text-ink-secondary">
+                导入教务课程，或手动创建第一门课；之后用快速记录追踪每天的专注与打卡。
+              </p>
+            </div>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/knowledge')}
+            >
+              <Upload />
+              导入教务课程
+            </Button>
+            <Button size="sm" onClick={() => setCourseDialogOpen(true)}>
+              <GraduationCap />
+              手动建课
+            </Button>
+          </div>
+        </Card>
+      ) : null}
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {overview.metrics.map((metric) => (
@@ -300,6 +361,12 @@ export default function DashboardPage() {
           </ul>
         </Card>
       </section>
+      {courseDialogOpen ? (
+        <CourseLogDialog
+          initialMode="add"
+          onClose={() => setCourseDialogOpen(false)}
+        />
+      ) : null}
     </div>
   )
 }

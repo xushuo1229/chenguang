@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import {
   BarChart3,
   Bot,
@@ -10,6 +10,7 @@ import {
   Moon,
   PanelLeftClose,
   Plus,
+  Settings,
   Sun,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -54,6 +55,7 @@ export function Sidebar({
 }: SidebarProps) {
   const { user, signOut } = useAuth()
   const { theme, toggleTheme, density, setDensity } = useTheme()
+  const navigate = useNavigate()
   const initial = (user?.nickname || user?.email || 'U')
     .slice(0, 1)
     .toUpperCase()
@@ -232,9 +234,13 @@ export function Sidebar({
               {theme === 'dark' ? <Sun /> : <Moon />}
               切换主题
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => navigate('/agent')}>
               <Plus />
               新建对话
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => navigate('/settings')}>
+              <Settings />
+              个人设置
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
