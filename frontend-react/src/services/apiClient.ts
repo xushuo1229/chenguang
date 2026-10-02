@@ -32,10 +32,26 @@ type AccessTokenProvider = () => string | null
 
 let accessTokenProvider: AccessTokenProvider = () => null
 
+type AuthLifecycle = {
+  onUnauthorized?: () => void
+  onTokenRenewed?: (token: string) => void
+}
+
+let authLifecycle: AuthLifecycle = {}
+let unauthorizedHandled = false
+
 export function configureAccessTokenProvider(
   provider: AccessTokenProvider,
 ): void {
   accessTokenProvider = provider
+}
+
+export function configureAuthLifecycle(lifecycle: AuthLifecycle): void {
+  authLifecycle = lifecycle
+}
+
+export function resetUnauthorizedGuard(): void {
+  unauthorizedHandled = false
 }
 
 export async function request<T>(
@@ -61,9 +77,22 @@ export async function request<T>(
       signal: options.signal || controller.signal,
     })
 
+    const renewedToken = response.headers.get('x-renewed-token')
+    if (renewedToken) authLifecycle.onTokenRenewed?.(renewedToken)
+
     const payload = (await response.json().catch(() => null)) as ApiEnvelope<T> | null
 
     if (!response.ok) {
+      // Expired/invalid token: clear the session once and bounce to login.
+      // Skip the auth endpoints themselves so login errors still render.
+      const isAuthEndpoint =
+        path === '/auth/login' || path === '/auth/register'
+      if (response.status === 401 && !isAuthEndpoint) {
+        if (!unauthorizedHandled) {
+          unauthorizedHandled = true
+          authLifecycle.onUnauthorized?.()
+        }
+      }
       const error = new ApiError(
         payload?.error?.code || 'REQUEST_FAILED',
         payload?.error?.message || '服务暂时不可用，请稍后再试。',

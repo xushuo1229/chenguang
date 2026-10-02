@@ -16,6 +16,8 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const from = (location.state as LocationState)?.from ?? '/dashboard'
+  const sessionExpired =
+    new URLSearchParams(window.location.search).get('reason') === 'expired'
   const [mode, setMode] = useState<Mode>('login')
   const [nickname, setNickname] = useState('')
   const [email, setEmail] = useState('')
@@ -65,6 +67,12 @@ export default function LoginPage() {
           ? '登录 Zeno AI Workspace，继续你的成长'
           : '注册后即可导入课程、构建知识库'}
       </p>
+
+      {mode === 'login' && sessionExpired ? (
+        <p className="mt-4 rounded-control border border-warning/30 bg-surface-subtle px-3 py-2 text-[13px] text-warning">
+          登录已过期，请重新登录。
+        </p>
+      ) : null}
 
       <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
         {mode === 'register' ? (

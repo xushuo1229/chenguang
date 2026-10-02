@@ -1,4 +1,8 @@
-import { configureAccessTokenProvider } from './apiClient'
+import {
+  configureAccessTokenProvider,
+  configureAuthLifecycle,
+  resetUnauthorizedGuard,
+} from './apiClient'
 import type { AuthUser } from './authService'
 
 const SESSION_KEY = 'zeno_auth'
@@ -31,6 +35,7 @@ export function setSession(user: AuthUser, token: string): Session {
   } catch {
     // storage unavailable: session still works in memory for this tab
   }
+  resetUnauthorizedGuard()
   window.dispatchEvent(new Event(AUTH_EVENT))
   return session
 }
@@ -45,3 +50,18 @@ export function clearSession(): void {
 }
 
 configureAccessTokenProvider(() => getSession()?.token ?? null)
+
+configureAuthLifecycle({
+  // Sliding renewal: backend issues a fresh JWT after 7 days of use.
+  onTokenRenewed: (token) => {
+    const session = getSession()
+    if (session) setSession(session.user, token)
+  },
+  // Token expired/revoked: drop local session and return to login.
+  onUnauthorized: () => {
+    clearSession()
+    if (!window.location.pathname.startsWith('/login')) {
+      window.location.assign('/login?reason=expired')
+    }
+  },
+})
