@@ -1,16 +1,26 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { Loader2, Upload } from 'lucide-react'
+import { Loader2, Upload, ArrowLeft, AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ErrorState } from '@/components/ui/state'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { importCoursesFromUrl } from '@/services/courseService'
 import type { ParsedCourse } from '@/services/courseService'
 import { useUpdateSnapshot } from '@/features/snapshot/useSnapshot'
 
 type Mode = 'url' | 'manual'
 
-const weekdayLabel = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+const weekdayLabel = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+
+const inputClass =
+  'h-9 min-w-0 flex-1 rounded-control border border-line bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-primary'
 
 export function ImportCourseDialog({
   open,
@@ -32,8 +42,6 @@ export function ImportCourseDialog({
     onSuccess: (result) => setPreview(result.courses),
   })
 
-  if (!open) return null
-
   const reset = () => {
     setUrl('')
     setCourseName('')
@@ -52,7 +60,7 @@ export function ImportCourseDialog({
   }
 
   const confirmParsed = () => {
-    if (!preview || preview.length === 0) return
+    if (!preview || preview.length === 0 || updateSnapshot.isPending) return
     const created = preview.map((course, index) => ({
       id: `course-${Date.now()}-${index}`,
       name: course.name,
@@ -65,9 +73,15 @@ export function ImportCourseDialog({
       }),
       {
         onSuccess: () => {
-          onImported(created[0].id)
+          toast.success(`已导入 ${created.length} 门课程`)
+          const firstId = created[0].id
           close()
+          onImported(firstId)
         },
+        onError: (submitError) =>
+          toast.error(
+            submitError instanceof Error ? submitError.message : '导入失败',
+          ),
       },
     )
   }
@@ -75,7 +89,7 @@ export function ImportCourseDialog({
   const handleManualCreate = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const name = courseName.trim()
-    if (!name) return
+    if (!name || updateSnapshot.isPending) return
     const created = { id: `course-${Date.now()}`, name }
     updateSnapshot.mutate(
       (draft) => ({
@@ -84,59 +98,65 @@ export function ImportCourseDialog({
       }),
       {
         onSuccess: () => {
-          onImported(created.id)
+          toast.success('课程已创建，可在文档页上传资料构建图谱')
           close()
+          onImported(created.id)
         },
+        onError: (submitError) =>
+          toast.error(
+            submitError instanceof Error ? submitError.message : '创建失败',
+          ),
       },
     )
   }
 
-  return (
-    <div className="fixed inset-0 z-50 grid place-items-center p-4">
-      <button
-        type="button"
-        aria-label="关闭导入窗口"
-        className="absolute inset-0 bg-black/30"
-        onClick={close}
-      />
-      <div className="relative w-full max-w-lg rounded-card border border-line bg-surface p-6">
-        <div className="flex items-center gap-2">
-          <span className="grid size-8 place-items-center rounded-control bg-primary-muted text-primary">
-            <Upload className="size-4" />
-          </span>
-          <div>
-            <h2 className="text-base font-semibold text-ink">导入课程</h2>
-            <p className="text-xs text-ink-muted">
-              课程是知识库的载体，先有课程才能构建图谱
-            </p>
-          </div>
-        </div>
+  const tabButton = (id: Mode, label: string) => (
+    <button
+      key={id}
+      type="button"
+      onClick={() => {
+        setMode(id)
+        previewMutation.reset()
+      }}
+      className={`flex-1 rounded-[5px] px-3 py-1.5 text-[13px] transition-colors ${
+        mode === id
+          ? 'bg-primary text-primary-foreground'
+          : 'text-ink-muted hover:text-ink'
+      }`}
+    >
+      {label}
+    </button>
+  )
 
-        <div className="mt-4 flex rounded-control border border-line p-0.5">
-          <button
-            type="button"
-            onClick={() => setMode('url')}
-            className={`flex-1 rounded-[5px] px-3 py-1.5 text-[13px] ${mode === 'url' ? 'bg-surface-muted text-ink' : 'text-ink-muted'}`}
-          >
-            教务链接导入
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode('manual')}
-            className={`flex-1 rounded-[5px] px-3 py-1.5 text-[13px] ${mode === 'manual' ? 'bg-surface-muted text-ink' : 'text-ink-muted'}`}
-          >
-            手动建课
-          </button>
+  return (
+    <Dialog open={open} onOpenChange={(value) => !value && close()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <span className="grid size-7 place-items-center rounded-control bg-primary-muted text-primary">
+              <Upload className="size-4" />
+            </span>
+            导入课程
+          </DialogTitle>
+          <DialogDescription>
+            课程是知识库的载体，先有课程才能构建图谱。
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex rounded-control border border-line p-0.5">
+          {tabButton('url', '教务链接导入')}
+          {tabButton('manual', '手动建课')}
         </div>
 
         {mode === 'url' ? (
-          <div className="mt-4">
+          <div>
             <form className="flex gap-2" onSubmit={handlePreview}>
               <input
                 value={url}
                 onChange={(event) => setUrl(event.target.value)}
-                placeholder="粘贴教务系统课表页面链接"
-                className="h-9 min-w-0 flex-1 rounded-control border border-line bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-primary"
+                placeholder="粘贴可公开访问的课表页面链接"
+                className={inputClass}
+                autoFocus
               />
               <Button
                 type="submit"
@@ -151,15 +171,28 @@ export function ImportCourseDialog({
             </form>
 
             {previewMutation.isError ? (
-              <div className="mt-3">
-                <ErrorState
-                  title="解析失败"
-                  text={
-                    previewMutation.error instanceof Error
-                      ? previewMutation.error.message
-                      : '请确认链接可公开访问'
-                  }
-                />
+              <div className="mt-3 rounded-card border border-warning/30 bg-surface-subtle p-3">
+                <p className="flex items-start gap-2 text-[13px] leading-5 text-ink">
+                  <AlertCircle className="mt-0.5 size-4 shrink-0 text-warning" />
+                  {previewMutation.error instanceof Error
+                    ? previewMutation.error.message
+                    : '解析失败，请确认链接可公开访问。'}
+                </p>
+                <p className="mt-2 pl-6 text-xs leading-5 text-ink-muted">
+                  多数教务系统需要登录，后端无法代为抓取。可以直接手动建课，
+                  之后上传文档同样能构建知识图谱。
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('manual')
+                    previewMutation.reset()
+                  }}
+                  className="ml-6 mt-2 inline-flex items-center gap-1.5 text-[13px] font-medium text-primary hover:underline"
+                >
+                  <ArrowLeft className="size-3.5" />
+                  改用手动建课
+                </button>
               </div>
             ) : null}
 
@@ -195,6 +228,9 @@ export function ImportCourseDialog({
                     onClick={confirmParsed}
                     disabled={updateSnapshot.isPending}
                   >
+                    {updateSnapshot.isPending ? (
+                      <Loader2 className="animate-spin" />
+                    ) : null}
                     确认导入
                   </Button>
                 </div>
@@ -202,13 +238,18 @@ export function ImportCourseDialog({
             ) : null}
           </div>
         ) : (
-          <form className="mt-4 space-y-3" onSubmit={handleManualCreate}>
+          <form className="space-y-3" onSubmit={handleManualCreate}>
             <input
               value={courseName}
               onChange={(event) => setCourseName(event.target.value)}
               placeholder="输入课程名称，如：高等数学"
               className="h-9 w-full rounded-control border border-line bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-primary"
+              autoFocus
             />
+            <p className="text-xs leading-5 text-ink-muted">
+              手动建课不依赖教务系统；创建后在「文档」页上传讲义或笔记，
+              经你审核后生成知识图谱。
+            </p>
             <div className="flex justify-end gap-2">
               <Button variant="ghost" size="sm" onClick={close}>
                 取消
@@ -218,12 +259,15 @@ export function ImportCourseDialog({
                 type="submit"
                 disabled={updateSnapshot.isPending}
               >
+                {updateSnapshot.isPending ? (
+                  <Loader2 className="animate-spin" />
+                ) : null}
                 创建课程
               </Button>
             </div>
           </form>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }
