@@ -22,7 +22,11 @@ export type AgentChatResponse = {
   insights: Array<{ id?: string; title: string; confidence?: number }>
   confidence: number
   actions: AgentSuggestion[]
-  metadata?: { fallback?: boolean }
+  metadata?: {
+    fallback?: boolean
+    status?: string
+    fallbackReason?: string | null
+  }
 }
 
 export type AgentContext = {

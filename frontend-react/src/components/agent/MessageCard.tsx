@@ -4,6 +4,10 @@ import {
   ChevronDown,
   FileText,
   Lightbulb,
+  PencilLine,
+  Library,
+  Globe2,
+  AlertTriangle,
   Quote,
   ShieldCheck,
   Sparkles,
@@ -22,9 +26,17 @@ export type ChatMessage = {
   actions?: AgentChatResponse['actions']
   mode?: AgentChatResponse['mode']
   streaming?: boolean
+  metadata?: AgentChatResponse['metadata']
+  onFallbackAction?: (action: 'record' | 'knowledge' | 'general') => void
 }
 
-export function MessageCard({ message }: { message: ChatMessage }) {
+export function MessageCard({
+  message,
+  onFallbackAction,
+}: {
+  message: ChatMessage
+  onFallbackAction?: (action: 'record' | 'knowledge' | 'general') => void
+}) {
   const isAssistant = message.role === 'assistant'
   const [display, setDisplay] = useState(
     message.streaming ? '' : message.content,
@@ -104,6 +116,53 @@ export function MessageCard({ message }: { message: ChatMessage }) {
             <span className="ml-0.5 inline-block h-4 w-[2px] animate-pulse bg-primary align-middle" />
           ) : null}
         </div>
+
+        {!message.streaming &&
+        message.metadata?.status === 'clarification_required' &&
+        onFallbackAction ? (
+          <div className="mt-3 rounded-card border border-line bg-surface-subtle p-3">
+            <p className="text-[13px] leading-5 text-ink-secondary">
+              先补充一点真实数据，Personal Agent 就能给出基于你记录的回答：
+            </p>
+            <div className="mt-2.5 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => onFallbackAction('record')}
+                className="inline-flex items-center gap-1.5 rounded-control border border-line bg-surface px-3 py-1.5 text-[13px] text-ink-secondary transition-colors hover:border-primary hover:text-primary"
+              >
+                <PencilLine className="size-3.5" />
+                记录今日学习
+              </button>
+              <button
+                type="button"
+                onClick={() => onFallbackAction('knowledge')}
+                className="inline-flex items-center gap-1.5 rounded-control border border-line bg-surface px-3 py-1.5 text-[13px] text-ink-secondary transition-colors hover:border-primary hover:text-primary"
+              >
+                <Library className="size-3.5" />
+                完善课程与图谱
+              </button>
+              <button
+                type="button"
+                onClick={() => onFallbackAction('general')}
+                className="inline-flex items-center gap-1.5 rounded-control border border-line bg-surface px-3 py-1.5 text-[13px] text-ink-secondary transition-colors hover:border-primary hover:text-primary"
+              >
+                <Globe2 className="size-3.5" />
+                用 General AI 回答
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {!message.streaming &&
+        message.mode === 'general' &&
+        message.metadata?.fallback &&
+        (message.metadata.fallbackReason === 'llm_not_configured' ||
+          message.metadata.fallbackReason === 'provider_unavailable') ? (
+          <p className="mt-3 flex items-start gap-2 rounded-card border border-warning/30 bg-surface-subtle p-3 text-[13px] leading-5 text-warning">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            General AI 服务当前不可用（未配置或暂时连不上），这是离线兜底回答。
+          </p>
+        ) : null}
 
         {message.insights?.length ? (
           <div className="mt-3 rounded-card bg-warning-muted p-3">

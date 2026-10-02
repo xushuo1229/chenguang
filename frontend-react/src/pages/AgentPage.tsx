@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ChevronDown, ShieldCheck } from 'lucide-react'
 import { AgentComposer } from '@/components/agent/AgentComposer'
 import { MessageCard, type ChatMessage } from '@/components/agent/MessageCard'
@@ -26,7 +26,8 @@ export default function AgentPage() {
   const [input, setInput] = useState('')
   const [mode, setMode] = useState<Mode>('personal')
   const [contextOpen, setContextOpen] = useState(false)
-  const conversationId = useRef(`zeno-mock-${Date.now()}`)
+  const navigate = useNavigate()
+  const conversationId = useRef(`zeno-${Date.now()}`)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -59,6 +60,7 @@ export default function AgentPage() {
                 actions: response.actions,
                 confidence: response.confidence,
                 mode: response.mode,
+                metadata: response.metadata,
                 streaming: true,
               }
             : message,
@@ -116,6 +118,43 @@ export default function AgentPage() {
     chatMutation.mutate({ message: question, mode, pendingId })
   }
 
+  const resubmitAsGeneral = () => {
+    const lastQuestion = [...messages]
+      .reverse()
+      .find((item) => item.role === 'user')?.content
+    if (!lastQuestion || chatMutation.isPending) return
+    setMode('general')
+    const timestamp = Date.now()
+    const pendingId = `reply-${timestamp}`
+    setMessages((current) => [
+      ...current,
+      {
+        id: pendingId,
+        role: 'assistant',
+        content: '正在调用 General AI...',
+        streaming: true,
+        mode: 'general',
+      },
+    ])
+    chatMutation.mutate({
+      message: lastQuestion,
+      mode: 'general',
+      pendingId,
+    })
+  }
+
+  const handleFallbackAction = (
+    action: 'record' | 'knowledge' | 'general',
+  ) => {
+    if (action === 'record') {
+      navigate('/dashboard')
+    } else if (action === 'knowledge') {
+      navigate('/knowledge')
+    } else {
+      resubmitAsGeneral()
+    }
+  }
+
   const context = contextQuery.data
 
   return (
@@ -168,7 +207,11 @@ export default function AgentPage() {
         >
           <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6 lg:px-6">
             {messages.map((message) => (
-              <MessageCard key={message.id} message={message} />
+              <MessageCard
+                key={message.id}
+                message={message}
+                onFallbackAction={handleFallbackAction}
+              />
             ))}
           </div>
         </div>
