@@ -1,6 +1,13 @@
 import { useMemo, useState } from 'react'
 import { AreaChart } from '@tremor/react'
-import { ArrowDownRight, ArrowUpRight, Minus, RefreshCw } from 'lucide-react'
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  Minus,
+  PencilLine,
+  RefreshCw,
+} from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -26,6 +33,7 @@ export default function AnalyticsPage() {
   const [customRange, setCustomRange] = useState<[string, string] | null>(
     null,
   )
+  const navigate = useNavigate()
 
   const data = snapshotQuery.data?.data
   const today = todayKey()
@@ -71,6 +79,11 @@ export default function AnalyticsPage() {
 
   const { summary, series, comparison, streaks, activityMap } = derived
   const dailyAverage = Math.round(summary.totalLearningMinutes / summary.days)
+  const noActivity =
+    summary.totalLearningMinutes === 0 &&
+    summary.activeDays === 0 &&
+    streaks.currentStreak === 0 &&
+    (data?.todos?.length ?? 0) === 0
 
   const metrics = [
     {
@@ -148,6 +161,28 @@ export default function AnalyticsPage() {
           setMode('custom')
         }}
       />
+
+      {noActivity ? (
+        <Card className="flex flex-col gap-3 border-primary/30 bg-primary-muted/40 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-sm font-semibold text-ink">
+              当前周期还没有真实记录
+            </h3>
+            <p className="mt-1 text-[13px] leading-5 text-ink-secondary">
+              下方所有数字均为 0，来自真实数据计算而非示例。记录一次专注或打卡后，
+              这里会立即更新。
+            </p>
+          </div>
+          <Button
+            size="sm"
+            className="shrink-0"
+            onClick={() => navigate('/dashboard')}
+          >
+            <PencilLine />
+            去记录
+          </Button>
+        </Card>
+      ) : null}
 
       <section className="grid grid-cols-2 gap-3 xl:grid-cols-5">
         {metrics.map((metric) => (
