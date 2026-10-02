@@ -1,6 +1,14 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { useUpdateSnapshot } from '@/features/snapshot/useSnapshot'
 import { todayKey } from '@/features/analytics/cgDate'
 
@@ -12,6 +20,14 @@ const titles: Record<QuickLogKind, string> = {
   sport: '记录运动',
   reading: '记录阅读',
   english: '记录英语',
+}
+
+const successText: Record<QuickLogKind, string> = {
+  checkin: '打卡成功',
+  focus: '专注已记录',
+  sport: '运动已记录',
+  reading: '阅读已记录',
+  english: '英语学习已记录',
 }
 
 function newId(): string {
@@ -43,13 +59,11 @@ export function QuickLogDialog({
   const [bookName, setBookName] = useState('')
   const [totalPages, setTotalPages] = useState('')
   const [words, setWords] = useState('')
-  const [error, setError] = useState('')
   const updateSnapshot = useUpdateSnapshot()
   const today = todayKey()
 
   useEffect(() => {
     updateSnapshot.reset()
-    setError('')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind])
 
@@ -109,27 +123,27 @@ export function QuickLogDialog({
         }
       },
       {
-        onSuccess: onClose,
-        onError: (submitError) =>
-          setError(
-            submitError instanceof Error ? submitError.message : '保存失败',
-          ),
+        onSuccess: () => {
+          toast.success(successText[kind])
+          onClose()
+        },
+        onError: (submitError) => {
+          const message =
+            submitError instanceof Error ? submitError.message : '保存失败'
+          toast.error(message)
+        },
       },
     )
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <button
-        type="button"
-        aria-label="关闭"
-        className="absolute inset-0 bg-black/30"
-        onClick={onClose}
-      />
-      <div className="relative w-full max-w-md rounded-card border border-line bg-surface p-6">
-        <h2 className="text-base font-semibold text-ink">{titles[kind]}</h2>
-        <p className="mt-1 text-[13px] text-ink-muted">{today}</p>
-        <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{titles[kind]}</DialogTitle>
+          <DialogDescription>{today}</DialogDescription>
+        </DialogHeader>
+        <form className="space-y-3" onSubmit={handleSubmit}>
           {kind === 'checkin' ? (
             <p className="rounded-control border border-line bg-surface-subtle p-3 text-[13px] text-ink-secondary">
               确认记录今天的打卡。
@@ -232,7 +246,6 @@ export function QuickLogDialog({
             </>
           ) : null}
 
-          {error ? <p className="text-xs text-danger">{error}</p> : null}
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="ghost" size="sm" onClick={onClose}>
               取消
@@ -245,7 +258,7 @@ export function QuickLogDialog({
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

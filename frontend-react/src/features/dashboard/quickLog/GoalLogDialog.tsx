@@ -1,6 +1,14 @@
 import { useState, type FormEvent } from 'react'
 import { Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { useUpdateSnapshot } from '@/features/snapshot/useSnapshot'
 import { todayKey } from '@/features/analytics/cgDate'
 
@@ -17,7 +25,6 @@ export function GoalLogDialog({ onClose }: { onClose: () => void }) {
   const [targetValue, setTargetValue] = useState('')
   const [metric, setMetric] = useState('')
   const [period, setPeriod] = useState('custom')
-  const [error, setError] = useState('')
   const updateSnapshot = useUpdateSnapshot()
   const today = todayKey()
 
@@ -25,7 +32,7 @@ export function GoalLogDialog({ onClose }: { onClose: () => void }) {
     event.preventDefault()
     const target = Number(targetValue)
     if (!title.trim() || !(target > 0)) {
-      setError('请填写目标标题和大于 0 的目标值')
+      toast.error('请填写目标标题和大于 0 的目标值')
       return
     }
     if (updateSnapshot.isPending) return
@@ -49,29 +56,29 @@ export function GoalLogDialog({ onClose }: { onClose: () => void }) {
         goals: [...(draft.goals ?? []), goal],
       }),
       {
-        onSuccess: onClose,
-        onError: (submitError) =>
-          setError(
+        onSuccess: () => {
+          toast.success('目标已创建')
+          onClose()
+        },
+        onError: (submitError) => {
+          toast.error(
             submitError instanceof Error ? submitError.message : '保存失败',
-          ),
+          )
+        },
       },
     )
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <button
-        type="button"
-        aria-label="关闭"
-        className="absolute inset-0 bg-black/30"
-        onClick={onClose}
-      />
-      <div className="relative w-full max-w-md rounded-card border border-line bg-surface p-6">
-        <h2 className="text-base font-semibold text-ink">新建目标</h2>
-        <p className="mt-1 text-[13px] text-ink-muted">
-          目标进度由 Goal Engine 实时计算，这里只记录目标定义。
-        </p>
-        <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>新建目标</DialogTitle>
+          <DialogDescription>
+            目标进度由 Goal Engine 实时计算，这里只记录目标定义。
+          </DialogDescription>
+        </DialogHeader>
+        <form className="space-y-3" onSubmit={handleSubmit}>
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
@@ -101,7 +108,6 @@ export function GoalLogDialog({ onClose }: { onClose: () => void }) {
             <option value="weekly">每周</option>
             <option value="monthly">每月</option>
           </select>
-          {error ? <p className="text-xs text-danger">{error}</p> : null}
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="ghost" size="sm" onClick={onClose}>
               取消
@@ -114,7 +120,7 @@ export function GoalLogDialog({ onClose }: { onClose: () => void }) {
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }
