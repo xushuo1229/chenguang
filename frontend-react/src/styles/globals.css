@@ -253,3 +253,27 @@
     scroll-behavior: auto !important;
   }
 }
+
+@keyframes zeno-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zeno-dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.zeno-dialog-overlay {
+  animation: zeno-overlay-in 160ms ease-out;
+}
+
+.zeno-dialog-content {
+  animation: zeno-dialog-in 180ms ease-out;
+}
