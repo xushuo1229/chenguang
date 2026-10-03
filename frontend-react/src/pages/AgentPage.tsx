@@ -131,7 +131,7 @@ export default function AgentPage() {
       {
         id: pendingId,
         role: 'assistant',
-        content: '正在调用 General AI...',
+        content: '正在深度思考，复杂问题可能需要 20-40 秒…',
         streaming: true,
         mode: 'general',
       },

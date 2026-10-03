@@ -107,5 +107,7 @@ export async function sendAgentMessage(
   return request<AgentChatResponse>('/personal-agent/chat', {
     method: 'POST',
     body: { message, mode, conversationId },
+    // Reasoning models can take 20-30s before the first token; allow up to 60s.
+    timeoutMs: 60000,
   })
 }
