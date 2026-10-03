@@ -5,7 +5,8 @@ import { AppProviders } from './app/providers'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import './styles/globals.css'
 
-const RELOAD_FLAG = 'zeno_sw_reloaded'
+const RELOAD_COUNT_KEY = 'zeno_sw_reloads'
+const MAX_CLEAN_RELOADS = 2
 
 // Dev/real builds must never be intercepted by a leftover MSW service worker
 // registered by an earlier same-origin mock preview on localhost:5174.
@@ -37,17 +38,17 @@ async function enableMocking(): Promise<boolean> {
 
   const removed = await unregisterStaleWorkers()
   // An unregistered worker can still control the current page until the next
-  // navigation. Reload once so API calls cannot be served stale mock data.
+  // navigation, and some browsers need more than one reload before releasing
+  // it. Reload a bounded number of times so API calls never serve stale mock
+  // data without risking an infinite reload loop.
   const controlled = Boolean(navigator.serviceWorker.controller)
-  if (
-    (removed || controlled) &&
-    !sessionStorage.getItem(RELOAD_FLAG)
-  ) {
-    sessionStorage.setItem(RELOAD_FLAG, '1')
+  const attempts = Number(sessionStorage.getItem(RELOAD_COUNT_KEY) ?? '0')
+  if ((removed || controlled) && attempts < MAX_CLEAN_RELOADS) {
+    sessionStorage.setItem(RELOAD_COUNT_KEY, String(attempts + 1))
     window.location.reload()
     return true
   }
-  sessionStorage.removeItem(RELOAD_FLAG)
+  sessionStorage.removeItem(RELOAD_COUNT_KEY)
   return false
 }
 
