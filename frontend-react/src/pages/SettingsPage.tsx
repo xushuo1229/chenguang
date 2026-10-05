@@ -1,19 +1,23 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Loader2, Mail } from 'lucide-react'
+import { Loader2, Mail, MonitorSmartphone } from 'lucide-react'
 import { toast } from 'sonner'
+import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useAuth } from '@/stores/auth-store'
 import { updateProfile } from '@/services/profileService'
+import * as authService from '@/services/authService'
 
 const inputClass =
   'h-9 w-full rounded-control border border-line bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-primary'
 
 export default function SettingsPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [nickname, setNickname] = useState(user?.nickname ?? '')
   const [saving, setSaving] = useState(false)
+  const [loggingOutAll, setLoggingOutAll] = useState(false)
 
   useEffect(() => {
     setNickname(user?.nickname ?? '')
@@ -34,6 +38,17 @@ export default function SettingsPage() {
         toast.error(error instanceof Error ? error.message : '保存失败')
       })
       .finally(() => setSaving(false))
+  }
+
+  const handleLogoutAll = () => {
+    setLoggingOutAll(true)
+    authService
+      .logoutAllDevices()
+      .then(() => toast.success('其它设备已全部退出，当前设备保持登录'))
+      .catch((error: unknown) => {
+        toast.error(error instanceof Error ? error.message : '操作失败')
+      })
+      .finally(() => setLoggingOutAll(false))
   }
 
   return (
@@ -81,8 +96,40 @@ export default function SettingsPage() {
       <Card className="max-w-xl p-5">
         <h3 className="text-sm font-semibold text-ink">登录密码</h3>
         <p className="mt-1 text-[13px] leading-5 text-ink-muted">
-          当前后端未提供自助修改密码接口，如需改密请联系管理员或等待后续版本。
+          通过邮箱验证可自助重置密码；重置后所有已登录设备都需要重新登录。
         </p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-3"
+          onClick={() => navigate('/forgot-password')}
+        >
+          通过邮箱重置密码
+        </Button>
+      </Card>
+
+      <Card className="max-w-xl p-5">
+        <div className="flex items-start gap-3">
+          <div className="grid size-9 shrink-0 place-items-center rounded-control bg-surface-muted">
+            <MonitorSmartphone className="size-4 text-ink-secondary" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-semibold text-ink">登录设备管理</h3>
+            <p className="mt-1 text-[13px] leading-5 text-ink-muted">
+              如果怀疑账号在其它设备被登录，可一键使所有设备上的会话失效。当前设备会立即获得新会话，无需重新登录。
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              disabled={loggingOutAll}
+              onClick={handleLogoutAll}
+            >
+              {loggingOutAll ? <Loader2 className="animate-spin" /> : null}
+              登出所有设备
+            </Button>
+          </div>
+        </div>
       </Card>
     </div>
   )

@@ -11,6 +11,7 @@ import {
   PanelLeftClose,
   Plus,
   Settings,
+  ShieldCheck,
   Sun,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -56,6 +57,9 @@ export function Sidebar({
   const { user, signOut } = useAuth()
   const { theme, toggleTheme, density, setDensity } = useTheme()
   const navigate = useNavigate()
+  const navItems = user?.is_admin
+    ? [...navigation, { label: 'Admin', to: '/admin', icon: ShieldCheck }]
+    : navigation
   const initial = (user?.nickname || user?.email || 'U')
     .slice(0, 1)
     .toUpperCase()
@@ -104,7 +108,7 @@ export function Sidebar({
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-2">
-        {navigation.map(({ label, to, icon: Icon }) => (
+        {navItems.map(({ label, to, icon: Icon }) => (
           <Tooltip key={to}>
             <TooltipTrigger asChild>
               <NavLink

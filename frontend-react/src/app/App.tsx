@@ -7,6 +7,12 @@ import AgentPage from '../pages/AgentPage'
 import KnowledgePage from '../pages/KnowledgePage'
 import SettingsPage from '../pages/SettingsPage'
 import NotFoundPage from '../pages/NotFoundPage'
+import AdminPage from '../pages/AdminPage'
+import {
+  ForgotPasswordPage,
+  ResetPasswordPage,
+  VerifyEmailPage,
+} from '../pages/AccountPages'
 import { ProtectedRoute } from './ProtectedRoute'
 import { AuthLayout } from '../layouts/AuthLayout'
 import { WorkspaceLayout } from '../layouts/WorkspaceLayout'
@@ -39,6 +45,30 @@ export default function App() {
         element={
           <AuthLayout>
             <LoginPage />
+          </AuthLayout>
+        }
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          <AuthLayout>
+            <ForgotPasswordPage />
+          </AuthLayout>
+        }
+      />
+      <Route
+        path="/reset-password"
+        element={
+          <AuthLayout>
+            <ResetPasswordPage />
+          </AuthLayout>
+        }
+      />
+      <Route
+        path="/verify-email"
+        element={
+          <AuthLayout>
+            <VerifyEmailPage />
           </AuthLayout>
         }
       />
@@ -79,6 +109,16 @@ export default function App() {
           <ProtectedRoute>
             <WorkspaceLayout>
               <SettingsPage />
+            </WorkspaceLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <WorkspaceLayout>
+              <AdminPage />
             </WorkspaceLayout>
           </ProtectedRoute>
         }

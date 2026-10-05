@@ -128,6 +128,18 @@ export default function LoginPage() {
           />
         </div>
 
+        {mode === 'login' ? (
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => navigate('/forgot-password')}
+              className="text-[13px] text-ink-muted transition-colors hover:text-primary"
+            >
+              忘记密码？
+            </button>
+          </div>
+        ) : null}
+
         {authMutation.isError ? (
           <ErrorState
             title={mode === 'login' ? '登录失败' : '注册失败'}

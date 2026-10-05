@@ -13,6 +13,25 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
     console.error('Zeno UI crashed:', error, info.componentStack)
+    try {
+      // 尽力而为上报到后端指标环；不阻断降级 UI（keepalive 保证页面卸载时也能发出）
+      const payload = JSON.stringify({
+        message: `${error.name}: ${error.message}`.slice(0, 300),
+        source: 'react-error-boundary',
+        url: window.location.pathname.slice(0, 200),
+      })
+      void fetch('/api/ops/client-errors', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: payload,
+        keepalive: true,
+      }).catch(() => undefined)
+    } catch {
+      // 上报失败不影响用户
+    }
   }
 
   private reload = () => {

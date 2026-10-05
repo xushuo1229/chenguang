@@ -6,6 +6,8 @@ export type AuthUser = {
   nickname?: string
   email: string
   avatar?: string
+  is_admin?: boolean
+  email_verified?: boolean
 }
 
 type AuthResult = { token: string; user: AuthUser }
@@ -50,4 +52,40 @@ export async function getMe(): Promise<AuthUser> {
 
 export async function logout(): Promise<void> {
   clearSession()
+}
+
+export async function forgotPassword(email: string): Promise<void> {
+  await request('/auth/forgot-password', {
+    method: 'POST',
+    body: { email: email.trim() },
+  })
+}
+
+export async function resetPassword(
+  token: string,
+  password: string,
+): Promise<void> {
+  await request('/auth/reset-password', {
+    method: 'POST',
+    body: { token, password },
+  })
+}
+
+export async function verifyEmail(token: string): Promise<void> {
+  await request('/auth/verify-email', {
+    method: 'POST',
+    body: { token },
+  })
+}
+
+export async function resendVerification(): Promise<void> {
+  await request('/auth/resend-verification', { method: 'POST' })
+}
+
+// 使所有设备上的会话失效；当前设备拿到携带新版本的令牌并就地更新会话。
+export async function logoutAllDevices(): Promise<AuthUser> {
+  const result = await request<AuthResult>('/auth/logout-all', {
+    method: 'POST',
+  })
+  return setSession(result.user, result.token).user
 }
