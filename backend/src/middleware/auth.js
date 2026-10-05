@@ -87,7 +87,11 @@ async function verifyPassword(plain, hash) {
  */
 function signToken(user) {
   return jwt.sign(
-    { uid: user.id, email: user.email },  // Payload：存入令牌的用户信息
+    {
+      uid: user.id,
+      email: user.email,
+      tv: Number(user.token_version || 0), // 令牌版本；登出所有设备后旧令牌失效
+    },
     config.jwtSecret,                      // 密钥：用于签名，不能泄露
     { expiresIn: config.jwtExpiresIn }     // 过期时间：如 30d（30 天）
   );
@@ -127,6 +131,11 @@ function verifyToken(token) {
  * @param {Function} next 下一个中间件
  */
 function authRequired(req, res, next) {
+  // Express 4 不自动捕获 async 中间件的 reject，统一转交错误处理中间件
+  _authRequiredAsync(req, res, next).catch(next);
+}
+
+async function _authRequiredAsync(req, res, next) {
   // 从请求头获取 Authorization 字段
   const header = req.headers['authorization'] || '';
   // 用正则提取 Bearer 后面的 token
@@ -142,8 +151,30 @@ function authRequired(req, res, next) {
     throw ApiError.unauthorized('TOKEN_INVALID', '令牌无效或已过期');
   }
 
-  // 验证成功：把用户 ID 注入请求对象，后续中间件/路由可以通过 req.userId 获取
-  req.userId = decoded.uid;
+  // 校验账号仍存在且令牌版本未被吊销（登出所有设备会推进 token_version）。
+  // 惰性 require，避免潜在的模块加载循环。
+  const { query } = require('../db');
+  const rows = await query(
+    'SELECT id, email, token_version, is_admin, email_verified FROM users WHERE id = $1',
+    [decoded.uid]
+  );
+  const account = rows.rows[0];
+  if (!account) {
+    throw ApiError.unauthorized('ACCOUNT_NOT_FOUND', '账号不存在或已注销');
+  }
+  const tokenVersion = Number(account.token_version || 0);
+  if (Number(decoded.tv || 0) !== tokenVersion) {
+    throw ApiError.unauthorized('SESSION_REVOKED', '登录态已失效，请重新登录');
+  }
+
+  // 验证成功：把用户信息注入请求对象
+  req.userId = account.id;
+  req.user = {
+    id: account.id,
+    email: account.email,
+    isAdmin: Boolean(account.is_admin),
+    emailVerified: Boolean(account.email_verified),
+  };
 
   // 滑动续期：只对超过阈值的老令牌下发新令牌，避免每次请求都签发
   // decoded.iat 是令牌签发时间（issued at）
@@ -152,12 +183,25 @@ function authRequired(req, res, next) {
     if (ageDays > RENEW_AFTER_DAYS) {
       try {
         // 签发新令牌，通过响应头返回给前端
-        res.setHeader('X-Renewed-Token', signToken({ id: decoded.uid, email: decoded.email }));
+        res.setHeader(
+          'X-Renewed-Token',
+          signToken({ id: account.id, email: account.email, token_version: tokenVersion })
+        );
       } catch (_) { /* 续期失败不影响本次请求 */ }
     }
   }
 
   // 继续执行下一个中间件
+  next();
+}
+
+/**
+ * 管理员守卫：必须先通过 authRequired，且账号 is_admin=1。
+ */
+function adminRequired(req, _res, next) {
+  if (!req.user || !req.user.isAdmin) {
+    return next(ApiError.forbidden('FORBIDDEN', '需要管理员权限'));
+  }
   next();
 }
 
@@ -167,4 +211,5 @@ module.exports = {
   signToken,
   verifyToken,
   authRequired,
+  adminRequired,
 };

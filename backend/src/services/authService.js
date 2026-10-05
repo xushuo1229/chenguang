@@ -34,9 +34,12 @@
  */
 const userModel = require('../db/userModel');
 const bcryptjs = require('bcryptjs');
+const crypto = require('crypto');
 const { hashPassword, verifyPassword, signToken } = require('../middleware/auth');
 const ApiError = require('../utils/ApiError');
 const { requireFields, assertLength, assertEmail, assertPassword } = require('../utils/validator');
+const ent = require('../config/enterprise');
+const mailer = require('./mailer');
 
 // 启动时生成一次，用于"用户不存在"时的空校验，抹平响应时间差
 // 这是一个假的哈希值，永远不会被真正使用
@@ -59,6 +62,8 @@ function toPublic(u) {
     email: u.email,
     nickname: u.nickname,
     avatar_url: u.avatar_url || '',
+    is_admin: Boolean(u.is_admin),
+    email_verified: Boolean(u.email_verified),
     created_at: u.created_at,
   };
 }
@@ -83,6 +88,9 @@ function toPublic(u) {
  * @returns {Promise<{ token: string, user: Object }>}
  */
 async function register({ email, nickname, password }) {
+  if (!ent.allowRegistration) {
+    throw ApiError.forbidden('REGISTRATION_DISABLED', '当前已关闭公开注册');
+  }
   // 校验必填字段
   requireFields({ email, password }, ['email', 'password'], '邮箱和密码必填');
   // 校验邮箱格式
@@ -101,6 +109,9 @@ async function register({ email, nickname, password }) {
     nickname: nickname || email.split('@')[0], // 没有昵称就用邮箱前缀
     passwordHash: await hashPassword(password),  // bcrypt 哈希（异步）
   });
+
+  // 发送验证邮件（失败不阻断注册）
+  sendVerificationEmail(user).catch(() => {});
 
   // 返回 JWT 令牌和用户信息（不含密码哈希）
   return { token: signToken(user), user: toPublic(user) };
@@ -140,6 +151,11 @@ async function login({ email, password }) {
     throw ApiError.unauthorized('INVALID_CREDENTIALS', '邮箱或密码错误');
   }
 
+  // 仅在显式开启强制验证且配置了邮件能力时拦截，避免无 SMTP 时锁死用户
+  if (ent.requireEmailVerification && !Number(user.email_verified || 0)) {
+    throw ApiError.forbidden('EMAIL_NOT_VERIFIED', '请先完成邮箱验证');
+  }
+
   return { token: signToken(user), user: toPublic(user) };
 }
 
@@ -174,10 +190,121 @@ async function updateProfile(userId, { nickname, avatar_url }) {
   return toPublic(user);
 }
 
+// ---------- 找回密码 / 邮箱验证 / 登出所有设备 ----------
+
+function hashToken(raw) {
+  return crypto.createHash('sha256').update(String(raw)).digest('hex');
+}
+function generateRawToken() {
+  return crypto.randomBytes(32).toString('hex');
+}
+function isoHoursAhead(hours) {
+  return new Date(Date.now() + hours * 3600 * 1000).toISOString();
+}
+function isFresh(row) {
+  return row && !row.used && new Date(row.expires_at).getTime() >= Date.now();
+}
+
+async function sendVerificationEmail(user) {
+  const raw = generateRawToken();
+  await userModel.saveHashedToken(
+    'email_verification_tokens',
+    user.id,
+    hashToken(raw),
+    isoHoursAhead(ent.verifyTokenTtlHours)
+  );
+  const url = `${ent.publicAppUrl}/verify-email?token=${encodeURIComponent(raw)}`;
+  await mailer.sendMail({
+    to: user.email,
+    subject: 'Zeno 邮箱验证',
+    text: `请点击完成邮箱验证：${url}\n该链接 ${ent.verifyTokenTtlHours} 小时内有效。`,
+    html: `<p>请点击 <a href="${url}">验证邮箱</a>（${ent.verifyTokenTtlHours} 小时内有效）。</p>`,
+  });
+  return { ok: true };
+}
+
+async function resendVerification(userId) {
+  const user = await userModel.findUserById(userId);
+  if (!user) throw ApiError.notFound('USER_NOT_FOUND', '用户不存在');
+  await sendVerificationEmail(user);
+  return { ok: true };
+}
+
+async function verifyEmail(rawToken) {
+  const row = await userModel.findValidTokenRow(
+    'email_verification_tokens',
+    hashToken(rawToken)
+  );
+  if (!row) throw ApiError.badRequest('INVALID_VERIFY_TOKEN', '验证链接无效');
+  if (!isFresh(row)) {
+    throw ApiError.badRequest('VERIFY_TOKEN_EXPIRED', '验证链接已过期，请重新发送');
+  }
+  await userModel.consumeHashedToken('email_verification_tokens', row, null);
+  await userModel.setEmailVerified(row.user_id, true);
+  return { ok: true };
+}
+
+async function logoutAllDevices(userId) {
+  const user = await userModel.findUserById(userId);
+  if (!user) throw ApiError.notFound('USER_NOT_FOUND', '用户不存在');
+  const tokenVersion = await userModel.incrementTokenVersion(userId);
+  // 当前会话立即获得携带新版本的令牌；其它设备上的旧令牌随即失效
+  const fresh = Object.assign({}, user, { token_version: tokenVersion });
+  return { token: signToken(fresh), user: toPublic(fresh) };
+}
+
+async function requestPasswordReset(email) {
+  const user = await userModel.findUserByEmail(String(email || '').trim());
+  // 无论账号是否存在都返回相同结果，避免接口被用来枚举已注册邮箱
+  if (user) {
+    const raw = generateRawToken();
+    await userModel.saveHashedToken(
+      'password_reset_tokens',
+      user.id,
+      hashToken(raw),
+      isoHoursAhead(ent.resetTokenTtlHours)
+    );
+    const url = `${ent.publicAppUrl}/reset-password?token=${encodeURIComponent(raw)}`;
+    await mailer.sendMail({
+      to: user.email,
+      subject: '重置你的 Zeno 密码',
+      text: `点击重置密码：${url}\n${ent.resetTokenTtlHours} 小时内有效；如非本人操作请忽略。`,
+      html: `<p>点击 <a href="${url}">重置密码</a>（${ent.resetTokenTtlHours} 小时内有效）。</p>`,
+    });
+  }
+  return { ok: true };
+}
+
+async function resetPassword(rawToken, newPassword) {
+  requireFields({ password: newPassword }, ['password'], '新密码必填');
+  assertPassword(newPassword);
+  const row = await userModel.findValidTokenRow(
+    'password_reset_tokens',
+    hashToken(rawToken)
+  );
+  if (!row) throw ApiError.badRequest('INVALID_RESET_TOKEN', '重置链接无效');
+  if (!isFresh(row)) {
+    throw ApiError.badRequest('RESET_TOKEN_EXPIRED', '重置链接已过期，请重新申请');
+  }
+  // 重置密码会同时推进 token_version，使所有已登录设备失效
+  await userModel.consumeHashedToken(
+    'password_reset_tokens',
+    row,
+    await hashPassword(newPassword)
+  );
+  return { ok: true };
+}
+
 module.exports = {
   register,
   login,
   getProfile,
   updateProfile,
   toPublic,
+  logoutAllDevices,
+  requestPasswordReset,
+  resetPassword,
+  sendVerificationEmail,
+  resendVerification,
+  verifyEmail,
 };

@@ -59,4 +59,11 @@ router.get ('/me',       authRequired, ctrl.getMe);
 // writeLimiter：限制更新频率，防止恶意频繁修改
 router.put ('/me',       authRequired, writeLimiter, ctrl.updateMe);
 
+// ---------- 找回密码 / 邮箱验证 / 会话管理 ----------
+router.post('/forgot-password',     authLimiter, ctrl.forgotPassword);
+router.post('/reset-password',      authLimiter, ctrl.resetPassword);
+router.post('/verify-email',        authLimiter, ctrl.verifyEmail);
+router.post('/resend-verification', authRequired, writeLimiter, ctrl.resendVerification);
+router.post('/logout-all',          authRequired, writeLimiter, ctrl.logoutAll);
+
 module.exports = router;

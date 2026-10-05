@@ -112,3 +112,56 @@ exports.updateMe = async (req, res, next) => {
     next(err);
   }
 };
+
+// POST /forgot-password → 请求重置密码邮件（不暴露邮箱是否注册）
+exports.forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body || {};
+    await authService.requestPasswordReset(email);
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /reset-password → 用邮件令牌设置新密码
+exports.resetPassword = async (req, res, next) => {
+  try {
+    const { token, password } = req.body || {};
+    await authService.resetPassword(token, password);
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /verify-email → 校验邮箱令牌
+exports.verifyEmail = async (req, res, next) => {
+  try {
+    const { token } = req.body || {};
+    await authService.verifyEmail(token);
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /resend-verification → 重新发送验证邮件（需登录）
+exports.resendVerification = async (req, res, next) => {
+  try {
+    await authService.resendVerification(req.userId);
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /logout-all → 使该账号所有已登录设备失效，返回当前设备的新令牌
+exports.logoutAll = async (req, res, next) => {
+  try {
+    const result = await authService.logoutAllDevices(req.userId);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+};
