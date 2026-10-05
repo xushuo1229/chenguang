@@ -9,6 +9,7 @@
     "dev": "node src/server.js",
     "start:prod": "cross-env NODE_ENV=production node src/server.js",
     "test": "node --test",
+    "backup": "node scripts/backup.cjs",
     "beta:metrics": "node scripts/betaOps.js metrics"
   },
   "dependencies": {
