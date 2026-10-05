@@ -30,6 +30,7 @@ const path = require('path');
 const fs = require('fs');
 const Database = require('better-sqlite3');
 const config = require('../config/env');
+const { runMigrations } = require('./migrate');
 
 // schema.sql 文件的路径（位于 backend/schema.sql）
 const schemaPath = path.join(__dirname, '..', '..', 'schema.sql');
@@ -115,6 +116,9 @@ async function initDatabase() {
   try { db.exec("ALTER TABLE course_space_evidence ADD COLUMN candidate_id TEXT NOT NULL DEFAULT ''"); } catch (_) {}
   try { db.exec("ALTER TABLE course_space_evidence ADD COLUMN verification_status TEXT NOT NULL DEFAULT 'unverified'"); } catch (_) {}
   db.exec("CREATE UNIQUE INDEX IF NOT EXISTS uq_course_space_nodes_source_candidate ON course_space_nodes(source_candidate_id) WHERE source_candidate_id <> ''");
+
+  // 企业级账号体系迁移（token_version / is_admin / email_verified + 令牌表）
+  runMigrations(db, config);
 
   console.log('[DB] SQLite 表结构初始化完成 → ' + config.dbPath);
 }
