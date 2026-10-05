@@ -6,6 +6,7 @@ const adaptiveReviewService = require('./adaptiveReviewService');
 const personalLearningAgentService = require('./personalLearningAgentService');
 const studentPracticeService = require('./studentPracticeService');
 const { getProvider } = require('./providers');
+const failover = require('./providers/failover');
 const { resolveAgentProvider } = require('./agentProvider/providerRegistry');
 const config = require('../config/env');
 const ApiError = require('../utils/ApiError');
@@ -179,13 +180,16 @@ async function runGeneralMode(message, generalProvider) {
     };
   }
   try {
-    const result = await provider.chatCompletion({
-      messages: [{ role: 'user', content: message }],
-      baseUrl: config.aiBaseUrl,
-      apiKey: config.aiApiKey,
-      model: config.aiModel,
-      timeoutMs: config.aiTimeoutMs,
-    });
+    const chatMessages = [{ role: 'user', content: message }];
+    const result = generalProvider
+      ? await provider.chatCompletion({
+          messages: chatMessages,
+          baseUrl: config.aiBaseUrl,
+          apiKey: config.aiApiKey,
+          model: config.aiModel,
+          timeoutMs: config.aiTimeoutMs,
+        })
+      : await failover.chatCompletionWithFailover({ messages: chatMessages });
     const answer = boundedText(result && result.reply, 8000);
     if (!answer) throw ApiError.internal('AI_EMPTY_REPLY', 'AI 响应为空');
     return {
