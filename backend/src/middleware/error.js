@@ -38,6 +38,7 @@
  */
 const ApiError = require('../utils/ApiError');
 const config = require('../config/env');
+const monitoring = require('../services/monitoring');
 
 /**
  * 404 兜底中间件
@@ -64,9 +65,12 @@ function notFound(req, _res, next) {
  *    - 否 → 当成系统错误，返回 500
  * 3. 生产环境隐藏系统错误详情（防止泄露服务器信息）
  */
-function handler(err, _req, res, _next) {
+function handler(err, req, res, _next) {
   // ApiError：业务错误，按其声明的 status/code/message 响应
   if (err instanceof ApiError) {
+    if (err.status >= 500) {
+      monitoring.captureError(err, { method: req.method, path: req.path });
+    }
     const errBody = { code: err.code, message: err.message };
     // 额外字段（如冲突时的 serverRevision / serverData）随错误一起返回，
     // 前端据它做防线式合并
@@ -76,6 +80,7 @@ function handler(err, _req, res, _next) {
 
   // 未知错误：打印错误日志（方便服务器端排查），返回 500
   console.error('[error] 未捕获异常:', err);
+  monitoring.captureError(err, { method: req.method, path: req.path });
   return res.status(500).json({
     error: {
       code: 'INTERNAL_ERROR',

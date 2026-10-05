@@ -84,4 +84,10 @@ router.use('/agent-home', agentHome);
 // 只读上下文 + 双模式对话。Action 仍然由既有确认接口执行。
 router.use('/personal-agent', personalAgent);
 
+// ===== 运维可观测性（指标 / 前端错误采集） =====
+router.use('/ops', require('./ops'));
+
+// ===== 后台管理（仅 is_admin） =====
+router.use('/admin', require('./admin'));
+
 module.exports = router;

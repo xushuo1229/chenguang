@@ -103,6 +103,7 @@ const csrfProtection = require('./middleware/csrf');
 const logger = require('./utils/logger');
 const { apiLimiter } = require('./middleware/rateLimit');
 const { notFound, handler } = require('./middleware/error');
+const { metricsMiddleware } = require('./middleware/metrics');
 
 // 引入路由（定义了所有 API 接口）
 const routes = require('./routes/index');
@@ -141,6 +142,7 @@ app.use(sanitizeInput);                                // 第5步：XSS 输入�
 app.use(responseEnhancer);                             // 第6步：注入 res.success/res.fail 统一响应方法
 app.use(csrfProtection);                               // 第7步：CSRF 防护（写操作需要验证来源）
 app.use(logger);                                       // 第8步：记录请求日志
+app.use(metricsMiddleware);                            // 进程内指标（状态码/耗时/路由）
 app.use('/api', apiLimiter);                           // 第9步：全局限流（只对 /api 路径生效）
 app.use('/api', routes);                               // 第10步：业务路由（匹配具体的 API 接口）
 
