@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useSearchParams } from 'react-router-dom'
 import { BookOpen, Library, Plus } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -24,6 +25,7 @@ export default function KnowledgePage() {
   const snapshotQuery = useSnapshot()
   const [tab, setTab] = useState<Tab>('graph')
   const [importOpen, setImportOpen] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const courses = useMemo<Course[]>(
     () =>
@@ -63,6 +65,29 @@ export default function KnowledgePage() {
       }
     }
   }, [courseId])
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab')
+    if (
+      tabParam === 'graph' ||
+      tabParam === 'mastery' ||
+      tabParam === 'documents' ||
+      tabParam === 'review'
+    ) {
+      setTab(tabParam)
+    }
+    const courseParam = searchParams.get('course')
+    if (courseParam && courses.some((course) => course.id === courseParam)) {
+      setCourseId(courseParam)
+    }
+  }, [searchParams, courses])
+
+  useEffect(() => {
+    const next: Record<string, string> = { tab }
+    if (courseId) next.course = courseId
+    setSearchParams(next, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, courseId])
 
   const spaceQuery = useQuery({
     queryKey: ['course-space', courseId],

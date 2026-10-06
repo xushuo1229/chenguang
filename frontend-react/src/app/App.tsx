@@ -2,12 +2,10 @@ import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import LoginPage from '../pages/LoginPage'
-import DashboardPage from '../pages/DashboardPage'
-import AgentPage from '../pages/AgentPage'
-import KnowledgePage from '../pages/KnowledgePage'
-import SettingsPage from '../pages/SettingsPage'
 import NotFoundPage from '../pages/NotFoundPage'
 import AdminPage from '../pages/AdminPage'
+import KnowledgePage from '../pages/KnowledgePage'
+import AnalyticsPage from '../pages/AnalyticsPage'
 import {
   ForgotPasswordPage,
   ResetPasswordPage,
@@ -15,24 +13,37 @@ import {
 } from '../pages/AccountPages'
 import { ProtectedRoute } from './ProtectedRoute'
 import { AuthLayout } from '../layouts/AuthLayout'
-import { WorkspaceLayout } from '../layouts/WorkspaceLayout'
+import { AppShellLayout } from '../layouts/AppShellLayout'
 
-const AnalyticsPage = lazy(() => import('../pages/AnalyticsPage'))
+const AgentWorkspace = lazy(() => import('@/features/agent/AgentWorkspace'))
+const WorkspacePage = lazy(() => import('@/features/workspace/WorkspacePage'))
+const CoursesPage = lazy(() => import('@/features/learning/CoursesPage'))
+const CourseDetailPage = lazy(() => import('@/features/learning/CourseDetailPage'))
+const PlansPage = lazy(() => import('@/features/learning/PlansPage'))
+const GoalsPage = lazy(() => import('@/features/growth/GoalsPage'))
+const MemoryPage = lazy(() => import('@/features/growth/MemoryPage'))
+const SettingsPage = lazy(() => import('@/features/settings/SettingsPage'))
 
-function AnalyticsRoute() {
+function PageFallback() {
+  return (
+    <div className="flex justify-center py-16 text-ink-muted">
+      <Loader2 className="size-5 animate-spin" />
+    </div>
+  )
+}
+
+function ShellRoute({
+  page,
+  fullBleed = false,
+}: {
+  page: React.ReactNode
+  fullBleed?: boolean
+}) {
   return (
     <ProtectedRoute>
-      <WorkspaceLayout>
-        <Suspense
-          fallback={
-            <div className="mt-10 flex justify-center text-ink-muted">
-              <Loader2 className="size-5 animate-spin" />
-            </div>
-          }
-        >
-          <AnalyticsPage />
-        </Suspense>
-      </WorkspaceLayout>
+      <AppShellLayout fullBleed={fullBleed}>
+        <Suspense fallback={<PageFallback />}>{page}</Suspense>
+      </AppShellLayout>
     </ProtectedRoute>
   )
 }
@@ -72,58 +83,43 @@ export default function App() {
           </AuthLayout>
         }
       />
+
+      <Route path="/agent" element={<ShellRoute fullBleed page={<AgentWorkspace />} />} />
       <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <WorkspaceLayout>
-              <DashboardPage />
-            </WorkspaceLayout>
-          </ProtectedRoute>
-        }
+        path="/agent/:conversationId"
+        element={<ShellRoute fullBleed page={<AgentWorkspace />} />}
       />
+      <Route path="/workspace" element={<ShellRoute page={<WorkspacePage />} />} />
+      <Route path="/learning/courses" element={<ShellRoute page={<CoursesPage />} />} />
+      <Route
+        path="/learning/courses/:id"
+        element={<ShellRoute page={<CourseDetailPage />} />}
+      />
+      <Route path="/learning/plans" element={<ShellRoute page={<PlansPage />} />} />
+      <Route
+        path="/learning/knowledge"
+        element={<ShellRoute page={<KnowledgePage />} />}
+      />
+      <Route path="/growth/goals" element={<ShellRoute page={<GoalsPage />} />} />
+      <Route
+        path="/growth/analytics"
+        element={<ShellRoute page={<AnalyticsPage />} />}
+      />
+      <Route path="/growth/memory" element={<ShellRoute page={<MemoryPage />} />} />
+      <Route path="/settings" element={<ShellRoute page={<SettingsPage />} />} />
+      <Route path="/settings/:section" element={<ShellRoute page={<SettingsPage />} />} />
+      <Route path="/admin" element={<ShellRoute page={<AdminPage />} />} />
+
+      <Route path="/dashboard" element={<Navigate to="/workspace" replace />} />
       <Route
         path="/knowledge"
-        element={
-          <ProtectedRoute>
-            <WorkspaceLayout>
-              <KnowledgePage />
-            </WorkspaceLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route path="/analytics" element={<AnalyticsRoute />} />
-      <Route
-        path="/agent"
-        element={
-          <ProtectedRoute>
-            <WorkspaceLayout fullBleed>
-              <AgentPage />
-            </WorkspaceLayout>
-          </ProtectedRoute>
-        }
+        element={<Navigate to="/learning/knowledge" replace />}
       />
       <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <WorkspaceLayout>
-              <SettingsPage />
-            </WorkspaceLayout>
-          </ProtectedRoute>
-        }
+        path="/analytics"
+        element={<Navigate to="/growth/analytics" replace />}
       />
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute>
-            <WorkspaceLayout>
-              <AdminPage />
-            </WorkspaceLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<Navigate to="/agent" replace />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
