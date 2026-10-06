@@ -81,12 +81,12 @@ export function CreateNodeDialog({
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder="知识点标题，如：闭包"
-            className="h-9 w-full rounded-control border border-line bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-primary"
+            className="h-[var(--control-h)] w-full rounded-control border border-line bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-primary"
           />
           <select
             value={kind}
             onChange={(event) => setKind(event.target.value)}
-            className="h-9 w-full rounded-control border border-line bg-surface px-2.5 text-sm text-ink outline-none focus:border-primary"
+            className="h-[var(--control-h)] w-full rounded-control border border-line bg-surface px-2.5 text-sm text-ink outline-none focus:border-primary"
           >
             {nodeKinds.map((option) => (
               <option key={option.value} value={option.value}>

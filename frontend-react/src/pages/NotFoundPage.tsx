@@ -15,7 +15,7 @@ export default function NotFoundPage() {
         </p>
         <Link
           to="/dashboard"
-          className="mt-5 inline-flex h-9 items-center rounded-control bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+          className="mt-5 inline-flex h-[var(--control-h)] items-center rounded-control bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
         >
           返回 Dashboard
         </Link>

@@ -20,7 +20,7 @@ export default function MemoryPage() {
   if (contextQuery.isPending) {
     return (
       <div className="space-y-3">
-        <div className="h-9 w-full animate-pulse rounded-card bg-surface-muted" />
+        <div className="h-[var(--control-h)] w-full animate-pulse rounded-card bg-surface-muted" />
         <div className="h-24 w-full animate-pulse rounded-card bg-surface-muted" />
       </div>
     )

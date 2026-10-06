@@ -13,7 +13,7 @@ import { useUpdateSnapshot } from '@/features/snapshot/useSnapshot'
 import { todayKey } from '@/features/analytics/cgDate'
 
 const inputClass =
-  'h-9 w-full rounded-control border border-line bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-primary'
+  'h-[var(--control-h)] w-full rounded-control border border-line bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-primary'
 
 function newId(): string {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID()

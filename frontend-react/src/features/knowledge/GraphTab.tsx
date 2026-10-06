@@ -115,7 +115,7 @@ export function GraphTab({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="搜索知识点..."
-            className="h-9 w-full rounded-control border border-line bg-surface pl-9 pr-3 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-primary"
+            className="h-[var(--control-h)] w-full rounded-control border border-line bg-surface pl-9 pr-3 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-primary"
           />
         </div>
         <div className="flex rounded-control border border-line p-0.5">

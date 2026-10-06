@@ -33,7 +33,7 @@ export default function CoursesPage() {
   if (snapshotQuery.isPending) {
     return (
       <div className="space-y-3">
-        <div className="h-9 w-full animate-pulse rounded-card bg-surface-muted" />
+        <div className="h-[var(--control-h)] w-full animate-pulse rounded-card bg-surface-muted" />
         <div className="h-10 w-full animate-pulse rounded bg-surface-muted" />
         <div className="h-10 w-full animate-pulse rounded bg-surface-muted" />
       </div>
@@ -104,22 +104,22 @@ export default function CoursesPage() {
                     onClick={() => navigate(`/learning/courses/${id}`)}
                     className="cursor-pointer transition-colors hover:bg-surface-muted/50"
                   >
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-row">
                       <p className="font-medium text-ink">{course.name || '未命名课程'}</p>
                       {course.credits ? (
                         <p className="mt-0.5 text-xs text-ink-faint">{course.credits} 学分</p>
                       ) : null}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-row">
                       <div className="flex items-center gap-2.5">
                         <Progress value={progressValue} className="w-24" />
                         <span className="text-xs tabular-nums text-ink-muted">{progressValue}%</span>
                       </div>
                     </td>
-                    <td className="hidden px-4 py-3 text-[13px] text-ink-muted md:table-cell">
+                    <td className="hidden px-4 py-row text-[13px] text-ink-muted md:table-cell">
                       {slotSummary(course.slots ?? course.schedule)}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-row">
                       <span className="text-xs text-ink-muted">{course.status || '进行中'}</span>
                     </td>
                   </tr>

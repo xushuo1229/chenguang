@@ -93,7 +93,7 @@ export function AppTopbar({ onOpenMobile }: AppTopbarProps) {
       <button
         type="button"
         onClick={openCommand}
-        className="ml-auto flex h-8 w-8 items-center justify-center rounded-control text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink lg:h-9 lg:w-[220px] lg:justify-start lg:gap-2 lg:border lg:border-line lg:bg-surface-muted/60 lg:px-3 hover:lg:border-border-strong"
+        className="ml-auto flex h-8 w-8 items-center justify-center rounded-control text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink lg:h-[var(--control-h)] lg:w-[220px] lg:justify-start lg:gap-2 lg:border lg:border-line lg:bg-surface-muted/60 lg:px-3 hover:lg:border-border-strong"
         aria-label="搜索或跳转"
       >
         <Search className="size-4 shrink-0" />

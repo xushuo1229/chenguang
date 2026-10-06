@@ -32,7 +32,7 @@ export default function GoalsPage() {
   if (snapshotQuery.isPending) {
     return (
       <div className="space-y-3">
-        <div className="h-9 w-full animate-pulse rounded-card bg-surface-muted" />
+        <div className="h-[var(--control-h)] w-full animate-pulse rounded-card bg-surface-muted" />
         <div className="h-16 w-full animate-pulse rounded-card bg-surface-muted" />
         <div className="h-16 w-full animate-pulse rounded-card bg-surface-muted" />
       </div>
@@ -182,7 +182,7 @@ export default function GoalsPage() {
                 max={100}
                 value={progressInput}
                 onChange={(event) => setProgressInput(event.target.value)}
-                className="mt-1.5 h-9 w-full rounded-control border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-primary"
+                className="mt-1.5 h-[var(--control-h)] w-full rounded-control border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-primary"
               />
             </label>
             <Button size="sm" className="w-full" onClick={saveProgress}>

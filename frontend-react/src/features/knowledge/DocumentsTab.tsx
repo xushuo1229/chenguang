@@ -144,7 +144,7 @@ export function DocumentsTab({
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder="文档标题，如：第 3 章讲义"
-            className="h-9 w-full rounded-control border border-line bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-primary"
+            className="h-[var(--control-h)] w-full rounded-control border border-line bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-primary"
           />
           <textarea
             value={content}
@@ -157,7 +157,7 @@ export function DocumentsTab({
             value={sourceUrl}
             onChange={(event) => setSourceUrl(event.target.value)}
             placeholder="来源链接（可选）"
-            className="h-9 w-full rounded-control border border-line bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-primary"
+            className="h-[var(--control-h)] w-full rounded-control border border-line bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-primary"
           />
           {createMutation.isError ? (
             <p className="text-xs text-danger">

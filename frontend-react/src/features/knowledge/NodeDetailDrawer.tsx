@@ -127,7 +127,7 @@ export function NodeDetailDrawer({
                 <select
                   value={targetId}
                   onChange={(event) => setTargetId(event.target.value)}
-                  className="h-9 w-full rounded-control border border-line bg-surface px-2 text-[13px] text-ink outline-none focus:border-primary"
+                  className="h-[var(--control-h)] w-full rounded-control border border-line bg-surface px-2 text-[13px] text-ink outline-none focus:border-primary"
                 >
                   <option value="">选择目标知识点</option>
                   {otherNodes.map((item) => (
@@ -139,7 +139,7 @@ export function NodeDetailDrawer({
                 <select
                   value={relationType}
                   onChange={(event) => setRelationType(event.target.value)}
-                  className="h-9 w-full rounded-control border border-line bg-surface px-2 text-[13px] text-ink outline-none focus:border-primary"
+                  className="h-[var(--control-h)] w-full rounded-control border border-line bg-surface px-2 text-[13px] text-ink outline-none focus:border-primary"
                 >
                   <option value="prerequisite">前置知识</option>
                   <option value="related_to">相关</option>

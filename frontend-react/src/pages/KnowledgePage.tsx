@@ -145,7 +145,7 @@ export default function KnowledgePage() {
             <select
               value={courseId}
               onChange={(event) => setCourseId(event.target.value)}
-              className="h-9 min-w-56 rounded-control border border-line bg-surface px-2.5 text-sm text-ink outline-none focus:border-primary"
+              className="h-[var(--control-h)] min-w-56 rounded-control border border-line bg-surface px-2.5 text-sm text-ink outline-none focus:border-primary"
             >
               {courses.map((course) => (
                 <option key={course.id} value={course.id}>

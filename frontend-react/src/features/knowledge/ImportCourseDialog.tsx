@@ -20,7 +20,7 @@ type Mode = 'url' | 'manual'
 const weekdayLabel = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 
 const inputClass =
-  'h-9 min-w-0 flex-1 rounded-control border border-line bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-primary'
+  'h-[var(--control-h)] min-w-0 flex-1 rounded-control border border-line bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-primary'
 
 export function ImportCourseDialog({
   open,
@@ -243,7 +243,7 @@ export function ImportCourseDialog({
               value={courseName}
               onChange={(event) => setCourseName(event.target.value)}
               placeholder="输入课程名称，如：高等数学"
-              className="h-9 w-full rounded-control border border-line bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-primary"
+              className="h-[var(--control-h)] w-full rounded-control border border-line bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-primary"
               autoFocus
             />
             <p className="text-xs leading-5 text-ink-muted">

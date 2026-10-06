@@ -241,6 +241,10 @@
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
+  .py-row {
+    padding-top: calc((var(--row-h) - 1.25rem) / 2);
+    padding-bottom: calc((var(--row-h) - 1.25rem) / 2);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

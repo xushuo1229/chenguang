@@ -76,10 +76,10 @@ export default function AdminPage() {
               <tbody>
                 {usersQuery.data.users.map((u) => (
                   <tr key={u.id} className="border-b border-line/60 last:border-0">
-                    <td className="px-4 py-2 tabular-nums text-ink-muted">{u.id}</td>
-                    <td className="px-4 py-2 text-ink">{u.email}</td>
-                    <td className="px-4 py-2 text-ink-secondary">{u.nickname}</td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-row tabular-nums text-ink-muted">{u.id}</td>
+                    <td className="px-4 py-row text-ink">{u.email}</td>
+                    <td className="px-4 py-row text-ink-secondary">{u.nickname}</td>
+                    <td className="px-4 py-row">
                       {u.is_admin ? (
                         <Badge tone="primary">
                           <ShieldCheck className="size-3" />
@@ -89,14 +89,14 @@ export default function AdminPage() {
                         <span className="text-xs text-ink-faint">用户</span>
                       )}
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-row">
                       {u.email_verified ? (
                         <span className="text-xs text-success">已验证</span>
                       ) : (
                         <span className="text-xs text-ink-faint">未验证</span>
                       )}
                     </td>
-                    <td className="px-4 py-2 text-xs tabular-nums text-ink-muted">
+                    <td className="px-4 py-row text-xs tabular-nums text-ink-muted">
                       {u.created_at}
                     </td>
                   </tr>
