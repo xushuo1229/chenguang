@@ -15,7 +15,7 @@ export function PageHeader({ eyebrow, title, description, actions }: PageHeaderP
       <div>
         {eyebrow ? <Badge tone="primary" className="mb-3"><Sparkles className="size-3" />{eyebrow}</Badge> : null}
         <h2 className="text-2xl font-bold tracking-tight text-ink md:text-3xl">{title}</h2>
-        {description ? <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">{description}</p> : null}
+{description ? <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-muted">{description}</p> : null}
       </div>
       {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
     </div>
