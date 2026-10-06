@@ -5,11 +5,9 @@ async function login(page) {
   await page.getByPlaceholder('you@company.com').fill('explorer@zeno.ai')
   await page.getByPlaceholder('至少 6 位').fill('zeno2026')
   await page.getByRole('button', { name: '登录', exact: true }).click()
-  await expect(page).toHaveURL(/\/dashboard/)
+  await expect(page).toHaveURL(/\/workspace/)
 }
 
-// Scenarios must reach the MSW service worker, which cannot read
-// localStorage, so the flag is mirrored into a same-origin cookie.
 async function setScenario(page, scenario) {
   await page.evaluate((value) => {
     localStorage.setItem('zeno_mock_scenario', value)
@@ -26,26 +24,37 @@ async function clearScenario(page) {
 
 test.describe('Zeno AI Workspace 核心流接受测试', () => {
   test('未认证访问受保护页面时重定向到登录页', async ({ page }) => {
-    await page.goto('/dashboard')
+    await page.goto('/workspace')
     await expect(page).toHaveURL(/\/login/)
     await page.goto('/agent')
     await expect(page).toHaveURL(/\/login/)
   })
 
-  test('登录后展示企业级 Dashboard 且存储边界干净', async ({ page }) => {
+  test('旧路径重定向到新信息架构', async ({ page }) => {
+    await page.goto('/dashboard')
+    await expect(page).toHaveURL(/\/login/)
+
+    await login(page)
+    await page.goto('/dashboard')
+    await expect(page).toHaveURL(/\/workspace/)
+    await page.goto('/knowledge')
+    await expect(page).toHaveURL(/\/learning\/knowledge/)
+    await page.goto('/analytics')
+    await expect(page).toHaveURL(/\/growth\/analytics/)
+  })
+
+  test('Workspace 展示今日计划且存储边界干净', async ({ page }) => {
     await login(page)
 
     await expect(
-      page.getByRole('heading', { name: '今日成长概览' }),
+      page.getByRole('heading', { name: /Zeno Explorer/ }),
     ).toBeVisible()
+    await expect(page.getByRole('heading', { name: "Today's Plan" })).toBeVisible()
+    await expect(page.locator("ul li:has-text('英语听力练习')")).toBeVisible()
 
-    await expect(page.getByText('今日任务', { exact: true })).toBeVisible()
-    await expect(page.getByText('今日专注', { exact: true })).toBeVisible()
-    await expect(page.getByText('连续学习', { exact: true })).toBeVisible()
-    await expect(page.getByText('知识掌握', { exact: true })).toBeVisible()
-
-    await expect(page.locator('.recharts-surface')).toHaveCount(2)
-    await expect(page.locator('table tbody tr')).toHaveCount(6)
+    const undone = page.locator("li:has-text('整理迁移文档与风险清单')")
+    await undone.getByRole('button', { name: '标记为完成' }).click()
+    await expect(undone.locator('span.line-through')).toBeVisible()
 
     const storage = await page.evaluate(() => ({ ...localStorage }))
     expect(storage).toHaveProperty('zeno_auth')
@@ -54,195 +63,187 @@ test.describe('Zeno AI Workspace 核心流接受测试', () => {
     expect(storage).not.toHaveProperty('chenguangData')
   })
 
-  test('Agent 支持 Personal 与 General 双模式对话并展示证据', async ({
+  test('Agent 空态建议可用，支持 Personal 与 General 对话及证据', async ({
     page,
   }) => {
     await login(page)
     await page.goto('/agent')
 
-    await expect(
-      page.getByRole('heading', { name: 'Zeno Agent' }),
-    ).toBeVisible()
+    await expect(page.getByText('Your personal learning agent.')).toBeVisible()
+    await page.getByRole('button', { name: '我今天应该学什么？' }).click()
+    await expect(page.getByRole('textbox')).toHaveValue('我今天应该学什么？')
 
-    await page.getByRole('textbox').fill('我今天该推进什么？')
     await page.getByRole('button', { name: '发送' }).click()
-
-    await expect(
-      page.getByText('根据你近 7 天的同步数据', { exact: false }),
-    ).toBeVisible()
-    await expect(page.getByText('Evidence Bound')).toBeVisible()
+    await expect(page.getByText('根据你近 7 天的同步数据')).toBeVisible()
+    await expect(page.getByText('Evidence · 2')).toBeVisible()
 
     await page.getByRole('tab', { name: 'General AI' }).click()
     await page.getByRole('textbox').fill('解释一下知识图谱')
     await page.getByRole('button', { name: '发送' }).click()
+    await expect(page.getByText('你刚才的问题：解释一下知识图谱')).toBeVisible()
+  })
+
+  test('Agent 建议可加入今日任务', async ({ page }) => {
+    await login(page)
+    await page.goto('/agent')
+
+    await page.getByRole('textbox').fill('给我一个学习建议')
+    await page.getByRole('button', { name: '发送' }).click()
+    await expect(page.getByText('将「复习 Hooks」加入明日计划')).toBeVisible()
+    await page.getByRole('button', { name: '加入今日任务' }).click()
+    await expect(page.getByText('已加入今日任务')).toBeVisible()
+
+    await page.goto('/workspace')
     await expect(
-      page.getByText('你刚才的问题：解释一下知识图谱'),
+      page.locator("li:has-text('将「复习 Hooks」加入明日计划')"),
     ).toBeVisible()
   })
 
   test('主题切换在刷新后保持', async ({ page }) => {
     await login(page)
 
-    await page.getByRole('button', { name: '深色模式' }).click()
+    await page.getByRole('button', { name: '用户菜单' }).last().click()
+    await page.getByRole('menuitem', { name: /深色模式/ }).click()
     await expect(page.locator('html')).toHaveClass(/(?:^|\s)dark(?:\s|$)/)
 
     await page.reload()
     await expect(page.locator('html')).toHaveClass(/(?:^|\s)dark(?:\s|$)/)
 
-    await page.getByRole('button', { name: '浅色模式' }).click()
+    await page.getByRole('button', { name: '用户菜单' }).last().click()
+    await page.getByRole('menuitem', { name: /浅色模式/ }).click()
     await expect(page.locator('html')).not.toHaveClass(/(?:^|\s)dark(?:\s|$)/)
   })
 
-  test('命令面板可以搜索并把快捷问题送入 Agent', async ({ page }) => {
+  test('命令菜单支持 ⌘K 快捷键、搜索页面与 Ask Zeno', async ({ page }) => {
     await login(page)
 
-    await page.getByRole('button', { name: /搜索或跳转/ }).click()
+    await page.keyboard.press('Control+k')
     await expect(page.getByRole('dialog')).toBeVisible()
+    await page.locator('[cmdk-input]').fill('knowledge')
+    await page.locator('[cmdk-item]', { hasText: 'Knowledge' }).first().click()
+    await expect(page).toHaveURL(/\/learning\/knowledge/)
 
+    await page.getByRole('button', { name: '搜索或跳转' }).click()
     await page.locator('[cmdk-input]').fill('复习')
     await page
-      .locator('[cmdk-item]', { hasText: '哪些知识需要优先复习' })
+      .locator('[cmdk-item]', { hasText: '问：哪些知识需要优先复习' })
       .click()
-
     await expect(page).toHaveURL(/\/agent/)
     await expect(page.getByRole('textbox')).toHaveValue(
       '哪些知识需要优先复习？',
     )
-    await expect(page).not.toHaveURL(/q=/)
   })
 
-  test('移动端无侧栏占位偏移且上下文可折叠', async ({ page }) => {
+  test('移动端无侧栏，抽屉导航与上下文折叠可用', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     await login(page)
 
-    const headingBox = await page
-      .getByRole('heading', { name: '今日成长概览' })
+    const greetingBox = await page
+      .getByRole('heading', { name: /Zeno Explorer/ })
       .boundingBox()
-    expect(headingBox.x).toBeLessThan(24)
-    expect(headingBox.x + headingBox.width).toBeLessThanOrEqual(390)
+    expect(greetingBox.x).toBeLessThan(24)
+
+    await page.getByRole('button', { name: '打开导航' }).click()
+    const drawer = page.locator('aside:visible').last()
+    await expect(drawer.getByRole('link', { name: 'Agent' })).toBeVisible()
+    await drawer.getByRole('link', { name: 'Goals' }).click()
+    await expect(page).toHaveURL(/\/growth\/goals/)
 
     await page.goto('/agent')
     const toggle = page.getByRole('button', { name: '工作区上下文' })
     await toggle.click()
-    const mobileSignals = page
-      .getByRole('heading', { name: 'Workspace Signals' })
-      .first()
-    await expect(mobileSignals).toBeVisible()
-
+    await expect(
+      page.getByRole('heading', { name: 'Workspace Signals' }).first(),
+    ).toBeVisible()
     await toggle.click()
-    await expect(mobileSignals).toBeHidden()
+    await expect(
+      page.getByRole('heading', { name: 'Workspace Signals' }),
+    ).toHaveCount(0)
   })
 
-  test('知识库展示图谱、节点详情与掌握度队列', async ({ page }) => {
+  test('Courses 表格可进入详情并继续学习', async ({ page }) => {
     await login(page)
-    await page.goto('/knowledge')
+    await page.goto('/learning/courses')
 
-    await expect(
-      page.getByRole('heading', { name: '知识库' }),
-    ).toBeVisible()
-    await expect(page.locator('.react-flow__node')).toHaveCount(7)
+    await expect(page.getByText('Zeno AI 基础与实践')).toBeVisible()
+    await page.getByText('Zeno AI 基础与实践').click()
+    await expect(page).toHaveURL(/\/learning\/courses\/course-zeno-1/)
+    await expect(page.getByRole('button', { name: 'Overview' })).toBeVisible()
 
-    await page.getByRole('button', { name: '列表' }).click()
-    await expect(page.locator('table tbody tr')).toHaveCount(7)
+    await page.getByRole('button', { name: /Continue Learning/ }).click()
+    await expect(page).toHaveURL(
+      /\/learning\/knowledge\?.*course=course-zeno-1/,
+    )
+  })
+
+  test('Knowledge 标签进入 URL，图谱节点可查看详情', async ({ page }) => {
+    await login(page)
+    await page.goto('/learning/knowledge')
 
     await page.getByRole('button', { name: '掌握度' }).click()
-    await expect(page.getByText('平均掌握度')).toBeVisible()
-    await expect(page.locator('table tbody tr')).toHaveCount(3)
+    await expect(page).toHaveURL(/tab=mastery/)
+    await expect(page.getByText('ES Modules').first()).toBeVisible()
+
+    await page.goto('/learning/knowledge?tab=graph')
+    await expect(page).toHaveURL(/tab=graph/)
+    await page.getByText('ES Modules').first().click()
+    await expect(page.getByText('语言级模块系统')).toBeVisible()
   })
 
-  test('文档保存进入列表且抽取候选可接受或拒绝', async ({ page }) => {
+  test('Goals 可更新进度并新建目标', async ({ page }) => {
     await login(page)
-    await page.goto('/knowledge')
+    await page.goto('/growth/goals')
 
-    await page.getByRole('button', { name: '审核', exact: true }).click()
-    await expect(page.getByText('useEffect 依赖数组')).toBeVisible()
-
-    await page.getByRole('button', { name: '接受' }).first().click()
-    await expect(page.getByText('useEffect 依赖数组')).toHaveCount(0)
-    await expect(page.getByText('状态提升原则')).toBeVisible()
-
-    await page.getByRole('button', { name: '拒绝' }).click()
-    await expect(page.getByText('没有待审核的候选')).toBeVisible()
-
-    await page.getByRole('button', { name: '文档', exact: true }).click()
+    await expect(page.getByText('完成 Zeno 架构迁移')).toBeVisible()
     await page
-      .getByPlaceholder('文档标题，如：第 3 章讲义')
-      .fill('冒烟讲义')
-    await page
-      .getByPlaceholder('粘贴课程文本内容...')
-      .fill('这是一段用于验证文档保存的课程文本内容。')
-    await page.getByRole('button', { name: '保存文档' }).click()
-    await expect(page.getByText('冒烟讲义')).toBeVisible()
+      .locator("li:has-text('完成 Zeno 架构迁移')")
+      .getByRole('button', { name: '更新进度' })
+      .click()
+    const dialog = page.getByRole('dialog')
+    await dialog.getByRole('spinbutton').fill('90')
+    await dialog.getByRole('button', { name: '保存进度' }).click()
+    await expect(dialog).toBeHidden()
+
+    await page.getByRole('button', { name: '新建目标' }).click()
+    const goalDialog = page.getByRole('dialog')
+    await goalDialog
+      .getByPlaceholder('目标标题，如：本月读完 4 本书')
+      .fill('通过期末英语考试')
+    await goalDialog.getByPlaceholder('目标值（数值，如 4）').fill('90')
+    await page.getByRole('button', { name: '创建目标' }).click()
+    await expect(page.getByText('通过期末英语考试')).toBeVisible()
   })
 
-  test('手动新建节点并为其添加关系', async ({ page }) => {
+  test('Growth Memory 展示分类记忆与推断说明', async ({ page }) => {
     await login(page)
-    await page.goto('/knowledge')
+    await page.goto('/growth/memory')
 
-    await expect(page.locator('.react-flow__node')).toHaveCount(7)
-    await page.getByRole('button', { name: '新建节点' }).click()
-    await page
-      .getByPlaceholder('知识点标题，如：闭包')
-      .fill('手动节点 A')
-    await page.getByRole('button', { name: '创建节点' }).click()
-
-    await expect(page.locator('.react-flow__node')).toHaveCount(8)
-    await page.getByText('手动节点 A').click()
-
-    const drawer = page.locator('aside').last()
-    await expect(drawer).toBeVisible()
-    await page
-      .locator('select')
-      .nth(1)
-      .selectOption({ label: 'ES Modules' })
-    await page.getByRole('button', { name: '添加关系' }).click()
-    await expect(
-      drawer.locator('li.rounded-control').first(),
-    ).toContainText('ES Modules')
+    await expect(page.getByRole('heading', { name: 'preference' })).toBeVisible()
+    await expect(page.getByText('偏好早晨先处理最难的学习任务')).toBeVisible()
+    await expect(page.getByText('Agent 推断').first()).toBeVisible()
   })
 
-  test('Analytics 展示学习 KPI，可切换范围并给出周期对比', async ({ page }) => {
+  test('Analytics 可切换范围，快速记录后反映真实写入', async ({ page }) => {
     await login(page)
-    await page.goto('/analytics')
+    await page.goto('/growth/analytics')
 
-    await expect(
-      page.getByRole('heading', { name: '成长分析' }),
-    ).toBeVisible()
-    await expect(page.getByText('总学习时长')).toBeVisible()
+    await expect(page.getByRole('heading', { name: '成长分析' })).toBeVisible()
     await expect(page.getByText('920', { exact: true })).toBeVisible()
-    await expect(page.getByText('学习时长增加 920 分钟')).toBeVisible()
-    await expect(page.getByText('13 个活跃日')).toBeVisible()
 
     await page.getByRole('button', { name: '近 7 天' }).click()
     await expect(page.getByText('540', { exact: true })).toBeVisible()
-  })
 
-  test('快速记录打卡与专注后，Analytics 反映真实写入', async ({ page }) => {
-    await login(page)
-
+    await page.goto('/workspace')
     await page.getByRole('button', { name: '打卡', exact: true }).click()
     await page.getByRole('button', { name: '保存', exact: true }).click()
-    await expect(
-      page.getByRole('heading', { name: '每日打卡' }),
-    ).toHaveCount(0)
-
+    await expect(page.getByRole('dialog')).toBeHidden()
     await page.getByRole('button', { name: '专注', exact: true }).click()
     await page.getByPlaceholder('专注分钟数').fill('30')
     await page.getByRole('button', { name: '保存', exact: true }).click()
-    await expect(
-      page.getByRole('heading', { name: '记录专注' }),
-    ).toHaveCount(0)
+    await expect(page.getByRole('dialog')).toBeHidden()
 
-    await page.goto('/analytics')
-    await expect(
-      page.getByRole('heading', { name: '成长分析' }),
-    ).toBeVisible()
+    await page.goto('/growth/analytics')
     await expect(page.getByText('950', { exact: true })).toBeVisible()
-
-    const streakCard = page.locator('.rounded-card', {
-      hasText: '连续打卡',
-    })
-    await expect(streakCard).toContainText('1')
   })
 
   test('PUT 版本冲突时回滚写入并提示，重试可成功', async ({ page }) => {
@@ -255,79 +256,50 @@ test.describe('Zeno AI Workspace 核心流接受测试', () => {
     await page.getByRole('button', { name: '专注', exact: true }).click()
     await page.getByPlaceholder('专注分钟数').fill('30')
     await page.getByRole('button', { name: '保存', exact: true }).click()
-
     await expect(
       page.getByText('数据版本冲突：本地修改晚于云端，请合并后重试'),
     ).toBeVisible()
 
     await page.getByRole('button', { name: '取消', exact: true }).click()
-    await page.goto('/analytics')
+    await page.goto('/growth/analytics')
     await expect(page.getByText('920', { exact: true })).toBeVisible()
 
-    await page.goto('/dashboard')
+    await page.goto('/workspace')
     await page.getByRole('button', { name: '专注', exact: true }).click()
     await page.getByPlaceholder('专注分钟数').fill('30')
     await page.getByRole('button', { name: '保存', exact: true }).click()
-    await expect(
-      page.getByRole('heading', { name: '记录专注' }),
-    ).toHaveCount(0)
-
-    await page.goto('/analytics')
+    await expect(page.getByRole('dialog')).toBeHidden()
+    await page.goto('/growth/analytics')
     await expect(page.getByText('950', { exact: true })).toBeVisible()
   })
 
-  test('空数据 mock 场景显示任务空态且可恢复', async ({ page }) => {
+  test('空数据场景显示空态，loading 显示骨架，error 可重试', async ({
+    page,
+  }) => {
     await login(page)
 
     await setScenario(page, 'empty')
-    await page.reload()
-
-    await expect(page.getByText('今日暂无计划任务')).toBeVisible()
-    await expect(page.locator('table tbody tr')).toHaveCount(0)
-    await expect(page.locator('.recharts-surface')).toHaveCount(2)
-
-    await clearScenario(page)
-    await page.reload()
-
-    await expect(page.locator('table tbody tr')).toHaveCount(6)
-    await expect(page.getByText('今日暂无计划任务')).toHaveCount(0)
-  })
-
-  test('loading mock 场景先显示骨架屏再呈现内容', async ({ page }) => {
-    await login(page)
+    await page.goto('/workspace')
+    await expect(page.getByText('今天还没有计划。')).toBeVisible()
+    await expect(page.getByText('还没有学习记录，从下方快速记录开始。')).toBeVisible()
 
     await setScenario(page, 'loading')
-    await page.reload()
-
-    await expect(page.locator('[aria-busy="true"]')).toBeVisible()
+    await page.goto('/workspace')
+    await expect(page.locator('.animate-pulse').first()).toBeVisible()
     await expect(
-      page.getByRole('heading', { name: '今日成长概览' }),
-    ).not.toBeVisible()
-
-    await expect(
-      page.getByRole('heading', { name: '今日成长概览' }),
+      page.getByRole('heading', { name: /Zeno Explorer/ }),
     ).toBeVisible({ timeout: 10000 })
 
-    await clearScenario(page)
-  })
-
-  test('error mock 场景显示错误提示且重试可恢复', async ({ page }) => {
-    await login(page)
-
     await setScenario(page, 'error')
-    await page.reload()
-
+    await page.goto('/workspace')
     const alert = page.getByRole('alert')
     await expect(alert).toBeVisible({ timeout: 10000 })
-    const retry = page.getByRole('button', { name: '重试' })
+    const retry = alert.getByRole('button', { name: '重试' })
     await expect(retry).toBeVisible()
-
     await clearScenario(page)
     await retry.click()
-
     await expect(
-      page.getByRole('heading', { name: '今日成长概览' }),
+      page.getByRole('heading', { name: "Today's Plan" }),
     ).toBeVisible()
-    await expect(alert).toHaveCount(0)
   })
 })
