@@ -5,7 +5,6 @@ import LoginPage from '../pages/LoginPage'
 import NotFoundPage from '../pages/NotFoundPage'
 import AdminPage from '../pages/AdminPage'
 import KnowledgePage from '../pages/KnowledgePage'
-import AnalyticsPage from '../pages/AnalyticsPage'
 import {
   ForgotPasswordPage,
   ResetPasswordPage,
@@ -23,6 +22,7 @@ const PlansPage = lazy(() => import('@/features/learning/PlansPage'))
 const GoalsPage = lazy(() => import('@/features/growth/GoalsPage'))
 const MemoryPage = lazy(() => import('@/features/growth/MemoryPage'))
 const SettingsPage = lazy(() => import('@/features/settings/SettingsPage'))
+const AnalyticsPage = lazy(() => import('../pages/AnalyticsPage'))
 
 function PageFallback() {
   return (

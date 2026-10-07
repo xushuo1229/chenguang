@@ -1,13 +1,5 @@
 import { useMemo, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeaderCell,
-  TableRow,
-} from '@tremor/react'
 import { List, Network, Plus, Search } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -155,40 +147,40 @@ export function GraphTab({
         />
       ) : (
         <Card className="overflow-hidden p-0">
-          <Table className="text-sm">
-            <TableHead>
-              <TableRow className="bg-surface-muted/50">
-                <TableHeaderCell>知识点</TableHeaderCell>
-                <TableHeaderCell>类型</TableHeaderCell>
-                <TableHeaderCell>置信度</TableHeaderCell>
-                <TableHeaderCell>状态</TableHeaderCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="bg-surface-muted/50">
+                <th className="px-4 py-2.5 font-medium">知识点</th>
+                <th className="px-4 py-2.5 font-medium">类型</th>
+                <th className="px-4 py-2.5 font-medium">置信度</th>
+                <th className="px-4 py-2.5 font-medium">状态</th>
+              </tr>
+            </thead>
+            <tbody>
               {filteredNodes.map((node) => (
-                <TableRow
+                <tr
                   key={node.id}
                   className="cursor-pointer hover:bg-surface-muted/40"
                   onClick={() => setSelectedId(node.id)}
                 >
-                  <TableCell className="font-medium text-ink">
+                  <td className="px-4 py-row font-medium text-ink">
                     {node.title}
-                  </TableCell>
-                  <TableCell>
+                  </td>
+                  <td className="px-4 py-row">
                     <Badge tone={kindTone[node.kind] ?? 'neutral'}>
                       {node.kind}
                     </Badge>
-                  </TableCell>
-                  <TableCell className="text-ink-secondary">
+                  </td>
+                  <td className="px-4 py-row text-ink-secondary">
                     {node.confidence}
-                  </TableCell>
-                  <TableCell className="text-ink-secondary">
+                  </td>
+                  <td className="px-4 py-row text-ink-secondary">
                     {node.status}
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
+            </tbody>
+          </table>
         </Card>
       )}
 

@@ -1,12 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { BookOpen, Library, Plus } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/state'
-import { GraphTab } from '@/features/knowledge/GraphTab'
-import { MasteryTab } from '@/features/knowledge/MasteryTab'
 import { DocumentsTab } from '@/features/knowledge/DocumentsTab'
 import { ReviewTab } from '@/features/knowledge/ReviewTab'
 import { ImportCourseDialog } from '@/features/knowledge/ImportCourseDialog'
@@ -17,6 +15,15 @@ import {
 } from '@/services/knowledgeStateService'
 import { useSnapshot } from '@/features/snapshot/useSnapshot'
 import type { Course } from '@/services/courseService'
+
+const GraphTab = lazy(() =>
+  import('@/features/knowledge/GraphTab').then((m) => ({ default: m.GraphTab })),
+)
+const MasteryTab = lazy(() =>
+  import('@/features/knowledge/MasteryTab').then((m) => ({
+    default: m.MasteryTab,
+  })),
+)
 
 type Tab = 'graph' | 'mastery' | 'documents' | 'review'
 const COURSE_PREF_KEY = 'zeno_kb_course'
@@ -174,23 +181,32 @@ export default function KnowledgePage() {
             })}
           </div>
 
-          {tab === 'graph' ? (
-            <GraphTab
-              space={spaceQuery.data}
-              isLoading={spaceQuery.isPending}
-              isError={spaceQuery.isError}
-              courseId={courseId}
-              onChanged={() => void spaceQuery.refetch()}
-            />
-          ) : null}
-          {tab === 'mastery' ? (
-            <MasteryTab
-              states={statesQuery.data?.states}
-              queue={queueQuery.data}
-              isLoading={statesQuery.isPending || queueQuery.isPending}
-              isError={statesQuery.isError || queueQuery.isError}
-            />
-          ) : null}
+          <Suspense
+            fallback={
+              <div className="space-y-3 py-2">
+                <div className="h-9 w-full animate-pulse rounded-card bg-surface-muted" />
+                <div className="h-64 w-full animate-pulse rounded-card bg-surface-muted" />
+              </div>
+            }
+          >
+            {tab === 'graph' ? (
+              <GraphTab
+                space={spaceQuery.data}
+                isLoading={spaceQuery.isPending}
+                isError={spaceQuery.isError}
+                courseId={courseId}
+                onChanged={() => void spaceQuery.refetch()}
+              />
+            ) : null}
+            {tab === 'mastery' ? (
+              <MasteryTab
+                states={statesQuery.data?.states}
+                queue={queueQuery.data}
+                isLoading={statesQuery.isPending || queueQuery.isPending}
+                isError={statesQuery.isError || queueQuery.isError}
+              />
+            ) : null}
+          </Suspense>
           {tab === 'documents' ? (
             <DocumentsTab
               courseId={courseId}

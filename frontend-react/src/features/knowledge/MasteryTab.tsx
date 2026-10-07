@@ -1,11 +1,3 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeaderCell,
-  TableRow,
-} from '@tremor/react'
 import { Gauge } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
@@ -118,36 +110,36 @@ export function MasteryTab({
         <div className="border-b border-line px-5 py-3.5">
           <h3 className="text-sm font-semibold text-ink">待复习队列</h3>
         </div>
-        <Table className="text-sm">
-          <TableHead>
-            <TableRow className="bg-surface-muted/50">
-              <TableHeaderCell>知识点</TableHeaderCell>
-              <TableHeaderCell>状态</TableHeaderCell>
-              <TableHeaderCell>原因</TableHeaderCell>
-              <TableHeaderCell className="text-right">优先级</TableHeaderCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="bg-surface-muted/50">
+              <th className="px-4 py-2.5 font-medium">知识点</th>
+              <th className="px-4 py-2.5 font-medium">状态</th>
+              <th className="px-4 py-2.5 font-medium">原因</th>
+              <th className="px-4 py-2.5 text-right font-medium">优先级</th>
+            </tr>
+          </thead>
+          <tbody>
             {(queue?.items ?? []).map((item: ReviewItem) => (
-              <TableRow key={item.knowledgeNodeId}>
-                <TableCell className="font-medium text-ink">
+              <tr key={item.knowledgeNodeId}>
+                <td className="px-4 py-row font-medium text-ink">
                   {item.nodeTitle}
-                </TableCell>
-                <TableCell>
+                </td>
+                <td className="px-4 py-row">
                   <Badge tone={stateTone[item.state]}>
                     {stateLabel[item.state]}
                   </Badge>
-                </TableCell>
-                <TableCell className="text-ink-secondary">
+                </td>
+                <td className="px-4 py-row text-ink-secondary">
                   {item.reason}
-                </TableCell>
-                <TableCell className="text-right tabular-nums text-ink-secondary">
+                </td>
+                <td className="px-4 py-row text-right tabular-nums text-ink-secondary">
                   P{item.priority}
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             ))}
-          </TableBody>
-        </Table>
+          </tbody>
+        </table>
       </Card>
     </div>
   )
